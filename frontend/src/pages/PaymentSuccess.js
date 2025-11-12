@@ -72,6 +72,9 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
             <Link to="/orders">
               <Button data-testid="orders-btn" variant="outline">Orders</Button>
             </Link>
+            <Link to="/profile">
+              <Button data-testid="profile-btn" variant="outline">Profile</Button>
+            </Link>
             <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
               Logout
             </Button>

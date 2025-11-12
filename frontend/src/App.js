@@ -12,6 +12,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Orders from "@/pages/Orders";
 import Profile from "@/pages/Profile";
+import Addresses from "@/pages/Addresses";
 import AdminDashboard from "@/pages/AdminDashboard";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 
@@ -120,6 +121,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile user={user} onLogout={handleLogout} cartCount={cartCount} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/addresses"
+            element={
+              <ProtectedRoute>
+                <Addresses user={user} onLogout={handleLogout} cartCount={cartCount} />
               </ProtectedRoute>
             }
           />

@@ -120,6 +120,20 @@ class PaymentTransactionDB(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class AddressDB(Base):
+    __tablename__ = "addresses"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    label: Mapped[str] = mapped_column(String(50))  # Home, Work, Other
+    full_address: Mapped[str] = mapped_column(Text)
+    city: Mapped[str] = mapped_column(String(100))
+    state: Mapped[str] = mapped_column(String(100))
+    zip_code: Mapped[str] = mapped_column(String(20))
+    country: Mapped[str] = mapped_column(String(100), default="USA")
+    is_default: Mapped[bool] = mapped_column(Integer, default=0)  # MySQL doesn't have bool, using Integer
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 # ============ Pydantic Models ============
 
 class User(BaseModel):
@@ -152,6 +166,37 @@ class UserProfileUpdate(BaseModel):
 class PasswordChange(BaseModel):
     old_password: str
     new_password: str
+
+class Address(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    label: str  # Home, Work, Other
+    full_address: str
+    city: str
+    state: str
+    zip_code: str
+    country: str = "USA"
+    is_default: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AddressCreate(BaseModel):
+    label: str
+    full_address: str
+    city: str
+    state: str
+    zip_code: str
+    country: str = "USA"
+    is_default: bool = False
+
+class AddressUpdate(BaseModel):
+    label: Optional[str] = None
+    full_address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: Optional[str] = None
+    is_default: Optional[bool] = None
 
 class Product(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -409,6 +454,161 @@ async def change_password(
         await session.commit()
         
         return {"message": "Password changed successfully"}
+
+# ============ Address Routes ============
+
+@api_router.get("/user/addresses")
+async def get_addresses(user_data: dict = Header(None, alias="Authorization")):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(AddressDB)
+            .where(AddressDB.user_id == current_user['user_id'])
+            .order_by(AddressDB.is_default.desc(), AddressDB.created_at.desc())
+        )
+        addresses = result.scalars().all()
+        
+        return [{
+            "id": addr.id,
+            "user_id": addr.user_id,
+            "label": addr.label,
+            "full_address": addr.full_address,
+            "city": addr.city,
+            "state": addr.state,
+            "zip_code": addr.zip_code,
+            "country": addr.country,
+            "is_default": bool(addr.is_default),
+            "created_at": addr.created_at.isoformat() if addr.created_at else None
+        } for addr in addresses]
+
+@api_router.post("/user/addresses")
+async def create_address(
+    address_data: AddressCreate,
+    user_data: dict = Header(None, alias="Authorization")
+):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        # If this is set as default, unset all other defaults
+        if address_data.is_default:
+            await session.execute(
+                update(AddressDB)
+                .where(AddressDB.user_id == current_user['user_id'])
+                .values(is_default=0)
+            )
+        
+        new_address = AddressDB(
+            id=str(uuid.uuid4()),
+            user_id=current_user['user_id'],
+            label=address_data.label,
+            full_address=address_data.full_address,
+            city=address_data.city,
+            state=address_data.state,
+            zip_code=address_data.zip_code,
+            country=address_data.country,
+            is_default=1 if address_data.is_default else 0,
+            created_at=datetime.now(timezone.utc)
+        )
+        
+        session.add(new_address)
+        await session.commit()
+        
+        return {
+            "message": "Address added successfully",
+            "address": {
+                "id": new_address.id,
+                "label": new_address.label,
+                "full_address": new_address.full_address,
+                "city": new_address.city,
+                "state": new_address.state,
+                "zip_code": new_address.zip_code,
+                "country": new_address.country,
+                "is_default": bool(new_address.is_default)
+            }
+        }
+
+@api_router.put("/user/addresses/{address_id}")
+async def update_address(
+    address_id: str,
+    address_data: AddressUpdate,
+    user_data: dict = Header(None, alias="Authorization")
+):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(AddressDB)
+            .where(AddressDB.id == address_id, AddressDB.user_id == current_user['user_id'])
+        )
+        address = result.scalar_one_or_none()
+        
+        if not address:
+            raise HTTPException(status_code=404, detail="Address not found")
+        
+        # If setting as default, unset all other defaults
+        if address_data.is_default:
+            await session.execute(
+                update(AddressDB)
+                .where(AddressDB.user_id == current_user['user_id'])
+                .values(is_default=0)
+            )
+        
+        # Update fields
+        if address_data.label is not None:
+            address.label = address_data.label
+        if address_data.full_address is not None:
+            address.full_address = address_data.full_address
+        if address_data.city is not None:
+            address.city = address_data.city
+        if address_data.state is not None:
+            address.state = address_data.state
+        if address_data.zip_code is not None:
+            address.zip_code = address_data.zip_code
+        if address_data.country is not None:
+            address.country = address_data.country
+        if address_data.is_default is not None:
+            address.is_default = 1 if address_data.is_default else 0
+        
+        await session.commit()
+        
+        return {
+            "message": "Address updated successfully",
+            "address": {
+                "id": address.id,
+                "label": address.label,
+                "full_address": address.full_address,
+                "city": address.city,
+                "state": address.state,
+                "zip_code": address.zip_code,
+                "country": address.country,
+                "is_default": bool(address.is_default)
+            }
+        }
+
+@api_router.delete("/user/addresses/{address_id}")
+async def delete_address(
+    address_id: str,
+    user_data: dict = Header(None, alias="Authorization")
+):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(AddressDB)
+            .where(AddressDB.id == address_id, AddressDB.user_id == current_user['user_id'])
+        )
+        address = result.scalar_one_or_none()
+        
+        if not address:
+            raise HTTPException(status_code=404, detail="Address not found")
+        
+        await session.execute(
+            delete(AddressDB).where(AddressDB.id == address_id)
+        )
+        await session.commit()
+        
+        return {"message": "Address deleted successfully"}
 
 # ============ Product Routes ============
 

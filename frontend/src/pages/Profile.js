@@ -126,6 +126,9 @@ const Profile = ({ user, onLogout, cartCount }) => {
                 <Link to="/orders">
                   <Button variant="outline">Orders</Button>
                 </Link>
+                <Link to="/addresses">
+                  <Button variant="outline">Addresses</Button>
+                </Link>
               </>
             )}
             <Button onClick={onLogout} variant="destructive">

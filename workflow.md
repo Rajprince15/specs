@@ -252,49 +252,70 @@ Break down development into small, manageable phases that can be completed in 4-
 ---
 
 ## 🟢 PHASE 2B: User Profile Management (4 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 35-40 minutes
 
 ### Backend Tasks:
-- [ ] GET /api/user/profile
-- [ ] PUT /api/user/profile
-- [ ] PUT /api/user/password
+- [x] GET /api/user/profile
+- [x] PUT /api/user/profile
+- [x] PUT /api/user/password
 
 ### Frontend Tasks:
-- [ ] Profile page
-- [ ] Edit profile form
-- [ ] Change password form
-- [ ] Profile link in navigation
+- [x] Profile page
+- [x] Edit profile form
+- [x] Change password form
+- [x] Profile link in navigation
 
 ### Testing:
 - [ ] Test profile display
 - [ ] Test profile update
 - [ ] Test password change
 
+### Implementation Details:
+- Backend APIs implemented at lines 336-411 in /app/backend/server.py
+- Pydantic models UserProfileUpdate and PasswordChange defined
+- Profile.js page with tabs for Profile and Password sections
+- Edit mode for profile information with validation
+- Password change with confirmation and old password verification
+- Profile navigation links added to all user pages (Home, Products, ProductDetail, Cart, Orders, PaymentSuccess)
+- Protected route with authentication check
+
 ---
 
 ## 🟢 PHASE 2C: Address Management (5 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 40-45 minutes
 
 ### Backend Tasks:
-- [ ] Create addresses table
-- [ ] GET /api/user/addresses
-- [ ] POST /api/user/addresses
-- [ ] PUT /api/user/addresses/{id}
-- [ ] DELETE /api/user/addresses/{id}
+- [x] Create addresses table (AddressDB model)
+- [x] GET /api/user/addresses
+- [x] POST /api/user/addresses
+- [x] PUT /api/user/addresses/{id}
+- [x] DELETE /api/user/addresses/{id}
 
 ### Frontend Tasks:
-- [ ] Addresses page
-- [ ] Add address form
-- [ ] Edit address
-- [ ] Delete address
-- [ ] Set default address
+- [x] Addresses page (/addresses route)
+- [x] Add address form (modal dialog)
+- [x] Edit address (modal dialog)
+- [x] Delete address (with confirmation)
+- [x] Set default address
 
 ### Testing:
 - [ ] Test CRUD operations
 - [ ] Test default address
 - [ ] Test address in checkout
+
+### Implementation Details:
+- AddressDB model with fields: id, user_id, label, full_address, city, state, zip_code, country, is_default
+- Backend APIs handle default address logic (unsets others when setting new default)
+- Address Pydantic models: Address, AddressCreate, AddressUpdate
+- Addresses.js page with grid layout showing all addresses
+- Dialog modals for add/edit with full form (label dropdown, address fields)
+- Address cards with label icons (Home, Work, Other)
+- Default address highlighted with blue ring and checkmark badge
+- Empty state with call-to-action button
+- Navigation link added to Profile page
+- Protected route with authentication check
 
 ---
 
@@ -820,25 +841,46 @@ making it easier to support multiple payment gateways through a unified interfac
 | Phase Group | Total Phases | Total Credits | Status |
 |-------------|--------------|---------------|--------|
 | Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
-| Phase 2 (UX) | 5 | 20 | 🟡 1/5 Done |
+| Phase 2 (UX) | 5 | 20 | 🟡 3/5 Done |
 | Phase 3 (Engagement) | 6 | 26 | ❌ TODO |
 | Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
-| **TOTAL** | **35** | **140** | **10/35 Done** |
+| **TOTAL** | **35** | **140** | **12/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 28.6% Complete (40/140 credits)
+## 🎯 Current Progress: 35.0% Complete (49/140 credits)
 
 ---
 
-**Last Updated:** 2025-11-12 (Phase 2A: Product Search & Filters Completed)
-**Version:** 2.2  
+**Last Updated:** 2025-11-12 (Phase 2C: Address Management Completed)
+**Version:** 2.4  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 2.4 (2025-11-12)
+- ✅ Completed Phase 2C: Address Management
+- ✅ AddressDB model with complete address fields
+- ✅ Backend APIs: GET/POST/PUT/DELETE /api/user/addresses
+- ✅ Automatic default address handling (unsets others when new default set)
+- ✅ Addresses.js page with responsive grid layout
+- ✅ Add/Edit address modal dialogs with full form
+- ✅ Address cards with label icons (Home, Work, Other)
+- ✅ Default address highlighting and set default functionality
+- ✅ Delete confirmation dialog
+- ✅ Empty state with call-to-action
+
+### Version 2.3 (2025-11-12)
+- ✅ Completed Phase 2B: User Profile Management
+- ✅ Backend APIs: GET/PUT /api/user/profile and PUT /api/user/password
+- ✅ Profile page with tabs for profile info and password change
+- ✅ Edit mode for profile information with validation
+- ✅ Password change with old password verification and confirmation
+- ✅ Profile navigation links added to all user pages
+- ✅ Protected route with authentication check
 
 ### Version 2.2 (2025-11-12)
 - ✅ Completed Phase 2A: Product Search & Filters
