@@ -101,27 +101,40 @@ Break down development into small, manageable phases that can be completed in 4-
 
 ---
 
-## 🔵 PHASE 1E: Stripe Payment Integration (5 Credits)
+## 🔵 PHASE 1E: Payment Gateway Integration (5 Credits)
 **Status:** ✅ COMPLETED  
 **Estimated Time:** 40-50 minutes
 
 ### Backend Tasks:
-- [x] POST /api/payment/checkout (create Stripe session)
+- [x] Created payment gateway abstraction layer (payment_gateway.py)
+- [x] Implemented PaymentGateway base class with common interface
+- [x] Implemented StripeGateway class wrapping Stripe checkout
+- [x] Implemented RazorpayGateway class for Indian payments
+- [x] POST /api/payment/checkout (unified payment creation)
 - [x] GET /api/payment/status/{session_id} (poll status)
 - [x] POST /api/webhook/stripe (handle webhook)
-- [x] Payment transactions table/collection
+- [x] POST /api/webhook/razorpay (handle webhook)
+- [x] Payment transactions table in MySQL schema
 
 ### Frontend Tasks:
-- [x] Checkout button in cart
-- [x] Redirect to Stripe checkout
+- [x] Payment method selection dropdown (Stripe/Razorpay)
+- [x] Checkout button in cart with gateway selection
+- [x] Redirect to selected payment gateway
 - [x] Payment success page with status polling
-- [x] Handle payment failure
+- [x] Handle payment failure for both gateways
+
+### Architecture:
+- **Abstraction Layer**: `payment_gateway.py` provides unified interface
+- **Gateway Classes**: StripeGateway, RazorpayGateway implement common methods
+- **Configuration**: Environment variables for API keys
+- **Extensibility**: Easy to add new payment gateways (PayPal, Square, etc.)
 
 ### Testing:
-- [x] Test Stripe session creation
-- [x] Test payment with test card (4242...)
-- [x] Test payment failure scenario
-- [x] Test webhook handling
+- [x] Test Stripe payment flow with test card (4242...)
+- [x] Test Razorpay payment flow
+- [x] Test payment gateway selection in UI
+- [x] Test webhook handling for both gateways
+- [x] Test payment failure scenarios
 
 ---
 
@@ -149,7 +162,42 @@ Break down development into small, manageable phases that can be completed in 4-
 
 ---
 
-## 🔵 PHASE 1G: UI Polish & Landing Page (3 Credits)
+## 🔵 PHASE 1H: MySQL Database Schema (3 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 25-30 minutes
+
+### Database Tasks:
+- [x] Created mysql_schema.sql with complete database structure
+- [x] Users table with bcrypt password hashing support
+- [x] Products table with all eyewear-specific fields
+- [x] Cart table with user-product relationships
+- [x] Orders table with payment and order status tracking
+- [x] Order_items table (normalized from MongoDB array structure)
+- [x] Payment_transactions table with support for multiple gateways
+- [x] Proper foreign key relationships and indexes
+- [x] Sample data seed (10 products)
+
+### Schema Features:
+- **UUID-based IDs**: CHAR(36) for consistency with app
+- **Proper Indexes**: On email, category, brand, price, user_id, order_id
+- **Cascading Deletes**: Properly configured foreign keys
+- **JSON Metadata**: For flexible payment gateway data storage
+- **Timestamps**: created_at and updated_at tracking
+- **Enums**: For status fields, categories, frame types
+
+### Migration Notes:
+- Schema is designed for easy MongoDB-to-MySQL migration
+- Maintains compatibility with existing application code
+- Includes helpful reference queries in comments
+- Ready for production deployment
+
+### Testing:
+- [x] Schema validates without errors
+- [x] All foreign key constraints work correctly
+- [x] Indexes improve query performance
+- [x] Sample data loads successfully
+
+---
 **Status:** ✅ COMPLETED  
 **Estimated Time:** 25-30 minutes
 
@@ -560,24 +608,29 @@ Break down development into small, manageable phases that can be completed in 4-
 
 ---
 
-## 🟠 PHASE 4G: Razorpay Payment (5 Credits)
-**Status:** ❌ TODO  
+## 🟢 PHASE 4G: Razorpay Payment (5 Credits)
+**Status:** ✅ COMPLETED (Integrated in Phase 1E)
 **Estimated Time:** 40-45 minutes
 
 ### Backend Tasks:
-- [ ] POST /api/payment/razorpay/checkout
-- [ ] POST /api/payment/razorpay/verify
-- [ ] POST /api/webhook/razorpay
+- [x] Razorpay integrated via payment gateway abstraction
+- [x] RazorpayGateway class in payment_gateway.py
+- [x] Unified checkout API supports both Stripe and Razorpay
+- [x] POST /api/webhook/razorpay for payment verification
 
 ### Frontend Tasks:
-- [ ] Payment method selection
-- [ ] Razorpay checkout modal
-- [ ] Payment verification
+- [x] Payment method selection dropdown in Cart.js
+- [x] Dynamic gateway selection (Stripe/Razorpay)
+- [x] Payment verification flow
 
 ### Testing:
-- [ ] Test Razorpay payment
-- [ ] Test verification
-- [ ] Test webhook
+- [x] Test Razorpay payment flow
+- [x] Test payment method selection
+- [x] Test webhook handling
+
+### Note:
+This feature was integrated early as part of the payment gateway abstraction layer,
+making it easier to support multiple payment gateways through a unified interface.
 
 ---
 
@@ -756,20 +809,38 @@ Break down development into small, manageable phases that can be completed in 4-
 
 | Phase Group | Total Phases | Total Credits | Status |
 |-------------|--------------|---------------|--------|
-| Phase 1 (MVP) | 7 | 29 | ✅ COMPLETED |
+| Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
 | Phase 2 (UX) | 5 | 20 | ❌ TODO |
 | Phase 3 (Engagement) | 6 | 26 | ❌ TODO |
-| Phase 4 (Advanced) | 8 | 34 | ❌ TODO |
+| Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
-| **TOTAL** | **34** | **142** | **7/34 Done** |
+| **TOTAL** | **35** | **140** | **9/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 20.6% Complete (29/142 credits)
+## 🎯 Current Progress: 25.7% Complete (36/140 credits)
 
 ---
 
-**Last Updated:** 2025-11-12  
-**Version:** 2.0  
+**Last Updated:** 2025-11-12 (Payment Gateway Abstraction & MySQL Schema Added)
+**Version:** 2.1  
 **Organization:** Optimized for 4-5 credits per phase
+
+---
+
+## 📝 Recent Updates
+
+### Version 2.1 (2025-11-12)
+- ✅ Added payment gateway abstraction layer (payment_gateway.py)
+- ✅ Integrated Razorpay as alternative payment gateway
+- ✅ Created comprehensive MySQL database schema (mysql_schema.sql)
+- ✅ Updated payment flow to support multiple gateways
+- ✅ Added payment method selection in frontend
+- ✅ Moved Razorpay from Phase 4G to integrated in Phase 1E
+- ✅ Added new Phase 1H for MySQL schema documentation
+
+### Version 2.0 (2025-11-12)
+- Initial MVP completion with Stripe payment integration
+- All core e-commerce features implemented
+- Modern UI with gradient theme and glassmorphism effects
 "
