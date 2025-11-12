@@ -1,0 +1,27 @@
+{
+  "name": "specs-ecommerce",
+  "version": "1.0.0",
+  "description": "specs e-commerce website with React, FastAPI, and MySQL",
+  "scripts": {
+    "install:frontend": "cd frontend && yarn install",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "start:frontend": "cd frontend && yarn start",
+    "start:backend": "cd backend && uvicorn server:app --host 0.0.0.0 --port 8001 --reload",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "seed": "cd backend && python ../scripts/seed_data.py",
+    "dev": "npm run start"
+  },
+  "keywords": [
+    "ecommerce",
+    "react",
+    "fastapi",
+    "mysql",
+    "lenskart"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
