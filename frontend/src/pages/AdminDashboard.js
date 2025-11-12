@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Glasses, Package, Users, DollarSign, Plus, Edit, Trash2 } from 'lucide-react';
+import { Glasses, Package, Users, DollarSign, Plus, Edit, Trash2, Images } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -16,6 +16,12 @@ const AdminDashboard = ({ user, onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [managingProductId, setManagingProductId] = useState(null);
+  const [productImages, setProductImages] = useState([]);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newImageOrder, setNewImageOrder] = useState(1);
+  const [newImageIsPrimary, setNewImageIsPrimary] = useState(false);
   const [productForm, setProductForm] = useState({
     name: '',
     brand: '',
@@ -126,6 +132,55 @@ const AdminDashboard = ({ user, onLogout }) => {
       fetchStats();
     } catch (error) {
       toast.error('Failed to delete product');
+    }
+  };
+
+  const handleManageImages = async (productId) => {
+    setManagingProductId(productId);
+    setShowImageDialog(true);
+    try {
+      const response = await axiosInstance.get(`/products/${productId}/images`);
+      setProductImages(response.data);
+    } catch (error) {
+      toast.error('Failed to load product images');
+      setProductImages([]);
+    }
+  };
+
+  const handleAddImage = async (e) => {
+    e.preventDefault();
+    if (!newImageUrl.trim()) {
+      toast.error('Please enter an image URL');
+      return;
+    }
+    try {
+      await axiosInstance.post(`/products/${managingProductId}/images`, {
+        image_url: newImageUrl,
+        display_order: newImageOrder,
+        is_primary: newImageIsPrimary
+      });
+      toast.success('Image added successfully');
+      setNewImageUrl('');
+      setNewImageOrder(1);
+      setNewImageIsPrimary(false);
+      // Refresh images
+      const response = await axiosInstance.get(`/products/${managingProductId}/images`);
+      setProductImages(response.data);
+    } catch (error) {
+      toast.error('Failed to add image');
+    }
+  };
+
+  const handleDeleteImage = async (imageId) => {
+    if (!window.confirm('Are you sure you want to delete this image?')) return;
+    try {
+      await axiosInstance.delete(`/products/${managingProductId}/images/${imageId}`);
+      toast.success('Image deleted successfully');
+      // Refresh images
+      const response = await axiosInstance.get(`/products/${managingProductId}/images`);
+      setProductImages(response.data);
+    } catch (error) {
+      toast.error('Failed to delete image');
     }
   };
 
@@ -332,6 +387,9 @@ const AdminDashboard = ({ user, onLogout }) => {
                           <Button data-testid={`edit-product-${product.id}`} size="sm" variant="outline" onClick={() => handleEdit(product)}>
                             <Edit className="w-4 h-4" />
                           </Button>
+                          <Button data-testid={`manage-images-${product.id}`} size="sm" variant="outline" onClick={() => handleManageImages(product.id)} title="Manage Images">
+                            <Images className="w-4 h-4" />
+                          </Button>
                           <Button data-testid={`delete-product-${product.id}`} size="sm" variant="destructive" onClick={() => handleDelete(product.id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -368,6 +426,96 @@ const AdminDashboard = ({ user, onLogout }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Image Management Dialog */}
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Product Images</DialogTitle>
+            <DialogDescription>Add, remove, and manage images for this product</DialogDescription>
+          </DialogHeader>
+
+          {/* Add New Image Form */}
+          <form onSubmit={handleAddImage} className="space-y-4 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-gray-900">Add New Image</h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="new-image-url">Image URL</Label>
+                <Input
+                  id="new-image-url"
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="display-order">Display Order</Label>
+                <Input
+                  id="display-order"
+                  type="number"
+                  min="1"
+                  value={newImageOrder}
+                  onChange={(e) => setNewImageOrder(parseInt(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is-primary"
+                checked={newImageIsPrimary}
+                onChange={(e) => setNewImageIsPrimary(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded"
+              />
+              <Label htmlFor="is-primary" className="cursor-pointer">Set as primary image</Label>
+            </div>
+            <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Image
+            </Button>
+          </form>
+
+          {/* Current Images */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-900">Current Images ({productImages.length})</h3>
+            {productImages.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No images uploaded yet</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {productImages.map((image) => (
+                  <div key={image.id} className="relative group">
+                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                      <img
+                        src={image.image_url}
+                        alt="Product"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {image.is_primary && (
+                      <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                        Primary
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 bg-gray-600 text-white text-xs px-2 py-1 rounded">
+                      Order: {image.display_order}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleDeleteImage(image.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

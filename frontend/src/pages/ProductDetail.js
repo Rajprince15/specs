@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2 } from 'lucide-react';
+import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -19,11 +19,15 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [productImages, setProductImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   useEffect(() => {
     fetchProduct();
     fetchReviews();
     fetchRelatedProducts();
+    fetchProductImages();
     trackProductView();
   }, [productId]);
 
@@ -43,6 +47,16 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       setRelatedProducts(response.data);
     } catch (error) {
       console.error('Failed to load related products');
+    }
+  };
+
+  const fetchProductImages = async () => {
+    try {
+      const response = await axiosInstance.get(`/products/${productId}/images`);
+      setProductImages(response.data);
+    } catch (error) {
+      console.error('Failed to load product images');
+      setProductImages([]);
     }
   };
 
@@ -134,6 +148,23 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
     setComment('');
   };
 
+  const nextImage = () => {
+    const images = productImages.length > 0 ? productImages : [{ image_url: product?.image_url }];
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    setIsZoomed(false);
+  };
+
+  const prevImage = () => {
+    const images = productImages.length > 0 ? productImages : [{ image_url: product?.image_url }];
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setIsZoomed(false);
+  };
+
+  const selectImage = (index) => {
+    setCurrentImageIndex(index);
+    setIsZoomed(false);
+  };
+
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : 0;
@@ -212,13 +243,73 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
         </Link>
 
         <div className="grid md:grid-cols-2 gap-12">
-          {/* Product Image */}
-          <div className="glass rounded-3xl overflow-hidden">
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+          {/* Product Image Gallery */}
+          <div className="space-y-4">
+            {/* Main Image with Carousel */}
+            <div className="glass rounded-3xl overflow-hidden relative group">
+              <div className={`relative ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                onClick={() => setIsZoomed(!isZoomed)}
+              >
+                <img
+                  src={(productImages.length > 0 ? productImages[currentImageIndex]?.image_url : product.image_url) || product.image_url}
+                  alt={product.name}
+                  className={`w-full h-[500px] object-cover transition-transform duration-300 ${
+                    isZoomed ? 'scale-150' : 'scale-100'
+                  }`}
+                />
+                {!isZoomed && (
+                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn className="w-5 h-5 text-gray-700" />
+                  </div>
+                )}
+              </div>
+
+              {/* Carousel Navigation - Only show if multiple images */}
+              {(productImages.length > 1 || (productImages.length === 0 && product.image_url)) && productImages.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-gray-700" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                  >
+                    <ChevronRight className="w-6 h-6 text-gray-700" />
+                  </button>
+                  
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
+                    {currentImageIndex + 1} / {productImages.length}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnail Gallery */}
+            {productImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {productImages.map((image, index) => (
+                  <button
+                    key={image.id}
+                    onClick={() => selectImage(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                      currentImageIndex === index
+                        ? 'border-blue-600 ring-2 ring-blue-600 ring-offset-2'
+                        : 'border-gray-200 hover:border-gray-400'
+                    }`}
+                  >
+                    <img
+                      src={image.image_url}
+                      alt={`${product.name} - ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
