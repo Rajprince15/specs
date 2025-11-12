@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from passlib.context import CryptContext
 import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from payment_gateway import PaymentGatewayFactory, RazorpayGateway
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -857,6 +858,238 @@ async def stripe_webhook(request: Request):
         
         return {"status": "success"}
     except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ============ Unified Payment Gateway Endpoints ============
+
+@api_router.get("/payment/gateways")
+async def get_available_gateways():
+    """Get list of available payment gateways"""
+    return PaymentGatewayFactory.get_available_gateways()
+
+@api_router.post("/payment/razorpay/create-order")
+async def create_razorpay_order(request: Request, authorization: str = Header(None)):
+    """Create Razorpay order"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get cart items
+        result = await session.execute(
+            select(CartItemDB).where(CartItemDB.user_id == user['user_id'])
+        )
+        cart_items = result.scalars().all()
+        
+        if not cart_items:
+            raise HTTPException(status_code=400, detail="Cart is empty")
+        
+        # Calculate total amount
+        total_amount = 0.0
+        for cart_item in cart_items:
+            product_result = await session.execute(
+                select(ProductDB).where(ProductDB.id == cart_item.product_id)
+            )
+            product = product_result.scalar_one_or_none()
+            if product:
+                total_amount += product.price * cart_item.quantity
+        
+        # Get origin URL for callbacks
+        body = await request.json()
+        origin_url = body.get('origin_url', '')
+        
+        if not origin_url:
+            raise HTTPException(status_code=400, detail="Origin URL is required")
+        
+        # Create payment gateway
+        gateway = PaymentGatewayFactory.create_gateway("razorpay")
+        
+        # Create checkout session
+        success_url = f"{origin_url}/payment-success?session_id={{{{SESSION_ID}}}}&gateway=razorpay"
+        cancel_url = f"{origin_url}/cart"
+        
+        checkout_response = await gateway.create_checkout_session(
+            amount=total_amount,
+            currency="INR",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={"user_id": user['user_id']}
+        )
+        
+        # Create payment transaction
+        payment = PaymentTransaction(
+            session_id=checkout_response.session_id,
+            user_id=user['user_id'],
+            amount=total_amount,
+            currency="INR",
+            payment_status="pending",
+            status="initiated",
+            metadata={"user_id": user['user_id'], "gateway": "razorpay"}
+        )
+        
+        db_payment = PaymentTransactionDB(
+            id=payment.id,
+            session_id=payment.session_id,
+            user_id=payment.user_id,
+            order_id=payment.order_id,
+            amount=payment.amount,
+            currency=payment.currency,
+            payment_status=payment.payment_status,
+            status=payment.status,
+            payment_metadata=json.dumps(payment.metadata) if payment.metadata else None,
+            created_at=payment.created_at,
+            updated_at=payment.updated_at
+        )
+        
+        session.add(db_payment)
+        await session.commit()
+        
+        return {
+            "order_id": checkout_response.session_id,
+            "amount": int(checkout_response.amount * 100),  # Convert to paise for frontend
+            "currency": checkout_response.currency,
+            "key_id": checkout_response.key_id,
+            "gateway": "razorpay"
+        }
+
+@api_router.post("/payment/razorpay/verify")
+async def verify_razorpay_payment(
+    request: Request,
+    authorization: str = Header(None)
+):
+    """Verify Razorpay payment and create order"""
+    user = await get_current_user(authorization)
+    
+    body = await request.json()
+    razorpay_payment_id = body.get('razorpay_payment_id')
+    razorpay_order_id = body.get('razorpay_order_id')
+    razorpay_signature = body.get('razorpay_signature')
+    
+    if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+        raise HTTPException(status_code=400, detail="Missing payment verification data")
+    
+    # Verify signature
+    gateway = PaymentGatewayFactory.create_gateway("razorpay")
+    if not isinstance(gateway, RazorpayGateway):
+        raise HTTPException(status_code=500, detail="Invalid gateway type")
+    
+    is_valid = gateway.verify_payment_signature(
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+    )
+    
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Payment verification failed")
+    
+    async with async_session_maker() as session:
+        # Get cart items
+        result = await session.execute(
+            select(CartItemDB).where(CartItemDB.user_id == user['user_id'])
+        )
+        cart_items = result.scalars().all()
+        
+        if not cart_items:
+            raise HTTPException(status_code=400, detail="Cart is empty")
+        
+        # Create order
+        items = []
+        total_amount = 0.0
+        for cart_item in cart_items:
+            product_result = await session.execute(
+                select(ProductDB).where(ProductDB.id == cart_item.product_id)
+            )
+            product = product_result.scalar_one_or_none()
+            
+            if product:
+                items.append({
+                    "product_id": product.id,
+                    "name": product.name,
+                    "price": product.price,
+                    "quantity": cart_item.quantity
+                })
+                total_amount += product.price * cart_item.quantity
+        
+        # Get user info for address
+        user_result = await session.execute(select(UserDB).where(UserDB.id == user['user_id']))
+        user_info = user_result.scalar_one_or_none()
+        
+        order = Order(
+            user_id=user['user_id'],
+            items=items,
+            total_amount=total_amount,
+            payment_status="paid",
+            order_status="confirmed",
+            shipping_address=user_info.address if user_info and user_info.address else 'No address provided'
+        )
+        
+        db_order = OrderDB(
+            id=order.id,
+            user_id=order.user_id,
+            items=json.dumps(order.items),
+            total_amount=order.total_amount,
+            payment_status=order.payment_status,
+            order_status=order.order_status,
+            shipping_address=order.shipping_address,
+            created_at=order.created_at
+        )
+        
+        session.add(db_order)
+        
+        # Update payment transaction
+        payment_result = await session.execute(
+            select(PaymentTransactionDB).where(PaymentTransactionDB.session_id == razorpay_order_id)
+        )
+        existing_payment = payment_result.scalar_one_or_none()
+        
+        if existing_payment:
+            existing_payment.payment_status = "completed"
+            existing_payment.status = "completed"
+            existing_payment.order_id = order.id
+            existing_payment.updated_at = datetime.now(timezone.utc)
+        
+        # Clear cart
+        await session.execute(
+            delete(CartItemDB).where(CartItemDB.user_id == user['user_id'])
+        )
+        
+        await session.commit()
+        
+        return {
+            "status": "success",
+            "order_id": order.id,
+            "message": "Payment verified and order created successfully"
+        }
+
+@api_router.post("/webhook/razorpay")
+async def razorpay_webhook(request: Request):
+    """Handle Razorpay webhook events"""
+    body = await request.body()
+    signature = request.headers.get("X-Razorpay-Signature", "")
+    
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing signature")
+    
+    try:
+        # Create gateway and verify webhook
+        gateway = PaymentGatewayFactory.create_gateway("razorpay")
+        webhook_response = await gateway.verify_webhook(body, signature)
+        
+        async with async_session_maker() as session:
+            # Update payment transaction
+            result = await session.execute(
+                select(PaymentTransactionDB).where(
+                    PaymentTransactionDB.session_id == webhook_response.session_id
+                )
+            )
+            payment = result.scalar_one_or_none()
+            
+            if payment:
+                payment.payment_status = webhook_response.payment_status
+                payment.updated_at = datetime.now(timezone.utc)
+                await session.commit()
+        
+        return {"status": "success"}
+    except Exception as e:
+        logging.error(f"Razorpay webhook error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # ============ Admin Stats ============

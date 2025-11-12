@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingBag, Glasses, Trash2, Minus, Plus } from 'lucide-react';
+import { ShoppingBag, Glasses, Trash2, Minus, Plus, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -11,10 +11,26 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [paymentGateway, setPaymentGateway] = useState('stripe');
+  const [availableGateways, setAvailableGateways] = useState([]);
 
   useEffect(() => {
     fetchCart();
+    fetchAvailableGateways();
   }, []);
+
+  const fetchAvailableGateways = async () => {
+    try {
+      const response = await axiosInstance.get('/payment/gateways');
+      setAvailableGateways(response.data);
+      // Set default gateway to first available
+      if (response.data.length > 0) {
+        setPaymentGateway(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch payment gateways');
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -45,14 +61,81 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }
 
     setCheckoutLoading(true);
+    
     try {
-      const originUrl = window.location.origin;
-      const response = await axiosInstance.post('/payment/checkout', { origin_url: originUrl });
-      window.location.href = response.data.url;
+      if (paymentGateway === 'stripe') {
+        await handleStripeCheckout();
+      } else if (paymentGateway === 'razorpay') {
+        await handleRazorpayCheckout();
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Checkout failed');
       setCheckoutLoading(false);
     }
+  };
+
+  const handleStripeCheckout = async () => {
+    const originUrl = window.location.origin;
+    const response = await axiosInstance.post('/payment/checkout', { origin_url: originUrl });
+    window.location.href = response.data.url;
+  };
+
+  const handleRazorpayCheckout = async () => {
+    const originUrl = window.location.origin;
+    const response = await axiosInstance.post('/payment/razorpay/create-order', { origin_url: originUrl });
+    
+    const options = {
+      key: response.data.key_id,
+      amount: response.data.amount,
+      currency: response.data.currency,
+      order_id: response.data.order_id,
+      name: "LensKart",
+      description: "Eyewear Purchase",
+      image: `${originUrl}/logo.png`,
+      handler: async (razorpayResponse) => {
+        try {
+          await axiosInstance.post('/payment/razorpay/verify', {
+            razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+            razorpay_order_id: razorpayResponse.razorpay_order_id,
+            razorpay_signature: razorpayResponse.razorpay_signature
+          });
+          
+          toast.success('Payment successful!');
+          navigate('/orders');
+        } catch (error) {
+          toast.error('Payment verification failed');
+          setCheckoutLoading(false);
+        }
+      },
+      prefill: {
+        name: user?.name || '',
+        email: user?.email || '',
+        contact: user?.phone || ''
+      },
+      theme: {
+        color: '#3B82F6'
+      },
+      modal: {
+        ondismiss: () => {
+          setCheckoutLoading(false);
+          toast.info('Payment cancelled');
+        }
+      }
+    };
+
+    // Load Razorpay script dynamically
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => {
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
+    };
+    script.onerror = () => {
+      toast.error('Failed to load payment gateway');
+      setCheckoutLoading(false);
+    };
+    document.body.appendChild(script);
   };
 
   const calculateTotal = () => {
@@ -159,6 +242,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
               <Card className="glass border-0 sticky top-24">
                 <CardContent className="p-6 space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">Order Summary</h2>
+                  
                   <div className="space-y-3">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal</span>
@@ -175,6 +259,45 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Payment Gateway Selection */}
+                  {availableGateways.length > 1 && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <div className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <CreditCard className="w-5 h-5" />
+                        <span>Payment Method</span>
+                      </div>
+                      <div className="space-y-2">
+                        {availableGateways.map((gateway) => (
+                          <label
+                            key={gateway.id}
+                            className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                              paymentGateway === gateway.id
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="paymentGateway"
+                              value={gateway.id}
+                              checked={paymentGateway === gateway.id}
+                              onChange={(e) => setPaymentGateway(e.target.value)}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-900">{gateway.name}</div>
+                              <div className="text-sm text-gray-600">{gateway.description}</div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {gateway.currencies.join(', ')}
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     data-testid="checkout-btn"
                     onClick={handleCheckout}
