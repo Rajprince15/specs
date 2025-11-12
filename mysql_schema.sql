@@ -10,6 +10,11 @@
 USE specs;
 
 -- Drop existing tables if they exist (use with caution in production)
+DROP TABLE IF EXISTS recently_viewed;
+DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS wishlist;
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS addresses;
 DROP TABLE IF EXISTS payment_transactions;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
@@ -149,6 +154,102 @@ CREATE TABLE payment_transactions (
     INDEX idx_order_id (order_id),
     INDEX idx_payment_status (payment_status),
     INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- ADDRESSES TABLE
+-- ==================================================================
+-- Stores user shipping/billing addresses
+-- ==================================================================
+CREATE TABLE addresses (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    label ENUM('Home', 'Work', 'Other') NOT NULL,
+    full_address TEXT NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100) NOT NULL,
+    zip_code VARCHAR(20) NOT NULL,
+    country VARCHAR(100) DEFAULT 'USA',
+    is_default TINYINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_is_default (is_default)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- REVIEWS TABLE
+-- ==================================================================
+-- Stores product reviews and ratings
+-- ==================================================================
+CREATE TABLE reviews (
+    id CHAR(36) PRIMARY KEY,
+    product_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    user_name VARCHAR(255) NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product_review (user_id, product_id),
+    INDEX idx_product_id (product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_rating (rating)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- WISHLIST TABLE
+-- ==================================================================
+-- Stores user's wishlist items
+-- ==================================================================
+CREATE TABLE wishlist (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    product_id CHAR(36) NOT NULL,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product_wishlist (user_id, product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_product_id (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- PRODUCT_IMAGES TABLE
+-- ==================================================================
+-- Stores multiple images for each product
+-- ==================================================================
+CREATE TABLE product_images (
+    id CHAR(36) PRIMARY KEY,
+    product_id CHAR(36) NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    display_order INT DEFAULT 0,
+    is_primary TINYINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_product_id (product_id),
+    INDEX idx_display_order (display_order),
+    INDEX idx_is_primary (is_primary)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- RECENTLY_VIEWED TABLE
+-- ==================================================================
+-- Tracks user's recently viewed products for recommendations
+-- ==================================================================
+CREATE TABLE recently_viewed (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    product_id CHAR(36) NOT NULL,
+    viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product_view (user_id, product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_product_id (product_id),
+    INDEX idx_viewed_at (viewed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==================================================================

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Column, String, Float, Integer, Text, DateTime, JSON, select, update, delete, func
+from sqlalchemy import Column, String, Float, Integer, Text, DateTime, JSON, select, update, delete, func, or_
 import os
 import logging
 import json
@@ -182,6 +182,14 @@ class OrderTrackingDB(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class RecentlyViewedDB(Base):
+    __tablename__ = "recently_viewed"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    product_id: Mapped[str] = mapped_column(String(36), index=True)
+    viewed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 # ============ Pydantic Models ============
 
@@ -389,6 +397,13 @@ class PaymentTransaction(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class RecentlyViewed(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    product_id: str
+    viewed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # ============ Helper Functions ============
 
 def create_token(user_id: str, email: str, role: str):
@@ -415,7 +430,6 @@ async def get_db():
     async with async_session_maker() as session:
         yield session
 
-import json
 
 # ============ Auth Routes ============
 
@@ -2227,6 +2241,206 @@ async def razorpay_webhook(request: Request):
     except Exception as e:
         logging.error(f"Razorpay webhook error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+# ============ Recently Viewed & Recommendations ============
+
+@api_router.get("/user/recently-viewed")
+async def get_recently_viewed(
+    limit: int = 10,
+    authorization: str = Header(None)
+):
+    """Get user's recently viewed products"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get recently viewed products with product details
+        result = await session.execute(
+            select(RecentlyViewedDB, ProductDB)
+            .join(ProductDB, RecentlyViewedDB.product_id == ProductDB.id)
+            .where(RecentlyViewedDB.user_id == user['user_id'])
+            .order_by(RecentlyViewedDB.viewed_at.desc())
+            .limit(limit)
+        )
+        rows = result.all()
+        
+        return [
+            {
+                "id": row[1].id,
+                "name": row[1].name,
+                "brand": row[1].brand,
+                "price": float(row[1].price),
+                "description": row[1].description,
+                "category": row[1].category,
+                "frame_type": row[1].frame_type,
+                "frame_shape": row[1].frame_shape,
+                "color": row[1].color,
+                "image_url": row[1].image_url,
+                "stock": row[1].stock,
+                "viewed_at": row[0].viewed_at.isoformat() if row[0].viewed_at else None
+            }
+            for row in rows
+        ]
+
+@api_router.post("/user/recently-viewed/{product_id}")
+async def add_recently_viewed(
+    product_id: str,
+    authorization: str = Header(None)
+):
+    """Track product view"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Check if product exists
+        result = await session.execute(select(ProductDB).where(ProductDB.id == product_id))
+        product = result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Check if already viewed recently
+        result = await session.execute(
+            select(RecentlyViewedDB).where(
+                RecentlyViewedDB.user_id == user['user_id'],
+                RecentlyViewedDB.product_id == product_id
+            )
+        )
+        existing = result.scalar_one_or_none()
+        
+        if existing:
+            # Update viewed_at timestamp
+            existing.viewed_at = datetime.now(timezone.utc)
+        else:
+            # Add new entry
+            new_view = RecentlyViewedDB(
+                id=str(uuid.uuid4()),
+                user_id=user['user_id'],
+                product_id=product_id,
+                viewed_at=datetime.now(timezone.utc)
+            )
+            session.add(new_view)
+        
+        await session.commit()
+        
+        return {"message": "Product view tracked"}
+
+@api_router.get("/products/recommended")
+async def get_recommended_products(
+    limit: int = 8,
+    authorization: str = Header(None)
+):
+    """Get recommended products based on user's recently viewed items"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get user's recently viewed products to understand preferences
+        result = await session.execute(
+            select(RecentlyViewedDB, ProductDB)
+            .join(ProductDB, RecentlyViewedDB.product_id == ProductDB.id)
+            .where(RecentlyViewedDB.user_id == user['user_id'])
+            .order_by(RecentlyViewedDB.viewed_at.desc())
+            .limit(5)
+        )
+        recently_viewed = result.all()
+        
+        if not recently_viewed:
+            # No viewing history, return popular products (highest stock or newest)
+            result = await session.execute(
+                select(ProductDB)
+                .where(ProductDB.stock > 0)
+                .order_by(ProductDB.created_at.desc())
+                .limit(limit)
+            )
+            products = result.scalars().all()
+        else:
+            # Get categories and brands from recently viewed
+            categories = set()
+            brands = set()
+            viewed_ids = set()
+            
+            for view, product in recently_viewed:
+                categories.add(product.category)
+                brands.add(product.brand)
+                viewed_ids.add(product.id)
+            
+            # Find products with matching category or brand (excluding already viewed)
+            result = await session.execute(
+                select(ProductDB)
+                .where(
+                    ProductDB.stock > 0,
+                    ProductDB.id.notin_(viewed_ids),
+                    or_(
+                        ProductDB.category.in_(categories),
+                        ProductDB.brand.in_(brands)
+                    )
+                )
+                .order_by(ProductDB.created_at.desc())
+                .limit(limit)
+            )
+            products = result.scalars().all()
+        
+        return [
+            {
+                "id": p.id,
+                "name": p.name,
+                "brand": p.brand,
+                "price": float(p.price),
+                "description": p.description,
+                "category": p.category,
+                "frame_type": p.frame_type,
+                "frame_shape": p.frame_shape,
+                "color": p.color,
+                "image_url": p.image_url,
+                "stock": p.stock
+            }
+            for p in products
+        ]
+
+@api_router.get("/products/{product_id}/related")
+async def get_related_products(
+    product_id: str,
+    limit: int = 4
+):
+    """Get related products based on category and brand"""
+    async with async_session_maker() as session:
+        # Get the current product
+        result = await session.execute(select(ProductDB).where(ProductDB.id == product_id))
+        current_product = result.scalar_one_or_none()
+        
+        if not current_product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Find related products (same category or brand, excluding current product)
+        result = await session.execute(
+            select(ProductDB)
+            .where(
+                ProductDB.stock > 0,
+                ProductDB.id != product_id,
+                or_(
+                    ProductDB.category == current_product.category,
+                    ProductDB.brand == current_product.brand
+                )
+            )
+            .order_by(ProductDB.created_at.desc())
+            .limit(limit)
+        )
+        products = result.scalars().all()
+        
+        return [
+            {
+                "id": p.id,
+                "name": p.name,
+                "brand": p.brand,
+                "price": float(p.price),
+                "description": p.description,
+                "category": p.category,
+                "frame_type": p.frame_type,
+                "frame_shape": p.frame_shape,
+                "color": p.color,
+                "image_url": p.image_url,
+                "stock": p.stock
+            }
+            for p in products
+        ]
 
 # ============ Admin Stats ============
 

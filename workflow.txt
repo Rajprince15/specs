@@ -556,25 +556,44 @@ Break down development into small, manageable phases that can be completed in 4-
 ---
 
 ## 🟡 PHASE 3F: Recently Viewed & Recommendations (4 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 35-40 minutes
 
 ### Backend Tasks:
-- [ ] Create recently_viewed table
-- [ ] GET /api/user/recently-viewed
-- [ ] POST /api/user/recently-viewed/{product_id}
-- [ ] GET /api/products/recommended
-- [ ] GET /api/products/{id}/related
+- [x] Create recently_viewed table
+- [x] GET /api/user/recently-viewed
+- [x] POST /api/user/recently-viewed/{product_id}
+- [x] GET /api/products/recommended
+- [x] GET /api/products/{id}/related
 
 ### Frontend Tasks:
-- [ ] Recently viewed section (home, product detail)
-- [ ] Recommended products carousel
-- [ ] Related products on detail page
+- [x] Recently viewed section (home, product detail)
+- [x] Recommended products carousel
+- [x] Related products on detail page
 
 ### Testing:
 - [ ] Test tracking views
 - [ ] Test recommendations display
 - [ ] Test related products
+
+### Implementation Details:
+- Backend: RecentlyViewedDB model with fields: id, user_id, product_id, viewed_at
+- Backend: GET /api/user/recently-viewed returns recently viewed products with full product details (JOIN with products table)
+- Backend: POST /api/user/recently-viewed/{product_id} tracks product views (updates timestamp if already viewed)
+- Backend: GET /api/products/recommended returns personalized recommendations based on user's viewing history
+  - If no viewing history: Returns newest products with stock
+  - With viewing history: Returns products matching viewed categories/brands (excluding already viewed)
+- Backend: GET /api/products/{product_id}/related returns related products based on same category or brand
+- Backend: All endpoints require authentication
+- Database: mysql_schema.sql updated with recently_viewed table and indexes
+- Database: Also added missing tables (addresses, reviews, wishlist, product_images) to schema
+- Frontend: Home.js - Added "Recommended For You" section (8 products in grid)
+- Frontend: Home.js - Added "Recently Viewed" section (6 products in compact grid)
+- Frontend: ProductDetail.js - Automatically tracks product views on page load
+- Frontend: ProductDetail.js - Added "Related Products" section (4 products in grid)
+- Frontend: All sections only show for logged-in users
+- Frontend: Responsive grid layouts with hover effects and glassmorphism design
+- Frontend: Product cards show brand, name, price, and stock status
 
 ---
 
@@ -919,24 +938,40 @@ making it easier to support multiple payment gateways through a unified interfac
 |-------------|--------------|---------------|--------|
 | Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
 | Phase 2 (UX) | 5 | 20 | ✅ COMPLETED |
-| Phase 3 (Engagement) | 6 | 26 | 🟡 4/6 Done |
+| Phase 3 (Engagement) | 6 | 26 | 🟡 5/6 Done |
 | Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
-| **TOTAL** | **35** | **140** | **18/35 Done** |
+| **TOTAL** | **35** | **140** | **19/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 53.6% Complete (75/140 credits)
+## 🎯 Current Progress: 56.4% Complete (79/140 credits)
 
 ---
 
-**Last Updated:** 2025-11-12 (Phase 3E Completed)
-**Version:** 2.9  
+**Last Updated:** 2025-01-12 (Phase 3F Completed)
+**Version:** 3.0  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 3.0 (2025-01-12)
+- ✅ Completed Phase 3F: Recently Viewed & Recommendations (Full Stack)
+- ✅ Backend: RecentlyViewedDB model with user_id, product_id, viewed_at tracking
+- ✅ Backend: GET /api/user/recently-viewed returns recently viewed products with full details
+- ✅ Backend: POST /api/user/recently-viewed/{product_id} tracks product views
+- ✅ Backend: GET /api/products/recommended provides personalized recommendations
+- ✅ Backend: Recommendation algorithm based on user's viewing history (categories/brands)
+- ✅ Backend: GET /api/products/{product_id}/related returns related products
+- ✅ Database: mysql_schema.sql updated with recently_viewed table
+- ✅ Database: Added all missing tables (addresses, reviews, wishlist, product_images, recently_viewed)
+- ✅ Frontend: Home.js - "Recommended For You" section with 8 products
+- ✅ Frontend: Home.js - "Recently Viewed" section with 6 products  
+- ✅ Frontend: ProductDetail.js - Automatic view tracking on page load
+- ✅ Frontend: ProductDetail.js - "Related Products" section with 4 products
+- ✅ Frontend: Responsive grids with glassmorphism design and hover effects
 
 ### Version 2.9 (2025-11-12)
 - ✅ Completed Phase 3E: Email Notifications

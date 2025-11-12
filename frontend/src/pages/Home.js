@@ -1,8 +1,40 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Glasses, TrendingUp, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
 const Home = ({ user, onLogout, cartCount }) => {
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchRecommendationsAndRecent();
+    }
+  }, [user]);
+
+  const fetchRecommendationsAndRecent = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      const [recommendedRes, recentRes] = await Promise.all([
+        axios.get(`${BACKEND_URL}/api/products/recommended?limit=8`, config),
+        axios.get(`${BACKEND_URL}/api/user/recently-viewed?limit=6`, config)
+      ]);
+      
+      setRecommendedProducts(recommendedRes.data);
+      setRecentlyViewed(recentRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Navigation */}
@@ -96,6 +128,78 @@ const Home = ({ user, onLogout, cartCount }) => {
           </div>
         </div>
       </section>
+
+      {/* Recommended Products - Only for logged in users */}
+      {user && recommendedProducts.length > 0 && (
+        <section className="py-16 px-6 bg-gradient-to-br from-purple-50 to-blue-50">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Recommended For You
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {recommendedProducts.map((product) => (
+                <Link 
+                  key={product.id} 
+                  to={`/products/${product.id}`}
+                  className="glass rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  <div className="aspect-square overflow-hidden bg-gray-100">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 mb-1">{product.brand}</p>
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-blue-600">${product.price}</span>
+                      {product.stock > 0 ? (
+                        <span className="text-xs text-green-600">In Stock</span>
+                      ) : (
+                        <span className="text-xs text-red-600">Out of Stock</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Recently Viewed - Only for logged in users */}
+      {user && recentlyViewed.length > 0 && (
+        <section className="py-16 px-6 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Recently Viewed
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {recentlyViewed.map((product) => (
+                <Link 
+                  key={product.id} 
+                  to={`/products/${product.id}`}
+                  className="glass rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
+                  <div className="aspect-square overflow-hidden bg-gray-100">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
+                    <span className="text-sm font-bold text-blue-600">${product.price}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features */}
       <section className="py-20 px-6 bg-white">

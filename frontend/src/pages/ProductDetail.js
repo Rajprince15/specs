@@ -18,11 +18,33 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [editingReview, setEditingReview] = useState(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     fetchProduct();
     fetchReviews();
+    fetchRelatedProducts();
+    trackProductView();
   }, [productId]);
+
+  const trackProductView = async () => {
+    if (user) {
+      try {
+        await axiosInstance.post(`/user/recently-viewed/${productId}`);
+      } catch (error) {
+        console.error('Failed to track product view');
+      }
+    }
+  };
+
+  const fetchRelatedProducts = async () => {
+    try {
+      const response = await axiosInstance.get(`/products/${productId}/related?limit=4`);
+      setRelatedProducts(response.data);
+    } catch (error) {
+      console.error('Failed to load related products');
+    }
+  };
 
   const fetchProduct = async () => {
     try {
@@ -419,6 +441,48 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
             </div>
           )}
         </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Related Products
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <Link
+                  key={relatedProduct.id}
+                  to={`/products/${relatedProduct.id}`}
+                  className="glass rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  <div className="aspect-square overflow-hidden bg-gray-100">
+                    <img
+                      src={relatedProduct.image_url}
+                      alt={relatedProduct.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 mb-1">{relatedProduct.brand}</p>
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      {relatedProduct.name}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-blue-600">
+                        ${relatedProduct.price}
+                      </span>
+                      {relatedProduct.stock > 0 ? (
+                        <span className="text-xs text-green-600">In Stock</span>
+                      ) : (
+                        <span className="text-xs text-red-600">Out of Stock</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
