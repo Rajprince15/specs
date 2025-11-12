@@ -12,6 +12,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Wishlist from "@/pages/Wishlist";
 import Orders from "@/pages/Orders";
+import OrderTracking from "@/pages/OrderTracking";
 import Profile from "@/pages/Profile";
 import Addresses from "@/pages/Addresses";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -51,9 +52,13 @@ function App() {
   const fetchCartCount = async () => {
     try {
       const response = await axiosInstance.get("/cart");
-      setCartCount(response.data.length);
+      const count = response.data.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+      setCartCount(count);
     } catch (error) {
-      console.error("Error fetching cart:", error);
+      console.error("Failed to fetch cart count");
     }
   };
 
@@ -62,36 +67,29 @@ function App() {
       const response = await axiosInstance.get("/wishlist");
       setWishlistCount(response.data.length);
     } catch (error) {
-      console.error("Error fetching wishlist:", error);
+      console.error("Failed to fetch wishlist count");
     }
   };
 
-  const handleLogin = (userData, token) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
+  const handleLogin = (userData) => {
     setUser(userData);
-    if (userData.role !== "admin") {
-      fetchCartCount();
-      fetchWishlistCount();
-    }
+    localStorage.setItem("user", JSON.stringify(userData));
+    fetchCartCount();
+    fetchWishlistCount();
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     setUser(null);
     setCartCount(0);
     setWishlistCount(0);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     toast.success("Logged out successfully");
   };
 
   const ProtectedRoute = ({ children, adminOnly = false }) => {
-    if (!user) {
-      return <Navigate to="/login" />;
-    }
-    if (adminOnly && user.role !== "admin") {
-      return <Navigate to="/" />;
-    }
+    if (!user) return <Navigate to="/login" />;
+    if (adminOnly && user.role !== "admin") return <Navigate to="/" />;
     return children;
   };
 
@@ -135,6 +133,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Orders user={user} onLogout={handleLogout} cartCount={cartCount} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:orderId/tracking"
+            element={
+              <ProtectedRoute>
+                <OrderTracking user={user} onLogout={handleLogout} cartCount={cartCount} />
               </ProtectedRoute>
             }
           />

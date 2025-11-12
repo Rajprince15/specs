@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingBag, Glasses, Package } from 'lucide-react';
+import { ShoppingBag, Glasses, Package, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -31,8 +31,10 @@ const Orders = ({ user, onLogout, cartCount }) => {
         return 'text-green-600 bg-green-50';
       case 'processing':
         return 'text-blue-600 bg-blue-50';
-      case 'delivered':
+      case 'shipped':
         return 'text-purple-600 bg-purple-50';
+      case 'delivered':
+        return 'text-emerald-600 bg-emerald-50';
       default:
         return 'text-gray-600 bg-gray-50';
     }
@@ -127,14 +129,26 @@ const Orders = ({ user, onLogout, cartCount }) => {
                     ))}
                   </div>
 
-                  <div className="mt-6 pt-6 border-t flex justify-between items-center">
+                  <div className="mt-6 pt-6 border-t flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Shipping Address</p>
                       <p className="font-medium text-gray-900">{order.shipping_address}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Total Amount</p>
-                      <p className="text-2xl font-bold text-blue-600">${order.total_amount.toFixed(2)}</p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Total Amount</p>
+                        <p className="text-2xl font-bold text-blue-600">${order.total_amount.toFixed(2)}</p>
+                      </div>
+                      <Link to={`/orders/${order.id}/tracking`}>
+                        <Button 
+                          data-testid={`track-order-${order.id}`}
+                          variant="outline" 
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                        >
+                          <Truck className="w-4 h-4 mr-2" />
+                          Track Order
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
