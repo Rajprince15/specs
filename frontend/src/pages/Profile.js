@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingBag, Glasses, User, Lock } from 'lucide-react';
+import { ShoppingBag, Glasses, User, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -24,6 +24,12 @@ const Profile = ({ user, onLogout, cartCount }) => {
     new_password: '',
     confirm_password: ''
   });
+  const [emailPreferences, setEmailPreferences] = useState({
+    email_welcome: true,
+    email_order_confirmation: true,
+    email_payment_receipt: true,
+    email_shipping_notification: true
+  });
 
   useEffect(() => {
     if (!user) {
@@ -37,6 +43,9 @@ const Profile = ({ user, onLogout, cartCount }) => {
     try {
       const response = await axiosInstance.get('/user/profile');
       setProfile(response.data);
+      // Fetch email preferences
+      const prefsResponse = await axiosInstance.get('/user/email-preferences');
+      setEmailPreferences(prefsResponse.data);
     } catch (error) {
       toast.error('Failed to load profile');
     } finally {
@@ -81,6 +90,16 @@ const Profile = ({ user, onLogout, cartCount }) => {
       setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to change password');
+    }
+  };
+
+  const handleEmailPreferencesUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await axiosInstance.put('/user/email-preferences', emailPreferences);
+      toast.success('Email preferences updated successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update email preferences');
     }
   };
 
@@ -145,7 +164,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
         </h1>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               Profile Information
@@ -153,6 +172,10 @@ const Profile = ({ user, onLogout, cartCount }) => {
             <TabsTrigger value="password" className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
               Change Password
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Email Preferences
             </TabsTrigger>
           </TabsList>
 
@@ -315,6 +338,96 @@ const Profile = ({ user, onLogout, cartCount }) => {
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     >
                       Change Password
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Email Preferences Tab */}
+          <TabsContent value="email">
+            <Card className="glass border-0">
+              <CardHeader>
+                <CardTitle>Email Preferences</CardTitle>
+                <CardDescription>
+                  Manage your email notification preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleEmailPreferencesUpdate} className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Welcome Emails</h4>
+                        <p className="text-sm text-gray-500">Receive welcome email when you register</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={emailPreferences.email_welcome}
+                          onChange={(e) => setEmailPreferences({ ...emailPreferences, email_welcome: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Order Confirmation</h4>
+                        <p className="text-sm text-gray-500">Receive confirmation when order is placed</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={emailPreferences.email_order_confirmation}
+                          onChange={(e) => setEmailPreferences({ ...emailPreferences, email_order_confirmation: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Payment Receipts</h4>
+                        <p className="text-sm text-gray-500">Receive payment confirmation and receipt</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={emailPreferences.email_payment_receipt}
+                          onChange={(e) => setEmailPreferences({ ...emailPreferences, email_payment_receipt: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">Shipping Notifications</h4>
+                        <p className="text-sm text-gray-500">Receive updates when order is shipped</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={emailPreferences.email_shipping_notification}
+                          onChange={(e) => setEmailPreferences({ ...emailPreferences, email_shipping_notification: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      Save Preferences
                     </Button>
                   </div>
                 </form>

@@ -31,6 +31,10 @@ CREATE TABLE users (
     phone VARCHAR(20) NOT NULL,
     address TEXT,
     role ENUM('user', 'admin') DEFAULT 'user',
+    email_welcome TINYINT DEFAULT 1 COMMENT 'Email preference: Welcome emails',
+    email_order_confirmation TINYINT DEFAULT 1 COMMENT 'Email preference: Order confirmation emails',
+    email_payment_receipt TINYINT DEFAULT 1 COMMENT 'Email preference: Payment receipt emails',
+    email_shipping_notification TINYINT DEFAULT 1 COMMENT 'Email preference: Shipping notification emails',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email),
     INDEX idx_role (role)
@@ -189,3 +193,4 @@ INSERT INTO products (id, name, brand, price, description, category, frame_type,
 -- ==================================================================
 -- END OF SCHEMA
 -- ==================================================================
+

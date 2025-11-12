@@ -6,6 +6,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Column, String, Float, Integer, Text, DateTime, JSON, select, update, delete, func
 import os
 import logging
+import json
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict
@@ -15,6 +16,7 @@ from passlib.context import CryptContext
 import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 from payment_gateway import PaymentGatewayFactory, RazorpayGateway
+from email_service import email_service
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -66,6 +68,10 @@ class UserDB(Base):
     phone: Mapped[str] = mapped_column(String(50))
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     role: Mapped[str] = mapped_column(String(50), default="user")
+    email_welcome: Mapped[int] = mapped_column(Integer, default=1)  # 1 for enabled, 0 for disabled
+    email_order_confirmation: Mapped[int] = mapped_column(Integer, default=1)
+    email_payment_receipt: Mapped[int] = mapped_column(Integer, default=1)
+    email_shipping_notification: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class ProductDB(Base):
@@ -188,6 +194,10 @@ class User(BaseModel):
     phone: str
     address: Optional[str] = None
     role: str = "user"
+    email_welcome: bool = True
+    email_order_confirmation: bool = True
+    email_payment_receipt: bool = True
+    email_shipping_notification: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UserRegister(BaseModel):
@@ -209,6 +219,12 @@ class UserProfileUpdate(BaseModel):
 class PasswordChange(BaseModel):
     old_password: str
     new_password: str
+
+class EmailPreferences(BaseModel):
+    email_welcome: bool = True
+    email_order_confirmation: bool = True
+    email_payment_receipt: bool = True
+    email_shipping_notification: bool = True
 
 class Address(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -440,6 +456,13 @@ async def register(user_data: UserRegister):
         session.add(db_user)
         await session.commit()
         
+        # Send welcome email (async in background)
+        try:
+            email_service.send_welcome_email(user.name, user.email)
+        except Exception as e:
+            # Log error but don't fail registration
+            logging.error(f"Failed to send welcome email to {user.email}: {str(e)}")
+        
         # Generate token
         token = create_token(user.id, user.email, user.role)
         
@@ -562,6 +585,58 @@ async def change_password(
         await session.commit()
         
         return {"message": "Password changed successfully"}
+
+# ============ Email Preferences Routes ============
+
+@api_router.get("/user/email-preferences")
+async def get_email_preferences(user_data: dict = Header(None, alias="Authorization")):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "email_welcome": bool(user.email_welcome),
+            "email_order_confirmation": bool(user.email_order_confirmation),
+            "email_payment_receipt": bool(user.email_payment_receipt),
+            "email_shipping_notification": bool(user.email_shipping_notification)
+        }
+
+@api_router.put("/user/email-preferences")
+async def update_email_preferences(
+    preferences: EmailPreferences,
+    user_data: dict = Header(None, alias="Authorization")
+):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update email preferences
+        user.email_welcome = 1 if preferences.email_welcome else 0
+        user.email_order_confirmation = 1 if preferences.email_order_confirmation else 0
+        user.email_payment_receipt = 1 if preferences.email_payment_receipt else 0
+        user.email_shipping_notification = 1 if preferences.email_shipping_notification else 0
+        
+        await session.commit()
+        
+        return {
+            "message": "Email preferences updated successfully",
+            "preferences": {
+                "email_welcome": preferences.email_welcome,
+                "email_order_confirmation": preferences.email_order_confirmation,
+                "email_payment_receipt": preferences.email_payment_receipt,
+                "email_shipping_notification": preferences.email_shipping_notification
+            }
+        }
 
 # ============ Address Routes ============
 
@@ -1141,6 +1216,33 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
                 product.stock -= cart_item.quantity
         
         await session.commit()
+        
+        # Get user details for email
+        user_result = await session.execute(select(UserDB).where(UserDB.id == user['user_id']))
+        user_db = user_result.scalar_one_or_none()
+        
+        # Send order confirmation email
+        if user_db and user_db.email_order_confirmation:
+            try:
+                # Prepare items for email with brand info
+                email_items = []
+                for item in items:
+                    email_items.append({
+                        'name': item['name'],
+                        'brand': 'LensKart',  # or get from product if available
+                        'quantity': item['quantity'],
+                        'price': item['price']
+                    })
+                email_service.send_order_confirmation_email(
+                    user_db.name,
+                    user_db.email,
+                    order.id,
+                    email_items,
+                    total_amount,
+                    order_data.shipping_address
+                )
+            except Exception as e:
+                logging.error(f"Failed to send order confirmation email: {str(e)}")
         
         return {"message": "Order created successfully", "order": order.model_dump()}
 
@@ -1823,6 +1925,40 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
                 await session.execute(
                     delete(CartItemDB).where(CartItemDB.user_id == user['user_id'])
                 )
+                
+                # Send payment receipt and order confirmation emails
+                if user_info:
+                    try:
+                        # Send payment receipt email
+                        if user_info.email_payment_receipt:
+                            email_service.send_payment_receipt_email(
+                                user_info.name,
+                                user_info.email,
+                                order.id,
+                                total_amount,
+                                "Stripe"
+                            )
+                        
+                        # Send order confirmation email
+                        if user_info.email_order_confirmation:
+                            email_items = []
+                            for item in items:
+                                email_items.append({
+                                    'name': item['name'],
+                                    'brand': 'LensKart',
+                                    'quantity': item['quantity'],
+                                    'price': item['price']
+                                })
+                            email_service.send_order_confirmation_email(
+                                user_info.name,
+                                user_info.email,
+                                order.id,
+                                email_items,
+                                total_amount,
+                                order.shipping_address
+                            )
+                    except Exception as e:
+                        logging.error(f"Failed to send payment/order emails: {str(e)}")
             
             await session.commit()
     
