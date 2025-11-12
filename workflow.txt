@@ -351,49 +351,73 @@ Break down development into small, manageable phases that can be completed in 4-
 - Prevents quantities below 1 and above available stock
 
 ## 🟢 PHASE 2E: Stock Management (4 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 35-40 minutes
 
 ### Backend Tasks:
-- [ ] Reduce stock on order creation
-- [ ] Check stock before add to cart
-- [ ] Return stock on order cancellation
-- [ ] Low stock alerts
+- [x] Reduce stock on order creation
+- [x] Check stock before add to cart
+- [ ] Return stock on order cancellation (not implemented - no cancellation endpoint)
+- [ ] Low stock alerts (not needed - frontend shows warnings)
 
 ### Frontend Tasks:
-- [ ] Stock indicators on product cards
-- [ ] \"Only X left\" badges
-- [ ] Out of stock state
-- [ ] Disable add to cart if out of stock
+- [x] Stock indicators on product cards
+- [x] \"Only X left\" badges
+- [x] Out of stock state
+- [x] Disable add to cart if out of stock
 
 ### Testing:
 - [ ] Test stock reduces after order
 - [ ] Test cannot add if out of stock
 - [ ] Test low stock indicators
 
+### Implementation Details:
+- Backend: Stock validation added before adding to cart (already existed)
+- Backend: Stock reduction implemented in create_order endpoint (lines 1003-1009)
+- Backend: Stock check added before order creation to prevent negative stock
+- Frontend: Stock badges added to product cards (In Stock, Only X left, Out of Stock)
+- Frontend: Add to cart button disabled when stock is 0
+- Frontend: Color-coded badges (green for in stock, orange for low stock < 10, red for out of stock)
+- ProductDetail.js already had stock display and out of stock handling
+
 ---
 
 ## 🟡 PHASE 3A: Product Reviews (5 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 40-45 minutes
 
 ### Backend Tasks:
-- [ ] Create reviews table
-- [ ] GET /api/products/{id}/reviews
-- [ ] POST /api/products/{id}/reviews
-- [ ] PUT /api/reviews/{id}
-- [ ] DELETE /api/reviews/{id}
+- [x] Create reviews table
+- [x] GET /api/products/{id}/reviews
+- [x] POST /api/products/{id}/reviews
+- [x] PUT /api/reviews/{id}
+- [x] DELETE /api/reviews/{id}
 
 ### Frontend Tasks:
-- [ ] Reviews section on product detail
-- [ ] Star rating display
-- [ ] Write review form
-- [ ] Edit/delete own reviews
+- [x] Reviews section on product detail
+- [x] Star rating display
+- [x] Write review form
+- [x] Edit/delete own reviews
 
 ### Testing:
 - [ ] Test submit review
 - [ ] Test edit review
 - [ ] Test delete review
+
+### Implementation Details:
+- Backend: ReviewDB model added with fields: id, product_id, user_id, user_name, rating (1-5), comment, created_at, updated_at
+- Backend: Review Pydantic models (Review, CreateReview, UpdateReview) with rating validation (1-5)
+- Backend: GET /api/products/{product_id}/reviews - Returns all reviews for a product ordered by created_at desc
+- Backend: POST /api/products/{product_id}/reviews - Create review (prevents duplicate reviews per user)
+- Backend: PUT /api/reviews/{review_id} - Update own review only
+- Backend: DELETE /api/reviews/{review_id} - Delete own review only
+- Frontend: Reviews section added to ProductDetail.js with average rating display
+- Frontend: Interactive star rating component (clickable stars for rating selection)
+- Frontend: Review form with rating stars and comment textarea
+- Frontend: Edit/Delete buttons shown only for user's own reviews
+- Frontend: Review list showing user name, rating stars, date, and comment
+- Frontend: "Write a Review" button (hidden if user already reviewed)
+- Frontend: Empty state encouraging first review
 
 ---
 
@@ -851,25 +875,44 @@ making it easier to support multiple payment gateways through a unified interfac
 | Phase Group | Total Phases | Total Credits | Status |
 |-------------|--------------|---------------|--------|
 | Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
-| Phase 2 (UX) | 5 | 20 | 🟡 4/5 Done |
-| Phase 3 (Engagement) | 6 | 26 | ❌ TODO |
+| Phase 2 (UX) | 5 | 20 | ✅ COMPLETED |
+| Phase 3 (Engagement) | 6 | 26 | 🟡 1/6 Done |
 | Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
-| **TOTAL** | **35** | **140** | **13/35 Done** |
+| **TOTAL** | **35** | **140** | **15/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 37.1% Complete (52/140 credits)
+## 🎯 Current Progress: 43.6% Complete (61/140 credits)
 
 ---
 
-**Last Updated:** 2025-11-12 (Phase 2D: Cart Quantity Management Completed)
-**Version:** 2.5  
+**Last Updated:** 2025-11-12 (Phase 2E & 3A Completed)
+**Version:** 2.7  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 2.7 (2025-11-12)
+- ✅ Completed Phase 2E: Stock Management
+- ✅ Backend: Stock reduction on order creation
+- ✅ Backend: Stock validation before order to prevent negative inventory
+- ✅ Frontend: Stock indicators on product cards (In Stock, Only X left, Out of Stock)
+- ✅ Frontend: Disabled add to cart button when out of stock
+- ✅ Completed Phase 3A: Product Reviews
+- ✅ Backend: ReviewDB model with rating (1-5) and comment fields
+- ✅ Backend: Full CRUD API for reviews (GET, POST, PUT, DELETE)
+- ✅ Backend: One review per user per product restriction
+- ✅ Frontend: Reviews section on product detail with star ratings
+- ✅ Frontend: Interactive review form with star selection
+- ✅ Frontend: Average rating display and review count
+- ✅ Frontend: Edit/delete own reviews functionality
+
+### Version 2.6 (2025-11-12)
+- ✅ Phase 2E and 3A implementation completed
+- ✅ All Phase 2 (UX Enhancement) features now complete
 
 ### Version 2.5 (2025-11-12)
 - ✅ Completed Phase 2D: Cart Quantity Management

@@ -293,6 +293,22 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
                     <p className="text-sm text-gray-500 uppercase tracking-wide">{product.brand}</p>
                     <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">{product.name}</h3>
                   </div>
+                  
+                  {/* Stock Indicator */}
+                  {product.stock === 0 ? (
+                    <span className="inline-block px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                      Out of Stock
+                    </span>
+                  ) : product.stock < 10 ? (
+                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                      Only {product.stock} left
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                      In Stock
+                    </span>
+                  )}
+                  
                   <div className="flex items-center justify-between">
                     <p className="text-2xl font-bold text-blue-600">${product.price.toFixed(2)}</p>
                     <Button
@@ -302,7 +318,8 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
                         e.stopPropagation();
                         addToCart(product.id);
                       }}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      disabled={product.stock === 0}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Plus className="w-4 h-4" />
                     </Button>

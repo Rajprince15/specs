@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -11,9 +12,16 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
 
   useEffect(() => {
     fetchProduct();
+    fetchReviews();
   }, [productId]);
 
   const fetchProduct = async () => {
@@ -25,6 +33,17 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       navigate('/products');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await axiosInstance.get(`/products/${productId}/reviews`);
+      setReviews(response.data);
+    } catch (error) {
+      console.error('Failed to load reviews');
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -41,6 +60,63 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       toast.error('Failed to add to cart');
     }
   };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      if (editingReview) {
+        await axiosInstance.put(`/reviews/${editingReview.id}`, { rating, comment });
+        toast.success('Review updated successfully');
+      } else {
+        await axiosInstance.post(`/products/${productId}/reviews`, { rating, comment });
+        toast.success('Review submitted successfully');
+      }
+      setRating(5);
+      setComment('');
+      setShowReviewForm(false);
+      setEditingReview(null);
+      fetchReviews();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to submit review');
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReview(review);
+    setRating(review.rating);
+    setComment(review.comment || '');
+    setShowReviewForm(true);
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    
+    try {
+      await axiosInstance.delete(`/reviews/${reviewId}`);
+      toast.success('Review deleted successfully');
+      fetchReviews();
+    } catch (error) {
+      toast.error('Failed to delete review');
+    }
+  };
+
+  const cancelReviewForm = () => {
+    setShowReviewForm(false);
+    setEditingReview(null);
+    setRating(5);
+    setComment('');
+  };
+
+  const averageRating = reviews.length > 0 
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : 0;
+
+  const userReview = user ? reviews.find(r => r.user_id === user.user_id) : null;
 
   if (loading) {
     return (
@@ -179,6 +255,169 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Customer Reviews</h2>
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${
+                          star <= Math.round(averageRating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-lg font-semibold text-gray-700">
+                    {averageRating} out of 5
+                  </span>
+                  <span className="text-gray-500">({reviews.length} reviews)</span>
+                </div>
+              )}
+            </div>
+            {user && !userReview && !showReviewForm && (
+              <Button
+                onClick={() => setShowReviewForm(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Write a Review
+              </Button>
+            )}
+          </div>
+
+          {/* Review Form */}
+          {showReviewForm && (
+            <Card className="glass border-0 mb-8">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4">
+                  {editingReview ? 'Edit Your Review' : 'Write Your Review'}
+                </h3>
+                <form onSubmit={handleSubmitReview}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rating
+                    </label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          className="focus:outline-none"
+                        >
+                          <Star
+                            className={`w-8 h-8 cursor-pointer transition-colors ${
+                              star <= rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300 hover:text-yellow-200'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Comment (Optional)
+                    </label>
+                    <Textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Share your experience with this product..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600">
+                      {editingReview ? 'Update Review' : 'Submit Review'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={cancelReviewForm}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Reviews List */}
+          {reviewsLoading ? (
+            <p className="text-gray-600">Loading reviews...</p>
+          ) : reviews.length === 0 ? (
+            <Card className="glass border-0">
+              <CardContent className="p-8 text-center">
+                <p className="text-gray-600 mb-4">No reviews yet. Be the first to review this product!</p>
+                {user && !showReviewForm && (
+                  <Button
+                    onClick={() => setShowReviewForm(true)}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600"
+                  >
+                    Write the First Review
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <Card key={review.id} className="glass border-0">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-gray-900">{review.user_name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`w-4 h-4 ${
+                                  star <= review.rating
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      {user && user.user_id === review.user_id && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditReview(review)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteReview(review.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    {review.comment && (
+                      <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

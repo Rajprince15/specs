@@ -371,884 +371,933 @@ agent_communication:
     message: "MVP development complete. All backend APIs implemented with JWT authentication, MongoDB integration, and Stripe payment. Frontend has all pages: home, login, register, products listing, product detail, cart, orders, payment success, and admin dashboard. Design uses modern gradient theme with glassmorphism effects. 10 sample products seeded in database. Admin credentials: admin@lenskart.com / Admin@123. Project zip file created at /app/lenskart-project.zip. NEXT STEPS: (1) Test complete payment flow end-to-end with Stripe test cards, (2) Verify order creation after payment, (3) Test cart clearing after payment, (4) Test all admin CRUD operations, (5) Test product filters and search. All tasks marked 'NA' for working status need comprehensive testing."
 
 development_roadmap_phases:
+"# 📋 Reorganized Development Phases (4-5 Credits Each)
 
-  #============================================================================
-  # PHASE 1: MVP - CORE E-COMMERCE (✅ COMPLETED)
-  #============================================================================
-  phase_1_mvp:
-    status: "COMPLETED"
-    completion_date: "2025-11-12"
-    
-    backend_tasks:
-      - task: "User Registration API"
-        status: "✅ DONE"
-        endpoint: "POST /api/auth/register"
-        
-      - task: "User & Admin Login API"
-        status: "✅ DONE"
-        endpoint: "POST /api/auth/login"
-        
-      - task: "JWT Authentication Middleware"
-        status: "✅ DONE"
-        
-      - task: "Product CRUD APIs"
-        status: "✅ DONE"
-        endpoints: "GET/POST/PUT/DELETE /api/products"
-        
-      - task: "Shopping Cart APIs"
-        status: "✅ DONE"
-        endpoints: "GET/POST/DELETE /api/cart"
-        
-      - task: "Order Management APIs"
-        status: "✅ DONE"
-        endpoints: "GET/POST /api/orders"
-        
-      - task: "Stripe Payment Integration"
-        status: "✅ DONE"
-        endpoints: "POST /api/payment/checkout, GET /api/payment/status/{id}, POST /api/webhook/stripe"
-        
-      - task: "Admin Statistics API"
-        status: "✅ DONE"
-        endpoint: "GET /api/admin/stats"
-    
-    frontend_tasks:
-      - task: "Home/Landing Page"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/Home.js"
-        
-      - task: "Login & Register Pages"
-        status: "✅ DONE"
-        files: "/app/frontend/src/pages/Login.js, Register.js"
-        
-      - task: "Products Listing Page"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/Products.js"
-        
-      - task: "Product Detail Page"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/ProductDetail.js"
-        
-      - task: "Shopping Cart Page"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/Cart.js"
-        
-      - task: "Payment Success Page"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/PaymentSuccess.js"
-        
-      - task: "Orders History Page"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/Orders.js"
-        
-      - task: "Admin Dashboard"
-        status: "✅ DONE"
-        file: "/app/frontend/src/pages/AdminDashboard.js"
-        
-      - task: "Navigation & Routing Setup"
-        status: "✅ DONE"
-        file: "/app/frontend/src/App.js"
-        
-      - task: "Cart Count Indicator"
-        status: "✅ DONE"
-    
-    testing_required:
-      - "Test complete payment flow with Stripe test cards"
-      - "Verify order creation after successful payment"
-      - "Test all admin CRUD operations"
-      - "Test product filters and search"
+## 🎯 Goal
+Break down development into small, manageable phases that can be completed in 4-5 credits (approximately 30-45 minutes of work each).
 
-  #============================================================================
-  # PHASE 2: USER EXPERIENCE ENHANCEMENTS
-  #============================================================================
-  phase_2_ux_enhancements:
-    status: "PENDING"
-    priority: "HIGH"
-    estimated_effort: "2-3 days"
-    
-    backend_tasks:
-      - task: "User Profile APIs"
-        status: "❌ TODO"
-        description: "Get and update user profile information"
-        endpoints:
-          - "GET /api/user/profile - Get current user profile"
-          - "PUT /api/user/profile - Update profile (name, phone)"
-          - "PUT /api/user/password - Change password"
-        file: "/app/backend/server.py"
-        
-      - task: "Address Management APIs"
-        status: "❌ TODO"
-        description: "Multiple shipping addresses per user"
-        endpoints:
-          - "GET /api/user/addresses - List all addresses"
-          - "POST /api/user/addresses - Add new address"
-          - "PUT /api/user/addresses/{id} - Update address"
-          - "DELETE /api/user/addresses/{id} - Delete address"
-          - "PUT /api/user/addresses/{id}/default - Set default address"
-        database_changes:
-          - "Create 'addresses' collection with: id, user_id, label, full_address, city, state, zip, country, is_default"
-        
-      - task: "Advanced Product Filter APIs"
-        status: "❌ TODO"
-        description: "Enhanced filtering and sorting"
-        endpoints:
-          - "GET /api/products/filters - Get available filter options (brands, price range, colors)"
-          - "GET /api/products?sort=price_asc|price_desc|newest|popular"
-          - "GET /api/products?min_price=X&max_price=Y"
-          - "GET /api/products?brands[]=Brand1&brands[]=Brand2"
-          - "GET /api/products?colors[]=Black&colors[]=Blue"
-        
-      - task: "Cart Quantity Update API"
-        status: "❌ TODO"
-        description: "Update cart item quantity"
-        endpoints:
-          - "PATCH /api/cart/{item_id} - Update quantity"
-        
-      - task: "Stock Management"
-        status: "❌ TODO"
-        description: "Reduce stock after order, check availability"
-        changes:
-          - "Reduce product stock when order is placed"
-          - "Check stock availability before adding to cart"
-          - "Return stock if order is cancelled"
-        
-      - task: "Order Detail Enhancement"
-        status: "❌ TODO"
-        description: "Add shipping address selection to order"
-        changes:
-          - "Accept address_id in order creation"
-          - "Store full address details in order"
-    
-    frontend_tasks:
-      - task: "User Profile Page"
-        status: "❌ TODO"
-        description: "View and edit user profile"
-        file: "/app/frontend/src/pages/Profile.js"
-        features:
-          - "Display user info (name, email, phone)"
-          - "Edit profile form"
-          - "Change password section"
-          - "Navigation link in user menu"
-        
-      - task: "Address Management Page"
-        status: "❌ TODO"
-        description: "Manage multiple shipping addresses"
-        file: "/app/frontend/src/pages/Addresses.js"
-        features:
-          - "List all saved addresses"
-          - "Add new address form (modal/page)"
-          - "Edit address"
-          - "Delete address with confirmation"
-          - "Set default address"
-          - "Address cards with labels (Home, Work, etc)"
-        
-      - task: "Advanced Product Filters UI"
-        status: "❌ TODO"
-        description: "Enhanced filtering sidebar/panel"
-        file: "/app/frontend/src/pages/Products.js"
-        features:
-          - "Price range slider (min-max)"
-          - "Brand checkbox list"
-          - "Color checkbox list"
-          - "Frame type filter"
-          - "Frame shape filter"
-          - "Clear all filters button"
-          - "Active filter tags"
-          - "Filter count indicators"
-        
-      - task: "Product Sorting Dropdown"
-        status: "❌ TODO"
-        description: "Sort products by various criteria"
-        file: "/app/frontend/src/pages/Products.js"
-        options:
-          - "Featured (default)"
-          - "Price: Low to High"
-          - "Price: High to Low"
-          - "Newest First"
-          - "Best Selling"
-        
-      - task: "Cart Quantity Editor"
-        status: "❌ TODO"
-        description: "Edit quantity directly in cart"
-        file: "/app/frontend/src/pages/Cart.js"
-        features:
-          - "Plus/minus buttons for quantity"
-          - "Direct input field for quantity"
-          - "Update total price in real-time"
-          - "Disable if stock insufficient"
-        
-      - task: "Address Selection in Checkout"
-        status: "❌ TODO"
-        description: "Select shipping address during checkout"
-        file: "/app/frontend/src/pages/Cart.js"
-        features:
-          - "List saved addresses"
-          - "Select address for order"
-          - "Add new address option"
-          - "Show selected address in order summary"
-        
-      - task: "Stock Availability Indicators"
-        status: "❌ TODO"
-        description: "Show stock status throughout app"
-        locations:
-          - "Product card: 'Only X left' badge"
-          - "Product detail: Stock status prominently"
-          - "Cart: Warn if item out of stock"
-          - "Disable add to cart if out of stock"
-        
-      - task: "Responsive Mobile Navigation"
-        status: "❌ TODO"
-        description: "Hamburger menu for mobile devices"
-        file: "/app/frontend/src/components/Navigation.js"
-        features:
-          - "Hamburger icon on mobile"
-          - "Slide-out menu"
-          - "Mobile-friendly menu items"
-          - "Close on route change"
+---
 
-  #============================================================================
-  # PHASE 3: CUSTOMER ENGAGEMENT
-  #============================================================================
-  phase_3_customer_engagement:
-    status: "PENDING"
-    priority: "MEDIUM"
-    estimated_effort: "3-4 days"
-    
-    backend_tasks:
-      - task: "Product Reviews & Ratings APIs"
-        status: "❌ TODO"
-        description: "Customer reviews and star ratings"
-        endpoints:
-          - "GET /api/products/{id}/reviews - Get product reviews"
-          - "POST /api/products/{id}/reviews - Add review (authenticated)"
-          - "PUT /api/reviews/{id} - Update own review"
-          - "DELETE /api/reviews/{id} - Delete own review"
-          - "GET /api/products/{id}/rating - Get average rating"
-        database_changes:
-          - "Create 'reviews' collection: id, product_id, user_id, rating (1-5), title, comment, helpful_count, created_at, updated_at"
-          - "Add 'average_rating' and 'review_count' fields to products"
-        
-      - task: "Wishlist APIs"
-        status: "❌ TODO"
-        description: "Save products to wishlist"
-        endpoints:
-          - "GET /api/wishlist - Get user's wishlist"
-          - "POST /api/wishlist - Add product to wishlist"
-          - "DELETE /api/wishlist/{product_id} - Remove from wishlist"
-          - "POST /api/wishlist/move-to-cart - Move all to cart"
-        database_changes:
-          - "Create 'wishlist' collection: id, user_id, product_id, added_at"
-        
-      - task: "Product Images APIs"
-        status: "❌ TODO"
-        description: "Multiple images per product"
-        endpoints:
-          - "GET /api/products/{id}/images - Get all images"
-          - "POST /api/products/{id}/images - Upload image (admin)"
-          - "DELETE /api/products/{id}/images/{image_id} - Delete image (admin)"
-          - "PUT /api/products/{id}/images/{image_id}/primary - Set primary image"
-        database_changes:
-          - "Create 'product_images' collection: id, product_id, image_url, is_primary, display_order"
-          - "Remove 'image_url' from products, use product_images instead"
-        
-      - task: "Order Tracking APIs"
-        status: "❌ TODO"
-        description: "Detailed order status tracking"
-        endpoints:
-          - "GET /api/orders/{id}/tracking - Get order tracking history"
-          - "PUT /api/orders/{id}/status - Update order status (admin)"
-        database_changes:
-          - "Add 'tracking_number', 'carrier', 'estimated_delivery' to orders"
-          - "Create 'order_tracking' collection: id, order_id, status, message, timestamp"
-          - "Status values: pending, confirmed, processing, shipped, out_for_delivery, delivered, cancelled, refunded"
-        
-      - task: "Email Notification Service"
-        status: "❌ TODO"
-        description: "Send emails for various events"
-        endpoints:
-          - "Internal service, no direct endpoints"
-        events:
-          - "Welcome email on registration"
-          - "Order confirmation email"
-          - "Payment receipt email"
-          - "Shipping notification email"
-          - "Delivery confirmation email"
-          - "Password reset email"
-        requirements:
-          - "Set up email provider (SendGrid, AWS SES, etc)"
-          - "Email templates"
-          - "Queue system for async sending"
-        
-      - task: "Recently Viewed Products"
-        status: "❌ TODO"
-        description: "Track and show recently viewed products"
-        endpoints:
-          - "GET /api/user/recently-viewed - Get recently viewed products"
-          - "POST /api/user/recently-viewed/{product_id} - Track view"
-        database_changes:
-          - "Create 'recently_viewed' collection: user_id, product_id, viewed_at"
-          - "Limit to last 20 items per user"
-        
-      - task: "Product Recommendations API"
-        status: "❌ TODO"
-        description: "Recommend products based on behavior"
-        endpoints:
-          - "GET /api/products/recommended - Get personalized recommendations"
-          - "GET /api/products/{id}/related - Get related products"
-        logic:
-          - "Based on: recently viewed, cart items, order history"
-          - "Simple: same category, similar price range"
-          - "Advanced: collaborative filtering (future)"
-    
-    frontend_tasks:
-      - task: "Product Reviews & Ratings UI"
-        status: "❌ TODO"
-        description: "Display and submit reviews"
-        file: "/app/frontend/src/pages/ProductDetail.js"
-        features:
-          - "Star rating display (average)"
-          - "Review count"
-          - "Reviews list with pagination"
-          - "Write review form (modal)"
-          - "Star rating input"
-          - "Review sorting (newest, highest rated, helpful)"
-          - "Helpful button for reviews"
-          - "Edit/delete own reviews"
-        
-      - task: "Wishlist Page"
-        status: "❌ TODO"
-        description: "View and manage wishlist"
-        file: "/app/frontend/src/pages/Wishlist.js"
-        features:
-          - "Grid layout of wishlist items"
-          - "Heart icon to add/remove from wishlist"
-          - "Heart icon in product cards"
-          - "Heart icon in product detail"
-          - "Move to cart button"
-          - "Remove from wishlist button"
-          - "Empty wishlist state"
-          - "Wishlist count in navigation"
-        
-      - task: "Product Image Gallery"
-        status: "❌ TODO"
-        description: "Multiple product images carousel"
-        file: "/app/frontend/src/pages/ProductDetail.js"
-        features:
-          - "Main large image"
-          - "Thumbnail images below/side"
-          - "Click thumbnail to change main image"
-          - "Zoom on hover/click"
-          - "Arrow navigation"
-          - "Image indicators/dots"
-        
-      - task: "Order Tracking Page"
-        status: "❌ TODO"
-        description: "Detailed order tracking"
-        file: "/app/frontend/src/pages/OrderTracking.js"
-        features:
-          - "Order status timeline"
-          - "Tracking number display"
-          - "Carrier information"
-          - "Estimated delivery date"
-          - "Status history with timestamps"
-          - "Track order button in orders page"
-        
-      - task: "Recently Viewed Section"
-        status: "❌ TODO"
-        description: "Show recently viewed products"
-        locations:
-          - "Home page section"
-          - "Product detail page section"
-        features:
-          - "Horizontal scrollable carousel"
-          - "Show last 10 viewed products"
-          - "Link to product detail"
-        
-      - task: "Product Recommendations Section"
-        status: "❌ TODO"
-        description: "Recommended products"
-        locations:
-          - "Home page: 'Recommended for You'"
-          - "Product detail: 'You May Also Like'"
-          - "Cart page: 'Frequently Bought Together'"
-        features:
-          - "Product carousel"
-          - "Quick add to cart"
-        
-      - task: "Password Reset Flow"
-        status: "❌ TODO"
-        description: "Forgot password functionality"
-        files: "/app/frontend/src/pages/ForgotPassword.js, ResetPassword.js"
-        features:
-          - "Forgot password link on login"
-          - "Email input form"
-          - "Reset link sent confirmation"
-          - "Reset password form with token"
-          - "Password strength indicator"
+## 🔵 PHASE 1A: User Authentication Setup (4 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 30-40 minutes
 
-  #============================================================================
-  # PHASE 4: ADVANCED FEATURES
-  #============================================================================
-  phase_4_advanced_features:
-    status: "PENDING"
-    priority: "LOW"
-    estimated_effort: "4-5 days"
-    
-    backend_tasks:
-      - task: "Discount Codes & Coupons APIs"
-        status: "❌ TODO"
-        description: "Promotional codes and discounts"
-        endpoints:
-          - "POST /api/coupons/validate - Validate coupon code"
-          - "POST /api/orders/apply-coupon - Apply coupon to cart"
-          - "GET /api/admin/coupons - List all coupons (admin)"
-          - "POST /api/admin/coupons - Create coupon (admin)"
-          - "PUT /api/admin/coupons/{id} - Update coupon (admin)"
-          - "DELETE /api/admin/coupons/{id} - Delete coupon (admin)"
-        database_changes:
-          - "Create 'coupons' collection: id, code, type (percentage/fixed), value, min_order_value, max_discount, start_date, end_date, usage_limit, used_count, is_active"
-          - "Create 'coupon_usage' collection: id, coupon_id, user_id, order_id, discount_amount, used_at"
-        
-      - task: "Save for Later API"
-        status: "❌ TODO"
-        description: "Move cart items to saved list"
-        endpoints:
-          - "GET /api/saved-items - Get saved items"
-          - "POST /api/cart/{item_id}/save - Move to saved"
-          - "POST /api/saved-items/{id}/move-to-cart - Move to cart"
-          - "DELETE /api/saved-items/{id} - Delete saved item"
-        database_changes:
-          - "Create 'saved_items' collection: id, user_id, product_id, saved_at"
-        
-      - task: "Search Suggestions API"
-        status: "❌ TODO"
-        description: "Autocomplete search suggestions"
-        endpoints:
-          - "GET /api/search/suggestions?q=query - Get suggestions"
-        features:
-          - "Product name matches"
-          - "Brand matches"
-          - "Category suggestions"
-          - "Recent searches (per user)"
-        
-      - task: "Inventory Alerts API"
-        status: "❌ TODO"
-        description: "Low stock alerts for admin"
-        endpoints:
-          - "GET /api/admin/inventory/alerts - Get low stock products"
-          - "PUT /api/admin/inventory/threshold - Set alert threshold"
-        features:
-          - "Alert when stock below threshold (e.g., 10 units)"
-          - "Email notification to admin"
-        
-      - task: "Sales Analytics APIs"
-        status: "❌ TODO"
-        description: "Detailed sales reports"
-        endpoints:
-          - "GET /api/admin/analytics/sales - Sales over time"
-          - "GET /api/admin/analytics/top-products - Best selling products"
-          - "GET /api/admin/analytics/revenue - Revenue breakdown"
-          - "GET /api/admin/analytics/customers - Customer metrics"
-        features:
-          - "Date range filtering"
-          - "Group by: day, week, month, year"
-          - "Export to CSV"
-        
-      - task: "Razorpay Payment Integration"
-        status: "❌ TODO"
-        description: "Alternative payment gateway for India"
-        endpoints:
-          - "POST /api/payment/razorpay/checkout - Create Razorpay order"
-          - "POST /api/payment/razorpay/verify - Verify payment"
-          - "POST /api/webhook/razorpay - Razorpay webhook"
-        requirements:
-          - "Razorpay account and API keys"
-          - "Split payment configuration"
-        
-      - task: "User Activity Tracking"
-        status: "❌ TODO"
-        description: "Track user behavior for analytics"
-        endpoints:
-          - "POST /api/analytics/track - Track event"
-        events:
-          - "Page views"
-          - "Product views"
-          - "Add to cart"
-          - "Search queries"
-          - "Checkout initiated"
-          - "Purchase completed"
-        database_changes:
-          - "Create 'user_events' collection: id, user_id, event_type, event_data, timestamp"
-        
-      - task: "Admin User Management APIs"
-        status: "❌ TODO"
-        description: "Manage users from admin panel"
-        endpoints:
-          - "GET /api/admin/users - List all users"
-          - "GET /api/admin/users/{id} - Get user details"
-          - "PUT /api/admin/users/{id} - Update user"
-          - "DELETE /api/admin/users/{id} - Delete user"
-          - "PUT /api/admin/users/{id}/block - Block/unblock user"
-    
-    frontend_tasks:
-      - task: "Coupon Code Input"
-        status: "❌ TODO"
-        description: "Apply discount codes in cart"
-        file: "/app/frontend/src/pages/Cart.js"
-        features:
-          - "Coupon code input field"
-          - "Apply button"
-          - "Show discount amount"
-          - "Show final price after discount"
-          - "Remove coupon option"
-          - "Coupon validation errors"
-        
-      - task: "Save for Later UI"
-        status: "❌ TODO"
-        description: "Save cart items for later"
-        file: "/app/frontend/src/pages/Cart.js"
-        features:
-          - "Save for later button on cart items"
-          - "Saved items section below cart"
-          - "Move to cart button"
-          - "Delete saved item"
-        
-      - task: "Search Autocomplete"
-        status: "❌ TODO"
-        description: "Live search suggestions"
-        file: "/app/frontend/src/components/SearchBar.js"
-        features:
-          - "Dropdown with suggestions"
-          - "Product suggestions with images"
-          - "Category suggestions"
-          - "Recent searches"
-          - "Clear recent searches"
-          - "Keyboard navigation"
-        
-      - task: "Admin Sales Dashboard"
-        status: "❌ TODO"
-        description: "Analytics charts and reports"
-        file: "/app/frontend/src/pages/admin/Analytics.js"
-        features:
-          - "Sales chart (line/bar)"
-          - "Revenue breakdown (pie chart)"
-          - "Top products table"
-          - "Customer metrics cards"
-          - "Date range picker"
-          - "Export to CSV button"
-          - "Use Chart.js or Recharts library"
-        
-      - task: "Admin Inventory Management"
-        status: "❌ TODO"
-        description: "Advanced product inventory"
-        file: "/app/frontend/src/pages/admin/Inventory.js"
-        features:
-          - "Low stock alerts badge"
-          - "Bulk update stock"
-          - "Stock history log"
-          - "Set alert thresholds"
-        
-      - task: "Admin User Management"
-        status: "❌ TODO"
-        description: "Manage users from admin"
-        file: "/app/frontend/src/pages/admin/Users.js"
-        features:
-          - "Users table with search"
-          - "View user details modal"
-          - "Edit user information"
-          - "Block/unblock user"
-          - "View user orders"
-          - "Delete user with confirmation"
-        
-      - task: "Admin Coupon Management"
-        status: "❌ TODO"
-        description: "Create and manage coupons"
-        file: "/app/frontend/src/pages/admin/Coupons.js"
-        features:
-          - "Coupons list table"
-          - "Create coupon form"
-          - "Edit coupon"
-          - "Activate/deactivate coupon"
-          - "View usage statistics"
-          - "Delete coupon"
-        
-      - task: "Razorpay Payment Option"
-        status: "❌ TODO"
-        description: "Alternative payment method"
-        file: "/app/frontend/src/pages/Cart.js"
-        features:
-          - "Payment method selection (Stripe/Razorpay)"
-          - "Razorpay checkout modal"
-          - "Payment verification flow"
-        
-      - task: "Product Comparison"
-        status: "❌ TODO"
-        description: "Compare multiple products side-by-side"
-        file: "/app/frontend/src/pages/Compare.js"
-        features:
-          - "Add to compare checkbox on products"
-          - "Compare bar showing selected items"
-          - "Compare page with side-by-side specs"
-          - "Highlight differences"
-          - "Max 4 products to compare"
+### Backend Tasks:
+- [x] User Registration API with bcrypt password hashing
+- [x] User & Admin Login API (fixed admin credentials)
+- [x] JWT token generation and verification
+- [x] Authentication middleware
 
-  #============================================================================
-  # PHASE 5: OPTIMIZATION & POLISH
-  #============================================================================
-  phase_5_optimization:
-    status: "PENDING"
-    priority: "LOW"
-    estimated_effort: "3-4 days"
-    
-    backend_tasks:
-      - task: "API Rate Limiting"
-        status: "❌ TODO"
-        description: "Prevent API abuse"
-        implementation:
-          - "Use slowapi or similar library"
-          - "Rate limits per endpoint"
-          - "Rate limits per user/IP"
-          - "Return 429 status code"
-        
-      - task: "Request Validation Enhancement"
-        status: "❌ TODO"
-        description: "Stricter input validation"
-        areas:
-          - "Email format validation"
-          - "Phone number validation"
-          - "Price validation (positive numbers)"
-          - "URL validation for images"
-          - "XSS prevention"
-          - "SQL injection prevention (already handled by MongoDB)"
-        
-      - task: "Database Indexing"
-        status: "❌ TODO"
-        description: "Optimize database queries"
-        indexes:
-          - "users: email (unique)"
-          - "products: category, brand, price"
-          - "cart: user_id"
-          - "orders: user_id, created_at"
-          - "reviews: product_id"
-        
-      - task: "Caching Layer"
-        status: "❌ TODO"
-        description: "Cache frequently accessed data"
-        implementation:
-          - "Use Redis or similar"
-          - "Cache product listings"
-          - "Cache product details"
-          - "Cache user sessions"
-          - "Set TTL appropriately"
-        
-      - task: "API Documentation"
-        status: "❌ TODO"
-        description: "Auto-generated API docs"
-        implementation:
-          - "FastAPI auto-generates Swagger UI"
-          - "Add detailed descriptions to endpoints"
-          - "Add request/response examples"
-          - "Available at /docs"
-        
-      - task: "Logging & Monitoring"
-        status: "❌ TODO"
-        description: "Better error tracking"
-        implementation:
-          - "Structured logging (JSON)"
-          - "Log levels (DEBUG, INFO, WARNING, ERROR)"
-          - "Error tracking (Sentry, Rollbar)"
-          - "Performance monitoring (New Relic, DataDog)"
-        
-      - task: "Backup & Recovery"
-        status: "❌ TODO"
-        description: "Database backup strategy"
-        implementation:
-          - "Automated daily backups"
-          - "Backup retention policy"
-          - "Backup to cloud storage (S3, GCS)"
-          - "Restore procedure documentation"
-    
-    frontend_tasks:
-      - task: "Performance Optimization"
-        status: "❌ TODO"
-        description: "Improve load times and responsiveness"
-        optimizations:
-          - "Code splitting by route"
-          - "Lazy loading images"
-          - "Optimize image sizes (WebP format)"
-          - "Minimize bundle size"
-          - "Use React.memo for expensive components"
-          - "Debounce search input"
-          - "Virtual scrolling for long lists"
-        
-      - task: "SEO Optimization"
-        status: "❌ TODO"
-        description: "Search engine optimization"
-        implementation:
-          - "React Helmet for meta tags"
-          - "Dynamic page titles"
-          - "Open Graph tags for social sharing"
-          - "Sitemap.xml generation"
-          - "Robots.txt"
-          - "Structured data (JSON-LD)"
-        
-      - task: "Accessibility (A11y) Improvements"
-        status: "❌ TODO"
-        description: "WCAG compliance"
-        improvements:
-          - "Keyboard navigation"
-          - "Screen reader labels"
-          - "ARIA attributes"
-          - "Focus indicators"
-          - "Color contrast ratios"
-          - "Alt text for images"
-        
-      - task: "Progressive Web App (PWA)"
-        status: "❌ TODO"
-        description: "Make app installable"
-        implementation:
-          - "Service worker for offline support"
-          - "Web app manifest"
-          - "Install prompt"
-          - "Offline fallback page"
-          - "Cache static assets"
-        
-      - task: "Error Boundary Components"
-        status: "❌ TODO"
-        description: "Graceful error handling"
-        implementation:
-          - "Top-level error boundary"
-          - "Route-specific error boundaries"
-          - "Fallback UI for errors"
-          - "Error reporting to backend"
-        
-      - task: "Loading States & Skeletons"
-        status: "❌ TODO"
-        description: "Better loading UX"
-        implementation:
-          - "Skeleton screens for content loading"
-          - "Shimmer effects"
-          - "Progressive image loading"
-          - "Spinner for button actions"
-        
-      - task: "Toast Notifications Enhancement"
-        status: "❌ TODO"
-        description: "Better user feedback"
-        improvements:
-          - "Success/error/warning/info variants"
-          - "Action buttons in toasts"
-          - "Undo functionality"
-          - "Toast queue management"
-          - "Position customization"
-        
-      - task: "Dark Mode Support"
-        status: "❌ TODO"
-        description: "Dark theme option"
-        implementation:
-          - "Theme toggle in settings"
-          - "Dark color scheme"
-          - "Persist theme preference"
-          - "System preference detection"
-        
-      - task: "Internationalization (i18n)"
-        status: "❌ TODO"
-        description: "Multi-language support"
-        implementation:
-          - "Use react-i18next"
-          - "Translation files"
-          - "Language selector"
-          - "Currency formatting"
-          - "Date/time formatting"
-        
-      - task: "Analytics Integration"
-        status: "❌ TODO"
-        description: "Track user behavior"
-        implementation:
-          - "Google Analytics 4"
-          - "Track page views"
-          - "Track e-commerce events"
-          - "Track conversion funnel"
-          - "Custom event tracking"
-        
-      - task: "Comprehensive Testing"
-        status: "❌ TODO"
-        description: "Automated test suite"
-        tests:
-          - "Unit tests (Jest + React Testing Library)"
-          - "Integration tests"
-          - "E2E tests (Cypress/Playwright)"
-          - "Component tests"
-          - "API tests"
-          - "Test coverage > 80%"
+### Frontend Tasks:
+- [x] Login page with form validation
+- [x] Register page with form validation
+- [x] Token storage (localStorage)
+- [x] Protected route wrapper
 
-  #============================================================================
-  # TESTING PRIORITIES (After Each Phase)
-  #============================================================================
-  testing_checklist:
-    after_phase_1:
-      - "✅ Test user registration and login"
-      - "🔄 Test payment flow with Stripe test cards"
-      - "🔄 Test order creation after payment"
-      - "🔄 Test admin CRUD operations"
-      - "🔄 Test product filters and search"
-    
-    after_phase_2:
-      - "Test user profile update"
-      - "Test address management (add/edit/delete)"
-      - "Test advanced product filters"
-      - "Test product sorting"
-      - "Test cart quantity editing"
-      - "Test address selection in checkout"
-      - "Test stock availability checks"
-      - "Test mobile navigation"
-    
-    after_phase_3:
-      - "Test product review submission"
-      - "Test wishlist add/remove"
-      - "Test product image gallery"
-      - "Test order tracking display"
-      - "Test email notifications sent"
-      - "Test recently viewed products"
-      - "Test product recommendations"
-      - "Test password reset flow"
-    
-    after_phase_4:
-      - "Test coupon code validation"
-      - "Test save for later"
-      - "Test search autocomplete"
-      - "Test admin analytics dashboard"
-      - "Test admin user management"
-      - "Test admin coupon management"
-      - "Test Razorpay payment flow"
-      - "Test product comparison"
-    
-    after_phase_5:
-      - "Test API rate limiting"
-      - "Test performance (load time < 3s)"
-      - "Test SEO meta tags"
-      - "Test accessibility with screen reader"
-      - "Test PWA installation"
-      - "Test error boundaries"
-      - "Test dark mode toggle"
-      - "Run full test suite"
-      - "Load testing (concurrent users)"
+### Testing:
+- [x] Test registration with duplicate email
+- [x] Test login with correct/incorrect credentials
+- [x] Test admin login
+- [x] Test protected route access
 
-known_limitations:
-  - "Cart quantity cannot be edited manually (only add more of same item)"
-  - "Shipping address from registration cannot be changed during checkout"
-  - "Stock levels don't decrease after purchase"
-  - "No email notifications for orders"
-  - "No password reset functionality"
-  - "Product images use Unsplash URLs (may have rate limits)"
-  - "No support for product variants (size/color options)"
+---
 
-database_collections:
-  - name: "users"
-    fields: "id, name, email, password (hashed), phone, address, role, created_at"
-  - name: "products"
-    fields: "id, name, brand, price, description, category, frame_type, frame_shape, color, image_url, stock, created_at"
-  - name: "cart"
-    fields: "id, user_id, product_id, quantity, added_at"
-  - name: "orders"
-    fields: "id, user_id, items[], total_amount, payment_status, order_status, shipping_address, created_at"
-  - name: "payment_transactions"
-    fields: "id, session_id, user_id, order_id, amount, currency, payment_status, status, metadata, created_at, updated_at"
+## 🔵 PHASE 1B: Product Catalog Foundation (4 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 30-40 minutes
+
+### Backend Tasks:
+- [x] Product model with all fields
+- [x] GET /api/products (list all)
+- [x] GET /api/products/{id} (single product)
+- [x] Database seeding script (10 products)
+
+### Frontend Tasks:
+- [x] Products listing page with grid layout
+- [x] Product cards with image, name, price
+- [x] Product detail page
+- [x] Routing setup for products
+
+### Testing:
+- [x] Test product listing loads
+- [x] Test product detail navigation
+- [x] Test product data displays correctly
+
+---
+
+## 🔵 PHASE 1C: Admin Product Management (5 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [x] POST /api/products (create - admin only)
+- [x] PUT /api/products/{id} (update - admin only)
+- [x] DELETE /api/products/{id} (delete - admin only)
+- [x] Admin role verification middleware
+
+### Frontend Tasks:
+- [x] Admin dashboard page
+- [x] Product management table
+- [x] Add product form/dialog
+- [x] Edit product functionality
+- [x] Delete product with confirmation
+
+### Testing:
+- [x] Test create product (admin only)
+- [x] Test edit product
+- [x] Test delete product
+- [x] Test non-admin cannot access
+
+---
+
+## 🔵 PHASE 1D: Shopping Cart (4 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [x] GET /api/cart (with product details JOIN)
+- [x] POST /api/cart (add item)
+- [x] DELETE /api/cart/{product_id} (remove item)
+- [x] DELETE /api/cart (clear cart)
+
+### Frontend Tasks:
+- [x] Cart page with items list
+- [x] Add to cart button on product pages
+- [x] Remove from cart button
+- [x] Cart count badge in navigation
+
+### Testing:
+- [x] Test add to cart
+- [x] Test remove from cart
+- [x] Test cart count updates
+- [x] Test empty cart state
+
+---
+
+## 🔵 PHASE 1E: Payment Gateway Integration (5 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 40-50 minutes
+
+### Backend Tasks:
+- [x] Created payment gateway abstraction layer (payment_gateway.py)
+- [x] Implemented PaymentGateway base class with common interface
+- [x] Implemented StripeGateway class wrapping Stripe checkout
+- [x] Implemented RazorpayGateway class for Indian payments
+- [x] POST /api/payment/checkout (unified payment creation)
+- [x] GET /api/payment/status/{session_id} (poll status)
+- [x] POST /api/webhook/stripe (handle webhook)
+- [x] POST /api/webhook/razorpay (handle webhook)
+- [x] Payment transactions table in MySQL schema
+
+### Frontend Tasks:
+- [x] Payment method selection dropdown (Stripe/Razorpay)
+- [x] Checkout button in cart with gateway selection
+- [x] Redirect to selected payment gateway
+- [x] Payment success page with status polling
+- [x] Handle payment failure for both gateways
+
+### Architecture:
+- **Abstraction Layer**: `payment_gateway.py` provides unified interface
+- **Gateway Classes**: StripeGateway, RazorpayGateway implement common methods
+- **Configuration**: Environment variables for API keys
+- **Extensibility**: Easy to add new payment gateways (PayPal, Square, etc.)
+
+### Testing:
+- [x] Test Stripe payment flow with test card (4242...)
+- [x] Test Razorpay payment flow
+- [x] Test payment gateway selection in UI
+- [x] Test webhook handling for both gateways
+- [x] Test payment failure scenarios
+
+---
+
+## 🔵 PHASE 1F: Order Management (4 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [x] POST /api/orders (create order after payment)
+- [x] GET /api/orders (list user's orders)
+- [x] GET /api/orders/{id} (single order)
+- [x] Order creation on payment success
+
+### Frontend Tasks:
+- [x] Orders page with order history
+- [x] Order status badges
+- [x] Shipping address display
+- [x] Empty orders state
+
+### Testing:
+- [x] Test order created after payment
+- [x] Test cart cleared after order
+- [x] Test orders list displays
+- [x] Test admin sees all orders
+
+---
+
+## 🔵 PHASE 1H: MySQL Database Schema (3 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 25-30 minutes
+
+### Database Tasks:
+- [x] Created mysql_schema.sql with complete database structure
+- [x] Users table with bcrypt password hashing support
+- [x] Products table with all eyewear-specific fields
+- [x] Cart table with user-product relationships
+- [x] Orders table with payment and order status tracking
+- [x] Order_items table (normalized from MongoDB array structure)
+- [x] Payment_transactions table with support for multiple gateways
+- [x] Proper foreign key relationships and indexes
+- [x] Sample data seed (10 products)
+
+### Schema Features:
+- **UUID-based IDs**: CHAR(36) for consistency with app
+- **Proper Indexes**: On email, category, brand, price, user_id, order_id
+- **Cascading Deletes**: Properly configured foreign keys
+- **JSON Metadata**: For flexible payment gateway data storage
+- **Timestamps**: created_at and updated_at tracking
+- **Enums**: For status fields, categories, frame types
+
+### Migration Notes:
+- Schema is designed for easy MongoDB-to-MySQL migration
+- Maintains compatibility with existing application code
+- Includes helpful reference queries in comments
+- Ready for production deployment
+
+### Testing:
+- [x] Schema validates without errors
+- [x] All foreign key constraints work correctly
+- [x] Indexes improve query performance
+- [x] Sample data loads successfully
+
+---
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 25-30 minutes
+
+### Frontend Tasks:
+- [x] Landing page with hero section
+- [x] Features showcase
+- [x] Call-to-action sections
+- [x] Gradient theme implementation
+- [x] Glassmorphism effects
+- [x] Responsive design
+
+### Testing:
+- [x] Test on mobile viewport
+- [x] Test navigation between pages
+- [x] Test visual consistency
+
+---
+
+## 🟢 PHASE 2A: Product Search & Filters (4 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [x] Add search query parameter to GET /api/products
+- [x] Add category filter
+- [x] Add price range filter
+- [x] Add sorting (price, name)
+
+### Frontend Tasks:
+- [x] Search bar with live filtering
+- [x] Category filter buttons
+- [x] Price range slider
+- [x] Sort dropdown
+- [x] Clear filters button
+
+### Testing:
+- [ ] Test search by product name
+- [ ] Test filter by category
+- [ ] Test price range filter
+- [ ] Test sorting
+
+### Implementation Details:
+- Backend enhanced with min_price, max_price, and sort parameters
+- Search now includes name, brand, and description fields
+- Sort options: price_asc, price_desc, name_asc, name_desc, newest
+- Frontend uses debounced search (500ms delay) for better UX
+- Price slider range: $0-$500 with $10 increments
+- Active filters display with individual clear buttons
+- Show/Hide filters toggle for cleaner interface
+- Results count display
+
+---
+
+## 🟢 PHASE 2B: User Profile Management (4 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [x] GET /api/user/profile
+- [x] PUT /api/user/profile
+- [x] PUT /api/user/password
+
+### Frontend Tasks:
+- [x] Profile page
+- [x] Edit profile form
+- [x] Change password form
+- [x] Profile link in navigation
+
+### Testing:
+- [ ] Test profile display
+- [ ] Test profile update
+- [ ] Test password change
+
+### Implementation Details:
+- Backend APIs implemented at lines 336-411 in /app/backend/server.py
+- Pydantic models UserProfileUpdate and PasswordChange defined
+- Profile.js page with tabs for Profile and Password sections
+- Edit mode for profile information with validation
+- Password change with confirmation and old password verification
+- Profile navigation links added to all user pages (Home, Products, ProductDetail, Cart, Orders, PaymentSuccess)
+- Protected route with authentication check
+
+---
+
+## 🟢 PHASE 2C: Address Management (5 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [x] Create addresses table (AddressDB model)
+- [x] GET /api/user/addresses
+- [x] POST /api/user/addresses
+- [x] PUT /api/user/addresses/{id}
+- [x] DELETE /api/user/addresses/{id}
+
+### Frontend Tasks:
+- [x] Addresses page (/addresses route)
+- [x] Add address form (modal dialog)
+- [x] Edit address (modal dialog)
+- [x] Delete address (with confirmation)
+- [x] Set default address
+
+### Testing:
+- [ ] Test CRUD operations
+- [ ] Test default address
+- [ ] Test address in checkout
+
+### Implementation Details:
+- AddressDB model with fields: id, user_id, label, full_address, city, state, zip_code, country, is_default
+- Backend APIs handle default address logic (unsets others when setting new default)
+- Address Pydantic models: Address, AddressCreate, AddressUpdate
+- Addresses.js page with grid layout showing all addresses
+- Dialog modals for add/edit with full form (label dropdown, address fields)
+- Address cards with label icons (Home, Work, Other)
+- Default address highlighted with blue ring and checkmark badge
+- Empty state with call-to-action button
+- Navigation link added to Profile page
+- Protected route with authentication check
+
+---
+
+## 🟢 PHASE 2D: Cart Quantity Management (3 Credits)
+**Status:** ✅ COMPLETED  
+**Estimated Time:** 25-30 minutes
+
+### Backend Tasks:
+- [x] PATCH /api/cart/{item_id} (update quantity)
+- [x] Stock validation
+
+### Frontend Tasks:
+- [x] Quantity +/- buttons in cart
+- [x] Direct quantity input
+- [x] Real-time total update
+- [x] Stock limit handling
+
+### Testing:
+- [ ] Test increase quantity
+- [ ] Test decrease quantity
+- [ ] Test stock limit
+
+---
+### Implementation Details:
+- Backend: PATCH /api/cart/{item_id} endpoint with comprehensive stock validation
+- UpdateCartQuantity Pydantic model for request validation
+- Stock validation added to both POST (add to cart) and PATCH (update quantity) endpoints
+- Frontend: Plus/Minus buttons with disabled states at limits
+- Direct quantity input field with validation
+- Stock warning badges for low stock items (< 10)
+- Per-item subtotal display
+- Real-time error handling with user-friendly messages
+- Prevents quantities below 1 and above available stock
+
+## 🟢 PHASE 2E: Stock Management (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] Reduce stock on order creation
+- [ ] Check stock before add to cart
+- [ ] Return stock on order cancellation
+- [ ] Low stock alerts
+
+### Frontend Tasks:
+- [ ] Stock indicators on product cards
+- [ ] \"Only X left\" badges
+- [ ] Out of stock state
+- [ ] Disable add to cart if out of stock
+
+### Testing:
+- [ ] Test stock reduces after order
+- [ ] Test cannot add if out of stock
+- [ ] Test low stock indicators
+
+---
+
+## 🟡 PHASE 3A: Product Reviews (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [ ] Create reviews table
+- [ ] GET /api/products/{id}/reviews
+- [ ] POST /api/products/{id}/reviews
+- [ ] PUT /api/reviews/{id}
+- [ ] DELETE /api/reviews/{id}
+
+### Frontend Tasks:
+- [ ] Reviews section on product detail
+- [ ] Star rating display
+- [ ] Write review form
+- [ ] Edit/delete own reviews
+
+### Testing:
+- [ ] Test submit review
+- [ ] Test edit review
+- [ ] Test delete review
+
+---
+
+## 🟡 PHASE 3B: Wishlist (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] Create wishlist table
+- [ ] GET /api/wishlist
+- [ ] POST /api/wishlist
+- [ ] DELETE /api/wishlist/{product_id}
+
+### Frontend Tasks:
+- [ ] Wishlist page
+- [ ] Heart icon on products
+- [ ] Move to cart button
+- [ ] Wishlist count badge
+
+### Testing:
+- [ ] Test add to wishlist
+- [ ] Test remove from wishlist
+- [ ] Test move to cart
+
+---
+
+## 🟡 PHASE 3C: Product Image Gallery (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] Create product_images table
+- [ ] GET /api/products/{id}/images
+- [ ] POST /api/products/{id}/images (admin)
+- [ ] DELETE /api/products/{id}/images/{image_id} (admin)
+
+### Frontend Tasks:
+- [ ] Image carousel on product detail
+- [ ] Thumbnail gallery
+- [ ] Image zoom on hover
+- [ ] Admin: Upload multiple images
+
+### Testing:
+- [ ] Test image carousel
+- [ ] Test thumbnail clicks
+- [ ] Test admin upload
+
+---
+
+## 🟡 PHASE 3D: Order Tracking (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] Create order_tracking table
+- [ ] GET /api/orders/{id}/tracking
+- [ ] PUT /api/orders/{id}/status (admin)
+- [ ] Add tracking_number to orders
+
+### Frontend Tasks:
+- [ ] Order tracking page
+- [ ] Status timeline
+- [ ] Tracking number display
+- [ ] Estimated delivery date
+
+### Testing:
+- [ ] Test status updates
+- [ ] Test tracking display
+- [ ] Test timeline visualization
+
+---
+
+## 🟡 PHASE 3E: Email Notifications (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [ ] Set up email service (SendGrid/SES)
+- [ ] Welcome email on registration
+- [ ] Order confirmation email
+- [ ] Payment receipt email
+- [ ] Shipping notification email
+
+### Frontend Tasks:
+- [ ] Email preferences in profile
+- [ ] Opt-in/opt-out toggles
+
+### Testing:
+- [ ] Test welcome email
+- [ ] Test order confirmation
+- [ ] Test all email triggers
+
+---
+
+## 🟡 PHASE 3F: Recently Viewed & Recommendations (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] Create recently_viewed table
+- [ ] GET /api/user/recently-viewed
+- [ ] POST /api/user/recently-viewed/{product_id}
+- [ ] GET /api/products/recommended
+- [ ] GET /api/products/{id}/related
+
+### Frontend Tasks:
+- [ ] Recently viewed section (home, product detail)
+- [ ] Recommended products carousel
+- [ ] Related products on detail page
+
+### Testing:
+- [ ] Test tracking views
+- [ ] Test recommendations display
+- [ ] Test related products
+
+---
+
+## 🟠 PHASE 4A: Coupon System (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [ ] Create coupons table
+- [ ] POST /api/coupons/validate
+- [ ] POST /api/orders/apply-coupon
+- [ ] GET/POST/PUT/DELETE /api/admin/coupons
+
+### Frontend Tasks:
+- [ ] Coupon input in cart
+- [ ] Apply coupon button
+- [ ] Discount display
+- [ ] Admin coupon management
+
+### Testing:
+- [ ] Test valid coupon
+- [ ] Test invalid coupon
+- [ ] Test discount calculation
+
+---
+
+## 🟠 PHASE 4B: Save for Later (3 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 25-30 minutes
+
+### Backend Tasks:
+- [ ] Create saved_items table
+- [ ] GET /api/saved-items
+- [ ] POST /api/cart/{item_id}/save
+- [ ] POST /api/saved-items/{id}/move-to-cart
+
+### Frontend Tasks:
+- [ ] Save for later button in cart
+- [ ] Saved items section
+- [ ] Move to cart button
+
+### Testing:
+- [ ] Test save item
+- [ ] Test move to cart
+- [ ] Test delete saved item
+
+---
+
+## 🟠 PHASE 4C: Search Autocomplete (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] GET /api/search/suggestions?q=query
+- [ ] Product name matching
+- [ ] Brand matching
+- [ ] Category suggestions
+
+### Frontend Tasks:
+- [ ] Search dropdown with suggestions
+- [ ] Product suggestions with images
+- [ ] Keyboard navigation
+- [ ] Recent searches
+
+### Testing:
+- [ ] Test suggestions appear
+- [ ] Test keyboard navigation
+- [ ] Test click to search
+
+---
+
+## 🟠 PHASE 4D: Admin Sales Analytics (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [ ] GET /api/admin/analytics/sales
+- [ ] GET /api/admin/analytics/top-products
+- [ ] GET /api/admin/analytics/revenue
+- [ ] Date range filtering
+
+### Frontend Tasks:
+- [ ] Analytics page with charts
+- [ ] Sales chart (Chart.js/Recharts)
+- [ ] Revenue breakdown
+- [ ] Top products table
+- [ ] Date range picker
+
+### Testing:
+- [ ] Test data displays
+- [ ] Test date filtering
+- [ ] Test charts render
+
+---
+
+## 🟠 PHASE 4E: Admin Inventory Management (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] GET /api/admin/inventory/alerts
+- [ ] PUT /api/admin/inventory/threshold
+- [ ] Low stock email alerts
+
+### Frontend Tasks:
+- [ ] Inventory page
+- [ ] Low stock alerts
+- [ ] Bulk stock update
+- [ ] Stock history log
+
+### Testing:
+- [ ] Test low stock alerts
+- [ ] Test bulk update
+- [ ] Test threshold settings
+
+---
+
+## 🟠 PHASE 4F: Admin User Management (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] GET /api/admin/users
+- [ ] GET /api/admin/users/{id}
+- [ ] PUT /api/admin/users/{id}
+- [ ] PUT /api/admin/users/{id}/block
+
+### Frontend Tasks:
+- [ ] Users management page
+- [ ] Users table with search
+- [ ] View user details
+- [ ] Block/unblock user
+- [ ] View user orders
+
+### Testing:
+- [ ] Test user list
+- [ ] Test user details
+- [ ] Test block user
+
+---
+
+## 🟢 PHASE 4G: Razorpay Payment (5 Credits)
+**Status:** ✅ COMPLETED (Integrated in Phase 1E)
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [x] Razorpay integrated via payment gateway abstraction
+- [x] RazorpayGateway class in payment_gateway.py
+- [x] Unified checkout API supports both Stripe and Razorpay
+- [x] POST /api/webhook/razorpay for payment verification
+
+### Frontend Tasks:
+- [x] Payment method selection dropdown in Cart.js
+- [x] Dynamic gateway selection (Stripe/Razorpay)
+- [x] Payment verification flow
+
+### Testing:
+- [x] Test Razorpay payment flow
+- [x] Test payment method selection
+- [x] Test webhook handling
+
+### Note:
+This feature was integrated early as part of the payment gateway abstraction layer,
+making it easier to support multiple payment gateways through a unified interface.
+
+---
+
+## 🟠 PHASE 4H: Product Comparison (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] No new APIs needed (use existing GET)
+
+### Frontend Tasks:
+- [ ] Add to compare checkbox
+- [ ] Compare bar (floating)
+- [ ] Comparison page
+- [ ] Side-by-side specs
+- [ ] Highlight differences
+
+### Testing:
+- [ ] Test add to compare
+- [ ] Test comparison page
+- [ ] Test differences highlight
+
+---
+
+## 🔴 PHASE 5A: Performance Optimization (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Backend Tasks:
+- [ ] Database indexing optimization
+- [ ] Query optimization
+- [ ] API response caching (Redis)
+
+### Frontend Tasks:
+- [ ] Code splitting by route
+- [ ] Lazy loading images
+- [ ] React.memo for heavy components
+- [ ] Debounce search input
+- [ ] Optimize bundle size
+
+### Testing:
+- [ ] Load time < 3 seconds
+- [ ] Lighthouse score > 90
+- [ ] Bundle size analysis
+
+---
+
+## 🔴 PHASE 5B: SEO & Accessibility (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Frontend Tasks:
+- [ ] React Helmet for meta tags
+- [ ] Dynamic page titles
+- [ ] Open Graph tags
+- [ ] Keyboard navigation
+- [ ] ARIA labels
+- [ ] Alt text for images
+- [ ] Color contrast fixes
+
+### Testing:
+- [ ] SEO audit (Lighthouse)
+- [ ] Accessibility audit (axe)
+- [ ] Screen reader test
+
+---
+
+## 🔴 PHASE 5C: PWA & Offline Support (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Frontend Tasks:
+- [ ] Service worker
+- [ ] Web app manifest
+- [ ] Install prompt
+- [ ] Offline fallback
+- [ ] Cache static assets
+
+### Testing:
+- [ ] Test offline mode
+- [ ] Test install prompt
+- [ ] Test cached assets
+
+---
+
+## 🔴 PHASE 5D: Error Handling & Logging (4 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 35-40 minutes
+
+### Backend Tasks:
+- [ ] Structured logging (JSON)
+- [ ] Error tracking (Sentry)
+- [ ] API rate limiting
+- [ ] Request validation
+
+### Frontend Tasks:
+- [ ] Error boundary components
+- [ ] Fallback UI
+- [ ] Toast notifications enhancement
+- [ ] Loading skeletons
+
+### Testing:
+- [ ] Test error boundaries
+- [ ] Test rate limiting
+- [ ] Test validation errors
+
+---
+
+## 🔴 PHASE 5E: Dark Mode (3 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 25-30 minutes
+
+### Frontend Tasks:
+- [ ] Dark theme color scheme
+- [ ] Theme toggle
+- [ ] Persist preference (localStorage)
+- [ ] System preference detection
+
+### Testing:
+- [ ] Test theme toggle
+- [ ] Test persistence
+- [ ] Test system preference
+
+---
+
+## 🔴 PHASE 5F: Internationalization (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Frontend Tasks:
+- [ ] Set up react-i18next
+- [ ] Translation files (en, es, fr)
+- [ ] Language selector
+- [ ] Currency formatting
+- [ ] Date/time formatting
+
+### Testing:
+- [ ] Test language switch
+- [ ] Test translations
+- [ ] Test formatting
+
+---
+
+## 🔴 PHASE 5G: Analytics Integration (3 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 25-30 minutes
+
+### Frontend Tasks:
+- [ ] Google Analytics 4
+- [ ] Page view tracking
+- [ ] E-commerce event tracking
+- [ ] Conversion funnel
+- [ ] Custom events
+
+### Testing:
+- [ ] Test events fire
+- [ ] Test GA4 dashboard
+
+---
+
+## 🔴 PHASE 5H: Comprehensive Testing (5 Credits)
+**Status:** ❌ TODO  
+**Estimated Time:** 40-45 minutes
+
+### Testing Tasks:
+- [ ] Unit tests (Jest)
+- [ ] Component tests (React Testing Library)
+- [ ] E2E tests (Playwright)
+- [ ] API tests
+- [ ] Test coverage > 80%
+- [ ] Load testing
+
+---
+
+## 📊 Phase Summary
+
+| Phase Group | Total Phases | Total Credits | Status |
+|-------------|--------------|---------------|--------|
+| Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
+| Phase 2 (UX) | 5 | 20 | 🟡 4/5 Done |
+| Phase 3 (Engagement) | 6 | 26 | ❌ TODO |
+| Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
+| Phase 5 (Polish) | 8 | 33 | ❌ TODO |
+| **TOTAL** | **35** | **140** | **13/35 Done** |
+
+---
+
+## 🎯 Current Progress: 37.1% Complete (52/140 credits)
+
+---
+
+**Last Updated:** 2025-11-12 (Phase 2D: Cart Quantity Management Completed)
+**Version:** 2.5  
+**Organization:** Optimized for 4-5 credits per phase
+
+---
+
+## 📝 Recent Updates
+
+### Version 2.5 (2025-11-12)
+- ✅ Completed Phase 2D: Cart Quantity Management
+- ✅ Backend: PATCH /api/cart/{item_id} endpoint with stock validation
+- ✅ UpdateCartQuantity Pydantic model for request validation
+- ✅ Enhanced POST /api/cart with comprehensive stock checking
+- ✅ Frontend: Plus/Minus buttons for quantity control with disabled states
+- ✅ Direct quantity input field with validation
+- ✅ Stock warning badges for low stock items (< 10 items)
+- ✅ Per-item subtotal display in cart
+- ✅ Real-time error handling with user-friendly messages
+- ✅ Prevents quantities below 1 and above available stock
+
+### Version 2.4 (2025-11-12)
+- ✅ Completed Phase 2C: Address Management
+- ✅ AddressDB model with complete address fields
+- ✅ Backend APIs: GET/POST/PUT/DELETE /api/user/addresses
+- ✅ Automatic default address handling (unsets others when new default set)
+- ✅ Addresses.js page with responsive grid layout
+- ✅ Add/Edit address modal dialogs with full form
+- ✅ Address cards with label icons (Home, Work, Other)
+- ✅ Default address highlighting and set default functionality
+- ✅ Delete confirmation dialog
+- ✅ Empty state with call-to-action
+
+### Version 2.3 (2025-11-12)
+- ✅ Completed Phase 2B: User Profile Management
+- ✅ Backend APIs: GET/PUT /api/user/profile and PUT /api/user/password
+- ✅ Profile page with tabs for profile info and password change
+- ✅ Edit mode for profile information with validation
+- ✅ Password change with old password verification and confirmation
+- ✅ Profile navigation links added to all user pages
+- ✅ Protected route with authentication check
+
+### Version 2.2 (2025-11-12)
+- ✅ Completed Phase 2A: Product Search & Filters
+- ✅ Enhanced backend GET /api/products with price range and sorting
+- ✅ Added debounced live search in frontend
+- ✅ Implemented price range slider ($0-$500)
+- ✅ Added 5 sort options (newest, price asc/desc, name asc/desc)
+- ✅ Added clear all filters functionality
+- ✅ Active filters display with individual remove buttons
+- ✅ Show/Hide filters toggle for better UX
+
+### Version 2.1 (2025-11-12)
+- ✅ Added payment gateway abstraction layer (payment_gateway.py)
+- ✅ Integrated Razorpay as alternative payment gateway
+- ✅ Created comprehensive MySQL database schema (mysql_schema.sql)
+- ✅ Updated payment flow to support multiple gateways
+- ✅ Added payment method selection in frontend
+- ✅ Moved Razorpay from Phase 4G to integrated in Phase 1E
+- ✅ Added new Phase 1H for MySQL schema documentation
+
+### Version 2.0 (2025-11-12)
+- Initial MVP completion with Stripe payment integration
+- All core e-commerce features implemented
+- Modern UI with gradient theme and glassmorphism effects
+"

@@ -134,6 +134,18 @@ class AddressDB(Base):
     is_default: Mapped[bool] = mapped_column(Integer, default=0)  # MySQL doesn't have bool, using Integer
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class ReviewDB(Base):
+    __tablename__ = "reviews"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    product_id: Mapped[str] = mapped_column(String(36), index=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    user_name: Mapped[str] = mapped_column(String(255))
+    rating: Mapped[int] = mapped_column(Integer)  # 1-5 stars
+    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
 # ============ Pydantic Models ============
 
 class User(BaseModel):
@@ -239,6 +251,25 @@ class AddToCart(BaseModel):
 
 class UpdateCartQuantity(BaseModel):
     quantity: int
+
+class Review(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    product_id: str
+    user_id: str
+    user_name: str
+    rating: int  # 1-5
+    comment: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CreateReview(BaseModel):
+    rating: int = Field(..., ge=1, le=5)  # Must be between 1-5
+    comment: Optional[str] = None
+
+class UpdateReview(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = None
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -970,6 +1001,13 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
             product = product_result.scalar_one_or_none()
             
             if product:
+                # Check stock availability
+                if product.stock < cart_item.quantity:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient stock for {product.name}. Only {product.stock} available"
+                    )
+                
                 items.append({
                     "product_id": product.id,
                     "name": product.name,
@@ -998,6 +1036,14 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
         )
         
         session.add(db_order)
+        
+        # Reduce stock for each product in the order
+        for cart_item in cart_items:
+            product_result = await session.execute(select(ProductDB).where(ProductDB.id == cart_item.product_id))
+            product = product_result.scalar_one_or_none()
+            if product:
+                product.stock -= cart_item.quantity
+        
         await session.commit()
         
         return {"message": "Order created successfully", "order": order.model_dump()}
@@ -1052,6 +1098,148 @@ async def get_order(order_id: str, authorization: str = Header(None)):
             "shipping_address": order.shipping_address,
             "created_at": order.created_at.isoformat() if order.created_at else None
         }
+
+# ============ Review Routes ============
+
+@api_router.get("/products/{product_id}/reviews")
+async def get_product_reviews(product_id: str):
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(ReviewDB)
+            .where(ReviewDB.product_id == product_id)
+            .order_by(ReviewDB.created_at.desc())
+        )
+        reviews = result.scalars().all()
+        
+        return [
+            {
+                "id": r.id,
+                "product_id": r.product_id,
+                "user_id": r.user_id,
+                "user_name": r.user_name,
+                "rating": r.rating,
+                "comment": r.comment,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "updated_at": r.updated_at.isoformat() if r.updated_at else None
+            }
+            for r in reviews
+        ]
+
+@api_router.post("/products/{product_id}/reviews")
+async def create_review(product_id: str, review_data: CreateReview, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Check if product exists
+        product_result = await session.execute(select(ProductDB).where(ProductDB.id == product_id))
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Check if user already reviewed this product
+        existing_review = await session.execute(
+            select(ReviewDB).where(
+                (ReviewDB.product_id == product_id) & 
+                (ReviewDB.user_id == user['user_id'])
+            )
+        )
+        if existing_review.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="You have already reviewed this product")
+        
+        # Get user details
+        user_result = await session.execute(select(UserDB).where(UserDB.id == user['user_id']))
+        user_data = user_result.scalar_one_or_none()
+        
+        # Create review
+        review = Review(
+            product_id=product_id,
+            user_id=user['user_id'],
+            user_name=user_data.name if user_data else "Anonymous",
+            rating=review_data.rating,
+            comment=review_data.comment
+        )
+        
+        db_review = ReviewDB(
+            id=review.id,
+            product_id=review.product_id,
+            user_id=review.user_id,
+            user_name=review.user_name,
+            rating=review.rating,
+            comment=review.comment,
+            created_at=review.created_at,
+            updated_at=review.updated_at
+        )
+        
+        session.add(db_review)
+        await session.commit()
+        
+        return {
+            "message": "Review created successfully",
+            "review": {
+                "id": review.id,
+                "product_id": review.product_id,
+                "user_id": review.user_id,
+                "user_name": review.user_name,
+                "rating": review.rating,
+                "comment": review.comment,
+                "created_at": review.created_at.isoformat(),
+                "updated_at": review.updated_at.isoformat()
+            }
+        }
+
+@api_router.put("/reviews/{review_id}")
+async def update_review(review_id: str, review_data: UpdateReview, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(ReviewDB).where(
+                (ReviewDB.id == review_id) & 
+                (ReviewDB.user_id == user['user_id'])
+            )
+        )
+        review = result.scalar_one_or_none()
+        
+        if not review:
+            raise HTTPException(status_code=404, detail="Review not found or you don't have permission")
+        
+        review.rating = review_data.rating
+        review.comment = review_data.comment
+        review.updated_at = datetime.now(timezone.utc)
+        
+        await session.commit()
+        
+        return {
+            "message": "Review updated successfully",
+            "review": {
+                "id": review.id,
+                "rating": review.rating,
+                "comment": review.comment,
+                "updated_at": review.updated_at.isoformat()
+            }
+        }
+
+@api_router.delete("/reviews/{review_id}")
+async def delete_review(review_id: str, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(ReviewDB).where(
+                (ReviewDB.id == review_id) & 
+                (ReviewDB.user_id == user['user_id'])
+            )
+        )
+        review = result.scalar_one_or_none()
+        
+        if not review:
+            raise HTTPException(status_code=404, detail="Review not found or you don't have permission")
+        
+        await session.execute(delete(ReviewDB).where(ReviewDB.id == review_id))
+        await session.commit()
+        
+        return {"message": "Review deleted successfully"}
 
 # ============ Payment Routes ============
 
