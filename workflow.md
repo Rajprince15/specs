@@ -320,18 +320,18 @@ Break down development into small, manageable phases that can be completed in 4-
 ---
 
 ## 🟢 PHASE 2D: Cart Quantity Management (3 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 25-30 minutes
 
 ### Backend Tasks:
-- [ ] PATCH /api/cart/{item_id} (update quantity)
-- [ ] Stock validation
+- [x] PATCH /api/cart/{item_id} (update quantity)
+- [x] Stock validation
 
 ### Frontend Tasks:
-- [ ] Quantity +/- buttons in cart
-- [ ] Direct quantity input
-- [ ] Real-time total update
-- [ ] Stock limit handling
+- [x] Quantity +/- buttons in cart
+- [x] Direct quantity input
+- [x] Real-time total update
+- [x] Stock limit handling
 
 ### Testing:
 - [ ] Test increase quantity
@@ -339,6 +339,16 @@ Break down development into small, manageable phases that can be completed in 4-
 - [ ] Test stock limit
 
 ---
+### Implementation Details:
+- Backend: PATCH /api/cart/{item_id} endpoint with comprehensive stock validation
+- UpdateCartQuantity Pydantic model for request validation
+- Stock validation added to both POST (add to cart) and PATCH (update quantity) endpoints
+- Frontend: Plus/Minus buttons with disabled states at limits
+- Direct quantity input field with validation
+- Stock warning badges for low stock items (< 10)
+- Per-item subtotal display
+- Real-time error handling with user-friendly messages
+- Prevents quantities below 1 and above available stock
 
 ## 🟢 PHASE 2E: Stock Management (4 Credits)
 **Status:** ❌ TODO  
@@ -841,25 +851,37 @@ making it easier to support multiple payment gateways through a unified interfac
 | Phase Group | Total Phases | Total Credits | Status |
 |-------------|--------------|---------------|--------|
 | Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
-| Phase 2 (UX) | 5 | 20 | 🟡 3/5 Done |
+| Phase 2 (UX) | 5 | 20 | 🟡 4/5 Done |
 | Phase 3 (Engagement) | 6 | 26 | ❌ TODO |
 | Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
-| **TOTAL** | **35** | **140** | **12/35 Done** |
+| **TOTAL** | **35** | **140** | **13/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 35.0% Complete (49/140 credits)
+## 🎯 Current Progress: 37.1% Complete (52/140 credits)
 
 ---
 
-**Last Updated:** 2025-11-12 (Phase 2C: Address Management Completed)
-**Version:** 2.4  
+**Last Updated:** 2025-11-12 (Phase 2D: Cart Quantity Management Completed)
+**Version:** 2.5  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 2.5 (2025-11-12)
+- ✅ Completed Phase 2D: Cart Quantity Management
+- ✅ Backend: PATCH /api/cart/{item_id} endpoint with stock validation
+- ✅ UpdateCartQuantity Pydantic model for request validation
+- ✅ Enhanced POST /api/cart with comprehensive stock checking
+- ✅ Frontend: Plus/Minus buttons for quantity control with disabled states
+- ✅ Direct quantity input field with validation
+- ✅ Stock warning badges for low stock items (< 10 items)
+- ✅ Per-item subtotal display in cart
+- ✅ Real-time error handling with user-friendly messages
+- ✅ Prevents quantities below 1 and above available stock
 
 ### Version 2.4 (2025-11-12)
 - ✅ Completed Phase 2C: Address Management

@@ -54,6 +54,47 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }
   };
 
+  const updateQuantity = async (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
+    
+    try {
+      await axiosInstance.patch(`/cart/${itemId}`, { quantity: newQuantity });
+      fetchCart();
+      fetchCartCount();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to update quantity');
+      fetchCart(); // Refresh to show actual quantity
+    }
+  };
+
+  const incrementQuantity = (item) => {
+    if (item.quantity >= item.product?.stock) {
+      toast.error(`Only ${item.product?.stock} items available in stock`);
+      return;
+    }
+    updateQuantity(item.id, item.quantity + 1);
+  };
+
+  const decrementQuantity = (item) => {
+    if (item.quantity <= 1) {
+      toast.info('Use remove button to delete item');
+      return;
+    }
+    updateQuantity(item.id, item.quantity - 1);
+  };
+
+  const handleQuantityChange = (item, value) => {
+    const newQuantity = parseInt(value);
+    if (isNaN(newQuantity) || newQuantity < 1) return;
+    
+    if (newQuantity > item.product?.stock) {
+      toast.error(`Only ${item.product?.stock} items available in stock`);
+      return;
+    }
+    
+    updateQuantity(item.id, newQuantity);
+  };
+
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
       toast.error('Cart is empty');
@@ -215,13 +256,53 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                           <h3 className="text-xl font-semibold text-gray-900">
                             {item.product?.name}
                           </h3>
-                          <p className="text-2xl font-bold text-blue-600 mt-2">
-                            ${item.product?.price.toFixed(2)}
-                          </p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <p className="text-2xl font-bold text-blue-600">
+                              ${item.product?.price.toFixed(2)}
+                            </p>
+                            {item.product?.stock < 10 && (
+                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                                Only {item.product?.stock} left
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-gray-600">Quantity: {item.quantity}</span>
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                data-testid={`decrement-qty-${item.id}`}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => decrementQuantity(item)}
+                                disabled={item.quantity <= 1}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <input
+                                data-testid={`quantity-input-${item.id}`}
+                                type="number"
+                                min="1"
+                                max={item.product?.stock}
+                                value={item.quantity}
+                                onChange={(e) => handleQuantityChange(item, e.target.value)}
+                                className="w-16 text-center border rounded-md py-1 font-semibold"
+                              />
+                              <Button
+                                data-testid={`increment-qty-${item.id}`}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => incrementQuantity(item)}
+                                disabled={item.quantity >= item.product?.stock}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              Subtotal: <span className="font-semibold text-gray-900">${(item.product?.price * item.quantity).toFixed(2)}</span>
+                            </div>
                           </div>
                           <Button
                             data-testid={`remove-item-${item.id}`}

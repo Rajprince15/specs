@@ -237,6 +237,9 @@ class AddToCart(BaseModel):
     product_id: str
     quantity: int = 1
 
+class UpdateCartQuantity(BaseModel):
+    quantity: int
+
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -816,6 +819,15 @@ async def add_to_cart(cart_data: AddToCart, authorization: str = Header(None)):
     user = await get_current_user(authorization)
     
     async with async_session_maker() as session:
+        # Check product stock first
+        product_result = await session.execute(
+            select(ProductDB).where(ProductDB.id == cart_data.product_id)
+        )
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
         # Check if item already in cart
         result = await session.execute(
             select(CartItemDB).where(
@@ -826,10 +838,24 @@ async def add_to_cart(cart_data: AddToCart, authorization: str = Header(None)):
         existing = result.scalar_one_or_none()
         
         if existing:
+            # Check if new quantity exceeds stock
+            new_quantity = existing.quantity + cart_data.quantity
+            if new_quantity > product.stock:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Only {product.stock} items available in stock"
+                )
             # Update quantity
-            existing.quantity += cart_data.quantity
+            existing.quantity = new_quantity
             await session.commit()
             return {"message": "Cart updated successfully"}
+        
+        # Check stock for new item
+        if cart_data.quantity > product.stock:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only {product.stock} items available in stock"
+            )
         
         # Add new item
         cart_item = CartItem(user_id=user['user_id'], product_id=cart_data.product_id, quantity=cart_data.quantity)
@@ -877,6 +903,50 @@ async def clear_cart(authorization: str = Header(None)):
         await session.commit()
         
         return {"message": "Cart cleared"}
+
+@api_router.patch("/cart/{item_id}")
+async def update_cart_quantity(item_id: str, quantity_data: UpdateCartQuantity, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    if quantity_data.quantity < 1:
+        raise HTTPException(status_code=400, detail="Quantity must be at least 1")
+    
+    async with async_session_maker() as session:
+        # Get cart item
+        result = await session.execute(
+            select(CartItemDB).where(
+                (CartItemDB.id == item_id) & 
+                (CartItemDB.user_id == user['user_id'])
+            )
+        )
+        cart_item = result.scalar_one_or_none()
+        
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="Cart item not found")
+        
+        # Check product stock
+        product_result = await session.execute(
+            select(ProductDB).where(ProductDB.id == cart_item.product_id)
+        )
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        if quantity_data.quantity > product.stock:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Only {product.stock} items available in stock"
+            )
+        
+        # Update quantity
+        cart_item.quantity = quantity_data.quantity
+        await session.commit()
+        
+        return {
+            "message": "Cart quantity updated successfully",
+            "quantity": cart_item.quantity
+        }
 
 # ============ Order Routes ============
 
