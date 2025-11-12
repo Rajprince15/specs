@@ -63,6 +63,9 @@ const Orders = ({ user, onLogout, cartCount }) => {
                 )}
               </Button>
             </Link>
+            <Link to="/profile">
+              <Button data-testid="profile-btn" variant="outline">Profile</Button>
+            </Link>
             <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
               Logout
             </Button>

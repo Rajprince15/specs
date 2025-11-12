@@ -144,6 +144,15 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class UserProfileUpdate(BaseModel):
+    name: str
+    phone: str
+    address: Optional[str] = None
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
+
 class Product(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -321,21 +330,133 @@ async def login(credentials: UserLogin):
             "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
         }
 
+# ============ User Profile Routes ============
+
+@api_router.get("/user/profile")
+async def get_user_profile(user_data: dict = Header(None, alias="Authorization")):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "phone": user.phone,
+            "address": user.address,
+            "role": user.role,
+            "created_at": user.created_at.isoformat() if user.created_at else None
+        }
+
+@api_router.put("/user/profile")
+async def update_user_profile(
+    profile_data: UserProfileUpdate,
+    user_data: dict = Header(None, alias="Authorization")
+):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update user fields
+        user.name = profile_data.name
+        user.phone = profile_data.phone
+        user.address = profile_data.address
+        
+        await session.commit()
+        
+        return {
+            "message": "Profile updated successfully",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "phone": user.phone,
+                "address": user.address
+            }
+        }
+
+@api_router.put("/user/password")
+async def change_password(
+    password_data: PasswordChange,
+    user_data: dict = Header(None, alias="Authorization")
+):
+    current_user = await get_current_user(user_data)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Verify old password
+        if not pwd_context.verify(password_data.old_password, user.password):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        
+        # Hash and update new password
+        user.password = pwd_context.hash(password_data.new_password)
+        
+        await session.commit()
+        
+        return {"message": "Password changed successfully"}
+
 # ============ Product Routes ============
 
 @api_router.get("/products")
-async def get_products(category: Optional[str] = None, search: Optional[str] = None):
+async def get_products(
+    category: Optional[str] = None, 
+    search: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    sort: Optional[str] = None
+):
     async with async_session_maker() as session:
         query = select(ProductDB)
         
+        # Category filter
         if category:
             query = query.where(ProductDB.category == category)
         
+        # Search filter (name, brand, description)
         if search:
             search_pattern = f"%{search}%"
             query = query.where(
-                (ProductDB.name.like(search_pattern)) | (ProductDB.brand.like(search_pattern))
+                (ProductDB.name.like(search_pattern)) | 
+                (ProductDB.brand.like(search_pattern)) |
+                (ProductDB.description.like(search_pattern))
             )
+        
+        # Price range filter
+        if min_price is not None:
+            query = query.where(ProductDB.price >= min_price)
+        if max_price is not None:
+            query = query.where(ProductDB.price <= max_price)
+        
+        # Sorting
+        if sort:
+            if sort == "price_asc":
+                query = query.order_by(ProductDB.price.asc())
+            elif sort == "price_desc":
+                query = query.order_by(ProductDB.price.desc())
+            elif sort == "name_asc":
+                query = query.order_by(ProductDB.name.asc())
+            elif sort == "name_desc":
+                query = query.order_by(ProductDB.name.desc())
+            elif sort == "newest":
+                query = query.order_by(ProductDB.created_at.desc())
+        else:
+            # Default sorting by created_at descending
+            query = query.order_by(ProductDB.created_at.desc())
         
         result = await session.execute(query)
         products = result.scalars().all()

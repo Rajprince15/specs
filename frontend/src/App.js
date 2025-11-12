@@ -11,6 +11,7 @@ import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
 import Orders from "@/pages/Orders";
+import Profile from "@/pages/Profile";
 import AdminDashboard from "@/pages/AdminDashboard";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 
@@ -111,6 +112,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Orders user={user} onLogout={handleLogout} cartCount={cartCount} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile user={user} onLogout={handleLogout} cartCount={cartCount} />
               </ProtectedRoute>
             }
           />
