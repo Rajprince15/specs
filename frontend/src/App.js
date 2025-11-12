@@ -10,6 +10,7 @@ import Register from "@/pages/Register";
 import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
+import Wishlist from "@/pages/Wishlist";
 import Orders from "@/pages/Orders";
 import Profile from "@/pages/Profile";
 import Addresses from "@/pages/Addresses";
@@ -35,6 +36,7 @@ axiosInstance.interceptors.request.use((config) => {
 function App() {
   const [user, setUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,6 +44,7 @@ function App() {
     if (token && userData) {
       setUser(JSON.parse(userData));
       fetchCartCount();
+      fetchWishlistCount();
     }
   }, []);
 
@@ -54,12 +57,22 @@ function App() {
     }
   };
 
+  const fetchWishlistCount = async () => {
+    try {
+      const response = await axiosInstance.get("/wishlist");
+      setWishlistCount(response.data.length);
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+    }
+  };
+
   const handleLogin = (userData, token) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     if (userData.role !== "admin") {
       fetchCartCount();
+      fetchWishlistCount();
     }
   };
 
@@ -68,6 +81,7 @@ function App() {
     localStorage.removeItem("user");
     setUser(null);
     setCartCount(0);
+    setWishlistCount(0);
     toast.success("Logged out successfully");
   };
 
@@ -105,6 +119,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Cart user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <Wishlist user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} fetchCartCount={fetchCartCount} fetchWishlistCount={fetchWishlistCount} />
               </ProtectedRoute>
             }
           />

@@ -103,7 +103,10 @@ class OrderDB(Base):
     payment_status: Mapped[str] = mapped_column(String(50), default="pending")
     order_status: Mapped[str] = mapped_column(String(50), default="processing")
     shipping_address: Mapped[str] = mapped_column(Text)
+    tracking_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    estimated_delivery: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class PaymentTransactionDB(Base):
     __tablename__ = "payment_transactions"
@@ -145,6 +148,34 @@ class ReviewDB(Base):
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+class WishlistDB(Base):
+    __tablename__ = "wishlist"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    product_id: Mapped[str] = mapped_column(String(36), index=True)
+    added_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class ProductImageDB(Base):
+    __tablename__ = "product_images"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    product_id: Mapped[str] = mapped_column(String(36), index=True)
+    image_url: Mapped[str] = mapped_column(String(500))
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_primary: Mapped[bool] = mapped_column(Integer, default=0)  # MySQL doesn't have bool, using Integer
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class OrderTrackingDB(Base):
+    __tablename__ = "order_tracking"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    order_id: Mapped[str] = mapped_column(String(36), index=True)
+    status: Mapped[str] = mapped_column(String(50))
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 # ============ Pydantic Models ============
 
@@ -271,6 +302,30 @@ class UpdateReview(BaseModel):
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
 
+class Wishlist(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    product_id: str
+    added_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AddToWishlist(BaseModel):
+    product_id: str
+
+class ProductImage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    product_id: str
+    image_url: str
+    display_order: int = 0
+    is_primary: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CreateProductImage(BaseModel):
+    image_url: str
+    display_order: int = 0
+    is_primary: bool = False
+
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -280,10 +335,29 @@ class Order(BaseModel):
     payment_status: str = "pending"
     order_status: str = "processing"
     shipping_address: str
+    tracking_number: Optional[str] = None
+    estimated_delivery: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CreateOrder(BaseModel):
     shipping_address: str
+
+class UpdateOrderStatus(BaseModel):
+    order_status: str
+    tracking_number: Optional[str] = None
+    estimated_delivery: Optional[datetime] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+
+class OrderTracking(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    order_id: str
+    status: str
+    description: Optional[str] = None
+    location: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PaymentTransaction(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1032,10 +1106,32 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
             payment_status=order.payment_status,
             order_status=order.order_status,
             shipping_address=order.shipping_address,
-            created_at=order.created_at
+            tracking_number=order.tracking_number,
+            estimated_delivery=order.estimated_delivery,
+            created_at=order.created_at,
+            updated_at=order.updated_at
         )
         
         session.add(db_order)
+        
+        # Create initial tracking entry
+        initial_tracking = OrderTracking(
+            order_id=order.id,
+            status="processing",
+            description="Order has been placed and is being processed",
+            location="Warehouse"
+        )
+        
+        db_tracking = OrderTrackingDB(
+            id=initial_tracking.id,
+            order_id=initial_tracking.order_id,
+            status=initial_tracking.status,
+            description=initial_tracking.description,
+            location=initial_tracking.location,
+            created_at=initial_tracking.created_at
+        )
+        
+        session.add(db_tracking)
         
         # Reduce stock for each product in the order
         for cart_item in cart_items:
@@ -1069,7 +1165,10 @@ async def get_orders(authorization: str = Header(None)):
                 "payment_status": o.payment_status,
                 "order_status": o.order_status,
                 "shipping_address": o.shipping_address,
-                "created_at": o.created_at.isoformat() if o.created_at else None
+                "tracking_number": o.tracking_number,
+                "estimated_delivery": o.estimated_delivery.isoformat() if o.estimated_delivery else None,
+                "created_at": o.created_at.isoformat() if o.created_at else None,
+                "updated_at": o.updated_at.isoformat() if o.updated_at else None
             }
             for o in orders
         ]
@@ -1096,7 +1195,107 @@ async def get_order(order_id: str, authorization: str = Header(None)):
             "payment_status": order.payment_status,
             "order_status": order.order_status,
             "shipping_address": order.shipping_address,
-            "created_at": order.created_at.isoformat() if order.created_at else None
+            "tracking_number": order.tracking_number,
+            "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+            "created_at": order.created_at.isoformat() if order.created_at else None,
+            "updated_at": order.updated_at.isoformat() if order.updated_at else None
+        }
+
+@api_router.get("/orders/{order_id}/tracking")
+async def get_order_tracking(order_id: str, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Verify order exists and user has access
+        order_result = await session.execute(select(OrderDB).where(OrderDB.id == order_id))
+        order = order_result.scalar_one_or_none()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        if user['role'] != 'admin' and order.user_id != user['user_id']:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get tracking history
+        tracking_result = await session.execute(
+            select(OrderTrackingDB)
+            .where(OrderTrackingDB.order_id == order_id)
+            .order_by(OrderTrackingDB.created_at.asc())
+        )
+        tracking_history = tracking_result.scalars().all()
+        
+        return {
+            "order_id": order.id,
+            "current_status": order.order_status,
+            "tracking_number": order.tracking_number,
+            "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+            "created_at": order.created_at.isoformat() if order.created_at else None,
+            "updated_at": order.updated_at.isoformat() if order.updated_at else None,
+            "tracking_history": [
+                {
+                    "id": t.id,
+                    "status": t.status,
+                    "description": t.description,
+                    "location": t.location,
+                    "created_at": t.created_at.isoformat() if t.created_at else None
+                }
+                for t in tracking_history
+            ]
+        }
+
+@api_router.put("/orders/{order_id}/status")
+async def update_order_status(order_id: str, status_data: UpdateOrderStatus, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    # Check if user is admin
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Get order
+        result = await session.execute(select(OrderDB).where(OrderDB.id == order_id))
+        order = result.scalar_one_or_none()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Update order status and tracking info
+        order.order_status = status_data.order_status
+        if status_data.tracking_number:
+            order.tracking_number = status_data.tracking_number
+        if status_data.estimated_delivery:
+            order.estimated_delivery = status_data.estimated_delivery
+        order.updated_at = datetime.now(timezone.utc)
+        
+        # Create tracking history entry
+        tracking = OrderTracking(
+            order_id=order_id,
+            status=status_data.order_status,
+            description=status_data.description,
+            location=status_data.location
+        )
+        
+        db_tracking = OrderTrackingDB(
+            id=tracking.id,
+            order_id=tracking.order_id,
+            status=tracking.status,
+            description=tracking.description,
+            location=tracking.location,
+            created_at=tracking.created_at
+        )
+        
+        session.add(db_tracking)
+        await session.commit()
+        
+        return {
+            "message": "Order status updated successfully",
+            "order": {
+                "id": order.id,
+                "order_status": order.order_status,
+                "tracking_number": order.tracking_number,
+                "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+                "updated_at": order.updated_at.isoformat()
+            }
         }
 
 # ============ Review Routes ============
@@ -1240,6 +1439,228 @@ async def delete_review(review_id: str, authorization: str = Header(None)):
         await session.commit()
         
         return {"message": "Review deleted successfully"}
+
+# ============ Wishlist Routes ============
+
+@api_router.get("/wishlist")
+async def get_wishlist(authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get wishlist items with product details
+        result = await session.execute(
+            select(WishlistDB, ProductDB)
+            .join(ProductDB, WishlistDB.product_id == ProductDB.id)
+            .where(WishlistDB.user_id == user['user_id'])
+            .order_by(WishlistDB.added_at.desc())
+        )
+        wishlist_items = result.all()
+        
+        return [
+            {
+                "id": w.id,
+                "product_id": w.product_id,
+                "added_at": w.added_at.isoformat() if w.added_at else None,
+                "product": {
+                    "id": p.id,
+                    "name": p.name,
+                    "brand": p.brand,
+                    "price": float(p.price),
+                    "category": p.category,
+                    "image_url": p.image_url,
+                    "stock": p.stock
+                }
+            }
+            for w, p in wishlist_items
+        ]
+
+@api_router.post("/wishlist")
+async def add_to_wishlist(wishlist_data: AddToWishlist, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Check if product exists
+        product_result = await session.execute(select(ProductDB).where(ProductDB.id == wishlist_data.product_id))
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Check if already in wishlist
+        existing = await session.execute(
+            select(WishlistDB).where(
+                (WishlistDB.user_id == user['user_id']) & 
+                (WishlistDB.product_id == wishlist_data.product_id)
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Product already in wishlist")
+        
+        # Add to wishlist
+        wishlist = Wishlist(
+            user_id=user['user_id'],
+            product_id=wishlist_data.product_id
+        )
+        
+        db_wishlist = WishlistDB(
+            id=wishlist.id,
+            user_id=wishlist.user_id,
+            product_id=wishlist.product_id,
+            added_at=wishlist.added_at
+        )
+        
+        session.add(db_wishlist)
+        await session.commit()
+        
+        return {
+            "message": "Product added to wishlist",
+            "wishlist_item": {
+                "id": wishlist.id,
+                "product_id": wishlist.product_id,
+                "added_at": wishlist.added_at.isoformat()
+            }
+        }
+
+@api_router.delete("/wishlist/{product_id}")
+async def remove_from_wishlist(product_id: str, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(WishlistDB).where(
+                (WishlistDB.user_id == user['user_id']) & 
+                (WishlistDB.product_id == product_id)
+            )
+        )
+        wishlist_item = result.scalar_one_or_none()
+        
+        if not wishlist_item:
+            raise HTTPException(status_code=404, detail="Product not in wishlist")
+        
+        await session.execute(
+            delete(WishlistDB).where(
+                (WishlistDB.user_id == user['user_id']) & 
+                (WishlistDB.product_id == product_id)
+            )
+        )
+        await session.commit()
+        
+        return {"message": "Product removed from wishlist"}
+
+# ============ Product Images Routes ============
+
+@api_router.get("/products/{product_id}/images")
+async def get_product_images(product_id: str):
+    async with async_session_maker() as session:
+        # Check if product exists
+        product_result = await session.execute(select(ProductDB).where(ProductDB.id == product_id))
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Get images
+        result = await session.execute(
+            select(ProductImageDB)
+            .where(ProductImageDB.product_id == product_id)
+            .order_by(ProductImageDB.display_order, ProductImageDB.created_at)
+        )
+        images = result.scalars().all()
+        
+        return [
+            {
+                "id": img.id,
+                "product_id": img.product_id,
+                "image_url": img.image_url,
+                "display_order": img.display_order,
+                "is_primary": bool(img.is_primary),
+                "created_at": img.created_at.isoformat() if img.created_at else None
+            }
+            for img in images
+        ]
+
+@api_router.post("/products/{product_id}/images")
+async def add_product_image(product_id: str, image_data: CreateProductImage, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    # Check if user is admin
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Check if product exists
+        product_result = await session.execute(select(ProductDB).where(ProductDB.id == product_id))
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # If this is set as primary, unset other primary images
+        if image_data.is_primary:
+            await session.execute(
+                update(ProductImageDB)
+                .where(ProductImageDB.product_id == product_id)
+                .values(is_primary=0)
+            )
+        
+        # Create image
+        product_image = ProductImage(
+            product_id=product_id,
+            image_url=image_data.image_url,
+            display_order=image_data.display_order,
+            is_primary=image_data.is_primary
+        )
+        
+        db_image = ProductImageDB(
+            id=product_image.id,
+            product_id=product_image.product_id,
+            image_url=product_image.image_url,
+            display_order=product_image.display_order,
+            is_primary=1 if product_image.is_primary else 0,
+            created_at=product_image.created_at
+        )
+        
+        session.add(db_image)
+        await session.commit()
+        
+        return {
+            "message": "Image added successfully",
+            "image": {
+                "id": product_image.id,
+                "product_id": product_image.product_id,
+                "image_url": product_image.image_url,
+                "display_order": product_image.display_order,
+                "is_primary": product_image.is_primary,
+                "created_at": product_image.created_at.isoformat()
+            }
+        }
+
+@api_router.delete("/products/{product_id}/images/{image_id}")
+async def delete_product_image(product_id: str, image_id: str, authorization: str = Header(None)):
+    user = await get_current_user(authorization)
+    
+    # Check if user is admin
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(ProductImageDB).where(
+                (ProductImageDB.id == image_id) & 
+                (ProductImageDB.product_id == product_id)
+            )
+        )
+        image = result.scalar_one_or_none()
+        
+        if not image:
+            raise HTTPException(status_code=404, detail="Image not found")
+        
+        await session.execute(
+            delete(ProductImageDB).where(ProductImageDB.id == image_id)
+        )
+        await session.commit()
+        
+        return {"message": "Image deleted successfully"}
 
 # ============ Payment Routes ============
 
