@@ -1,0 +1,375 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Glasses, Package, Users, DollarSign, Plus, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { axiosInstance } from '@/App';
+
+const AdminDashboard = ({ user, onLogout }) => {
+  const [stats, setStats] = useState({ total_products: 0, total_orders: 0, total_users: 0, total_revenue: 0 });
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    brand: '',
+    price: '',
+    description: '',
+    category: 'men',
+    frame_type: 'full-rim',
+    frame_shape: 'rectangular',
+    color: '',
+    image_url: '',
+    stock: 100
+  });
+
+  useEffect(() => {
+    fetchStats();
+    fetchProducts();
+    fetchOrders();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/stats');
+      setStats(response.data);
+    } catch (error) {
+      toast.error('Failed to load stats');
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axiosInstance.get('/products');
+      setProducts(response.data);
+    } catch (error) {
+      toast.error('Failed to load products');
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axiosInstance.get('/orders');
+      setOrders(response.data);
+    } catch (error) {
+      toast.error('Failed to load orders');
+    }
+  };
+
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const productData = {
+        ...productForm,
+        price: parseFloat(productForm.price),
+        stock: parseInt(productForm.stock)
+      };
+
+      if (editingProduct) {
+        await axiosInstance.put(`/products/${editingProduct.id}`, productData);
+        toast.success('Product updated successfully');
+      } else {
+        await axiosInstance.post('/products', productData);
+        toast.success('Product created successfully');
+      }
+
+      setShowProductDialog(false);
+      setEditingProduct(null);
+      setProductForm({
+        name: '',
+        brand: '',
+        price: '',
+        description: '',
+        category: 'men',
+        frame_type: 'full-rim',
+        frame_shape: 'rectangular',
+        color: '',
+        image_url: '',
+        stock: 100
+      });
+      fetchProducts();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to save product');
+    }
+  };
+
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name,
+      brand: product.brand,
+      price: product.price.toString(),
+      description: product.description,
+      category: product.category,
+      frame_type: product.frame_type,
+      frame_shape: product.frame_shape,
+      color: product.color,
+      image_url: product.image_url,
+      stock: product.stock
+    });
+    setShowProductDialog(true);
+  };
+
+  const handleDelete = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await axiosInstance.delete(`/products/${productId}`);
+      toast.success('Product deleted successfully');
+      fetchProducts();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to delete product');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Navigation */}
+      <nav className="glass sticky top-0 z-50 border-b">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <Glasses className="w-8 h-8 text-blue-600" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              LensKart Admin
+            </span>
+          </Link>
+          <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
+            Logout
+          </Button>
+        </div>
+      </nav>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+            <DialogTrigger asChild>
+              <Button data-testid="add-product-btn" onClick={() => { setEditingProduct(null); setProductForm({ name: '', brand: '', price: '', description: '', category: 'men', frame_type: 'full-rim', frame_shape: 'rectangular', color: '', image_url: '', stock: 100 }); }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Plus className="w-5 h-5 mr-2" />
+                Add Product
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+                <DialogDescription>Fill in the product details below</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleProductSubmit} className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Product Name</Label>
+                    <Input data-testid="product-name-input" id="name" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="brand">Brand</Label>
+                    <Input data-testid="product-brand-input" id="brand" value={productForm.brand} onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price ($)</Label>
+                    <Input data-testid="product-price-input" id="price" type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stock">Stock</Label>
+                    <Input data-testid="product-stock-input" id="stock" type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select value={productForm.category} onValueChange={(value) => setProductForm({ ...productForm, category: value })}>
+                      <SelectTrigger data-testid="product-category-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="men">Men</SelectItem>
+                        <SelectItem value="women">Women</SelectItem>
+                        <SelectItem value="kids">Kids</SelectItem>
+                        <SelectItem value="sunglasses">Sunglasses</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="frame_type">Frame Type</Label>
+                    <Select value={productForm.frame_type} onValueChange={(value) => setProductForm({ ...productForm, frame_type: value })}>
+                      <SelectTrigger data-testid="product-frame-type-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="full-rim">Full Rim</SelectItem>
+                        <SelectItem value="half-rim">Half Rim</SelectItem>
+                        <SelectItem value="rimless">Rimless</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="frame_shape">Frame Shape</Label>
+                    <Select value={productForm.frame_shape} onValueChange={(value) => setProductForm({ ...productForm, frame_shape: value })}>
+                      <SelectTrigger data-testid="product-frame-shape-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="rectangular">Rectangular</SelectItem>
+                        <SelectItem value="round">Round</SelectItem>
+                        <SelectItem value="cat-eye">Cat Eye</SelectItem>
+                        <SelectItem value="aviator">Aviator</SelectItem>
+                        <SelectItem value="wayfarer">Wayfarer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="color">Color</Label>
+                    <Input data-testid="product-color-input" id="color" value={productForm.color} onChange={(e) => setProductForm({ ...productForm, color: e.target.value })} required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input data-testid="product-description-input" id="description" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="image_url">Image URL</Label>
+                  <Input data-testid="product-image-input" id="image_url" type="url" value={productForm.image_url} onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })} required />
+                </div>
+                <Button data-testid="product-submit-btn" type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  {editingProduct ? 'Update Product' : 'Create Product'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Stats */}
+        <div className="grid md:grid-cols-4 gap-6 mb-12">
+          <Card className="glass border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Total Products</p>
+                  <p data-testid="stat-products" className="text-3xl font-bold text-gray-900">{stats.total_products}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Package className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Total Orders</p>
+                  <p data-testid="stat-orders" className="text-3xl font-bold text-gray-900">{stats.total_orders}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Glasses className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Total Users</p>
+                  <p data-testid="stat-users" className="text-3xl font-bold text-gray-900">{stats.total_users}</p>
+                </div>
+                <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-pink-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Total Revenue</p>
+                  <p data-testid="stat-revenue" className="text-3xl font-bold text-gray-900">${stats.total_revenue.toFixed(2)}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Products Table */}
+        <Card className="glass border-0 mb-12">
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Products</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Image</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Name</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Brand</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Price</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Stock</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product) => (
+                    <tr key={product.id} data-testid={`product-row-${product.id}`} className="border-b hover:bg-white/50">
+                      <td className="py-3 px-4">
+                        <img src={product.image_url} alt={product.name} className="w-12 h-12 object-cover rounded" />
+                      </td>
+                      <td className="py-3 px-4 font-medium text-gray-900">{product.name}</td>
+                      <td className="py-3 px-4 text-gray-600">{product.brand}</td>
+                      <td className="py-3 px-4 text-blue-600 font-semibold">${product.price.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-gray-600">{product.stock}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button data-testid={`edit-product-${product.id}`} size="sm" variant="outline" onClick={() => handleEdit(product)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button data-testid={`delete-product-${product.id}`} size="sm" variant="destructive" onClick={() => handleDelete(product.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Orders */}
+        <Card className="glass border-0">
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Orders</h2>
+            <div className="space-y-4">
+              {orders.slice(0, 10).map((order) => (
+                <div key={order.id} data-testid={`order-row-${order.id}`} className="p-4 bg-white/50 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">Order #{order.id.slice(0, 8)}</p>
+                      <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-600">${order.total_amount.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600 capitalize">{order.payment_status}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
