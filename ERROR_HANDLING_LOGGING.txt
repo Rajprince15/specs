@@ -1,0 +1,521 @@
+# Phase 5D: Error Handling & Logging Implementation
+
+## Overview
+This document describes the complete error handling and logging infrastructure implemented in Phase 5D.
+
+## Backend Implementation
+
+### 1. Structured JSON Logging
+
+**File:** `/app/backend/logging_config.py`
+
+#### Features:
+- **JSON Format**: All logs are structured as JSON for easy parsing and analysis
+- **Contextual Information**: Automatically includes timestamp, level, module, function, line number
+- **Extra Fields**: Support for custom fields (user_id, request_id, endpoint, etc.)
+- **Exception Tracking**: Automatic exception info capture with traceback
+- **Environment-based**: Can switch between JSON and text format via environment variable
+
+#### Configuration:
+```python
+# Environment Variables
+JSON_LOGGING=true          # Enable JSON logging (default: false)
+LOG_LEVEL=INFO            # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+```
+
+#### Usage:
+```python
+from logging_config import get_logger
+
+logger = get_logger(__name__, user_id="123", request_id="abc")
+logger.info("User logged in", extra={'ip_address': '1.2.3.4'})
+logger.error("Payment failed", extra={'order_id': 'xyz', 'amount': 99.99})
+```
+
+#### Example Log Output (JSON):
+```json
+{
+  "timestamp": "2025-01-12T10:30:45.123456Z",
+  "level": "INFO",
+  "logger": "server",
+  "message": "User logged in",
+  "module": "server",
+  "function": "login",
+  "line": 582,
+  "user_id": "user-123",
+  "request_id": "abc-def-ghi",
+  "endpoint": "/api/auth/login",
+  "method": "POST",
+  "status_code": 200,
+  "duration_ms": 45.67
+}
+```
+
+### 2. Error Tracking with Sentry
+
+**File:** `/app/backend/error_tracking.py`
+
+#### Features:
+- **Automatic Exception Capture**: All unhandled exceptions sent to Sentry
+- **Performance Monitoring**: Tracks API endpoint performance (configurable sample rate)
+- **User Context**: Associates errors with specific users
+- **Custom Context**: Add extra data to error reports
+- **Integration**: FastAPI, Redis, and Logging integrations
+- **Filtering**: Excludes health checks and static files
+- **Decorator Support**: `@track_error` decorator for functions
+
+#### Configuration:
+```python
+# Environment Variables
+SENTRY_DSN=https://xxxxx@sentry.io/xxxxx  # Sentry DSN (required)
+ENVIRONMENT=development                    # Environment name
+APP_VERSION=1.0.0                         # App version for release tracking
+SENTRY_TRACES_SAMPLE_RATE=0.1             # Performance monitoring sample rate
+```
+
+#### Usage:
+```python
+from error_tracking import capture_exception, set_user_context, track_error
+
+# Manual exception capture
+try:
+    risky_operation()
+except Exception as e:
+    capture_exception(e, order_id="123", amount=99.99)
+
+# Set user context for all subsequent errors
+set_user_context(user_id="user-123", email="user@example.com")
+
+# Decorator for automatic tracking
+@track_error
+async def process_payment(order_id):
+    # Your code here
+    pass
+```
+
+### 3. API Rate Limiting
+
+**File:** `/app/backend/rate_limiter.py`
+
+#### Features:
+- **User-based Limiting**: Authenticated users tracked by user ID
+- **IP-based Fallback**: Anonymous users tracked by IP address
+- **Flexible Limits**: Per-minute, per-hour, per-day limits
+- **Redis Storage**: Distributed rate limiting (optional)
+- **Preset Limits**: Pre-configured limits for different endpoint types
+- **Headers**: Includes rate limit info in response headers
+
+#### Rate Limit Presets:
+```python
+RateLimit = {
+    'auth': "5/minute",         # Login, logout
+    'login': "10/minute",       # Login specifically
+    'register': "5/minute",     # Registration
+    'read': "100/minute",       # GET requests
+    'search': "30/minute",      # Search endpoints
+    'write': "30/minute",       # POST, PUT, DELETE
+    'create': "20/minute",      # POST requests
+    'update': "30/minute",      # PUT requests
+    'delete': "20/minute",      # DELETE requests
+    'payment': "5/minute",      # Payment operations
+    'checkout': "3/minute",     # Checkout specifically
+    'admin': "50/minute",       # Admin operations
+    'default': "100/minute",    # Default for all endpoints
+}
+```
+
+#### Configuration:
+```python
+# Environment Variables
+REDIS_URL=redis://localhost:6379          # Redis for distributed limiting (optional)
+DEFAULT_RATE_LIMIT=100/minute             # Global default limit
+```
+
+#### Usage:
+```python
+from rate_limiter import limiter, RateLimit
+
+@api_router.post("/auth/login")
+@limiter.limit(RateLimit['login'])
+async def login(request: Request, credentials: UserLogin):
+    # Endpoint code
+    pass
+```
+
+#### Applied to Endpoints:
+- `/api/auth/register` - 5 requests/minute
+- `/api/auth/login` - 10 requests/minute
+- `/api/payment/checkout` - 3 requests/minute
+- All other endpoints - Default 100/minute
+
+### 4. Request Tracking Middleware
+
+**File:** `/app/backend/middleware.py`
+
+#### Features:
+- **Request ID**: Unique ID for each request (UUID)
+- **Performance Tracking**: Measures request duration
+- **Response Headers**: Adds X-Request-ID and X-Process-Time headers
+- **Automatic Logging**: Logs all requests with context
+- **Error Handling**: Catches and logs unhandled errors
+
+#### Example Request Log:
+```json
+{
+  "timestamp": "2025-01-12T10:30:45.123456Z",
+  "level": "INFO",
+  "message": "POST /api/auth/login",
+  "request_id": "abc-def-ghi-jkl",
+  "method": "POST",
+  "endpoint": "/api/auth/login",
+  "status_code": 200,
+  "duration_ms": 45.67,
+  "user_agent": "Mozilla/5.0..."
+}
+```
+
+### 5. Error Handler Middleware
+
+#### Features:
+- **Global Error Catching**: Catches all unhandled exceptions
+- **Consistent Responses**: Returns standardized error JSON
+- **Error Logging**: Logs full exception details with traceback
+- **Request Context**: Includes request ID in error response
+
+#### Example Error Response:
+```json
+{
+  "error": "Internal server error",
+  "message": "An unexpected error occurred. Please try again later.",
+  "request_id": "abc-def-ghi-jkl"
+}
+```
+
+### 6. Request Validation
+
+**Pydantic Models** are used throughout for automatic request validation:
+- Type checking
+- Required field validation
+- Value constraints (min/max, regex patterns)
+- Custom validators
+- Automatic error messages
+
+Example validation error response:
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "email"],
+      "msg": "value is not a valid email address",
+      "type": "value_error.email"
+    }
+  ]
+}
+```
+
+## Frontend Implementation
+
+### 1. Error Boundary Component
+
+**File:** `/app/frontend/src/components/ErrorBoundary.js`
+
+#### Features:
+- **React Error Catching**: Catches JavaScript errors in component tree
+- **Graceful Fallback**: Shows user-friendly error UI
+- **Development Info**: Shows stack trace in development mode
+- **Error Recovery**: "Try Again" button to reset error state
+- **Sentry Integration**: Automatically reports errors to Sentry (if configured)
+- **Custom Fallback**: Supports custom fallback UI via props
+
+#### Usage:
+```jsx
+// Wraps entire app
+<ErrorBoundary>
+  <App />
+</ErrorBoundary>
+
+// With custom fallback
+<ErrorBoundary fallback={<CustomErrorUI />}>
+  <YourComponent />
+</ErrorBoundary>
+```
+
+### 2. Toast Notification System
+
+**File:** `/app/frontend/src/components/Toast.js`
+
+#### Features:
+- **4 Types**: success, error, warning, info
+- **Auto-dismiss**: Configurable duration (default 5 seconds)
+- **Manual Dismiss**: Close button on each toast
+- **Stacking**: Multiple toasts stack vertically
+- **Animations**: Smooth slide-in animations
+- **Icons**: Contextual icons for each type
+- **Accessible**: ARIA live regions for screen readers
+
+#### Usage:
+```jsx
+import { useToast } from '@/components/Toast';
+
+function MyComponent() {
+  const { toast } = useToast();
+
+  const handleSuccess = () => {
+    toast.success('Success!', 'Operation completed successfully');
+  };
+
+  const handleError = () => {
+    toast.error('Error!', 'Something went wrong', 10000); // 10 seconds
+  };
+
+  const handleWarning = () => {
+    toast.warning('Warning!', 'Please check your input');
+  };
+
+  const handleInfo = () => {
+    toast.info('Info', 'Just so you know...');
+  };
+
+  return (
+    // Your component
+  );
+}
+```
+
+### 3. Loading Skeleton Components
+
+**File:** `/app/frontend/src/components/LoadingSkeleton.js`
+
+#### Features:
+- **Base Skeleton**: Generic skeleton component
+- **Specialized Skeletons**: Pre-built for common UI patterns
+- **Smooth Animation**: Gradient pulse animation
+- **Variants**: Rectangular, circular, text
+- **Responsive**: Works with all screen sizes
+
+#### Available Components:
+- `Skeleton` - Base skeleton component
+- `ProductCardSkeleton` - Product card loading state
+- `ProductDetailSkeleton` - Product detail page loading
+- `ListSkeleton` - List items loading (configurable count)
+- `TableSkeleton` - Table loading (configurable rows/cols)
+- `CardSkeleton` - Generic card loading
+- `FormSkeleton` - Form loading (configurable fields)
+- `PageSkeleton` - Full page loading
+
+#### Usage:
+```jsx
+import { ProductCardSkeleton, ListSkeleton } from '@/components/LoadingSkeleton';
+
+function ProductList() {
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-3 gap-4">
+        <ProductCardSkeleton />
+        <ProductCardSkeleton />
+        <ProductCardSkeleton />
+      </div>
+    );
+  }
+
+  return (
+    // Your products
+  );
+}
+```
+
+## Integration in App
+
+### Backend (server.py)
+
+```python
+from logging_config import setup_logging, get_logger
+from error_tracking import initialize_sentry
+from rate_limiter import create_limiter, RateLimit
+from middleware import RequestTrackerMiddleware, ErrorHandlerMiddleware
+
+# Setup logging
+setup_logging(log_level='INFO', json_format=True)
+logger = get_logger(__name__)
+
+# Initialize Sentry
+if os.getenv('SENTRY_DSN'):
+    initialize_sentry(
+        dsn=os.getenv('SENTRY_DSN'),
+        environment='production',
+        traces_sample_rate=0.1,
+    )
+
+# Create rate limiter
+limiter = create_limiter(default_limit="100/minute")
+app.state.limiter = limiter
+
+# Add middleware
+app.add_middleware(RequestTrackerMiddleware)
+app.add_middleware(ErrorHandlerMiddleware)
+```
+
+### Frontend (App.js)
+
+```jsx
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { ToastProvider } from '@/components/Toast';
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <ToastProvider>
+        <HelmetProvider>
+          {/* Your app */}
+        </HelmetProvider>
+      </ToastProvider>
+    </ErrorBoundary>
+  );
+}
+```
+
+## Environment Variables
+
+### Backend (.env)
+
+```bash
+# Logging
+JSON_LOGGING=true                                    # Enable JSON logging
+LOG_LEVEL=INFO                                       # Log level
+
+# Sentry Error Tracking
+SENTRY_DSN=https://xxxxx@sentry.io/xxxxx            # Sentry DSN (optional)
+ENVIRONMENT=production                               # Environment name
+APP_VERSION=1.0.0                                    # App version
+SENTRY_TRACES_SAMPLE_RATE=0.1                       # Performance sample rate
+
+# Rate Limiting
+REDIS_URL=redis://localhost:6379                     # Redis for distributed limiting (optional)
+DEFAULT_RATE_LIMIT=100/minute                        # Global default limit
+```
+
+## Testing
+
+### Test Rate Limiting:
+```bash
+# Test login rate limit (should fail after 10 requests)
+for i in {1..15}; do
+  curl -X POST http://localhost:8001/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@example.com","password":"test123"}'
+done
+```
+
+### Test Error Tracking:
+```python
+# Manually trigger error
+raise Exception("Test exception for Sentry")
+
+# Check Sentry dashboard for the error report
+```
+
+### Test Logging:
+```bash
+# View logs (JSON format)
+tail -f /var/log/supervisor/backend.out.log | jq .
+
+# Filter by level
+tail -f /var/log/supervisor/backend.out.log | jq 'select(.level=="ERROR")'
+
+# Filter by endpoint
+tail -f /var/log/supervisor/backend.out.log | jq 'select(.endpoint=="/api/auth/login")'
+```
+
+### Test Error Boundary:
+```jsx
+// Add this to any component to trigger error
+const TestError = () => {
+  throw new Error('Test error boundary');
+  return null;
+};
+
+// Use in app
+<TestError />
+```
+
+### Test Toast:
+```jsx
+// Add to any component
+const { toast } = useToast();
+
+<button onClick={() => toast.success('Test', 'This is a test')}>
+  Test Toast
+</button>
+```
+
+## Benefits
+
+### Development:
+- ✅ Better debugging with structured logs
+- ✅ Clear error messages and stack traces
+- ✅ Request tracing with unique IDs
+- ✅ Performance insights
+
+### Production:
+- ✅ Centralized error tracking with Sentry
+- ✅ Rate limiting prevents abuse
+- ✅ Better user experience with error boundaries
+- ✅ Consistent error handling
+- ✅ Log aggregation and analysis
+
+### Monitoring:
+- ✅ Track API performance
+- ✅ Monitor error rates
+- ✅ Identify problematic endpoints
+- ✅ User behavior insights
+
+## Future Enhancements
+
+1. **Log Aggregation**: Integrate with ELK stack, Datadog, or CloudWatch
+2. **Alert System**: Set up alerts for error rates and critical errors
+3. **Retry Logic**: Implement automatic retry for failed requests
+4. **Circuit Breaker**: Prevent cascading failures
+5. **Request Replay**: Save and replay failed requests
+6. **Performance Metrics**: Add custom performance metrics
+7. **User Session Tracking**: Track full user journeys
+8. **A/B Testing Integration**: Track errors by experiment variant
+
+## Maintenance
+
+### Regular Tasks:
+1. Review error logs weekly
+2. Monitor rate limit violations
+3. Check Sentry dashboard for trends
+4. Update rate limits based on usage patterns
+5. Rotate log files to prevent disk fill
+6. Review and update error messages
+
+### When Issues Occur:
+1. Check logs with request ID for full context
+2. Review Sentry for detailed error reports
+3. Check rate limit headers in responses
+4. Verify middleware is properly configured
+5. Test error scenarios in development
+
+## Summary
+
+Phase 5D implements a comprehensive error handling and logging infrastructure with:
+
+✅ **Backend:**
+- Structured JSON logging
+- Sentry error tracking
+- API rate limiting
+- Request tracking middleware
+- Automatic error handling
+- Request validation
+
+✅ **Frontend:**
+- Error boundary components
+- Toast notification system
+- Loading skeleton components
+- Graceful error recovery
+
+This provides a robust foundation for monitoring, debugging, and maintaining the application in production.

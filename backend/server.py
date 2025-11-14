@@ -18,6 +18,11 @@ from emergentintegrations.payments.stripe.checkout import StripeCheckout, Checko
 from payment_gateway import PaymentGatewayFactory, RazorpayGateway
 from email_service import email_service
 from cache_service import get_cache_service
+from logging_config import setup_logging, get_logger
+from error_tracking import initialize_sentry, capture_exception, set_user_context
+from rate_limiter import create_limiter, RateLimit, rate_limit_error_handler
+from middleware import RequestTrackerMiddleware, ErrorHandlerMiddleware
+from slowapi.errors import RateLimitExceeded
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -517,7 +522,8 @@ async def get_db():
 # ============ Auth Routes ============
 
 @api_router.post("/auth/register")
-async def register(user_data: UserRegister):
+@limiter.limit(RateLimit['register'])
+async def register(request: Request, user_data: UserRegister):
     async with async_session_maker() as session:
         # Check if user exists
         result = await session.execute(select(UserDB).where(UserDB.email == user_data.email))
@@ -570,7 +576,8 @@ async def register(user_data: UserRegister):
         }
 
 @api_router.post("/auth/login")
-async def login(credentials: UserLogin):
+@limiter.limit(RateLimit['login'])
+async def login(request: Request, credentials: UserLogin):
     # Check for admin login
     if credentials.email == ADMIN_EMAIL:
         if credentials.password == ADMIN_PASSWORD:
@@ -1997,6 +2004,7 @@ async def delete_product_image(product_id: str, image_id: str, authorization: st
 # ============ Payment Routes ============
 
 @api_router.post("/payment/checkout")
+@limiter.limit(RateLimit['checkout'])
 async def create_checkout(request: Request, authorization: str = Header(None)):
     user = await get_current_user(authorization)
     
@@ -3729,9 +3737,37 @@ async def shutdown_event():
     await cache.disconnect()
     logging.info("Redis cache connection closed")
 
+# Configure structured logging (JSON format in production)
+json_logging = os.getenv('JSON_LOGGING', 'false').lower() == 'true'
+log_level = os.getenv('LOG_LEVEL', 'INFO')
+setup_logging(log_level=log_level, json_format=json_logging)
+logger = get_logger(__name__)
+
+# Initialize Sentry error tracking (if configured)
+sentry_dsn = os.getenv('SENTRY_DSN')
+if sentry_dsn:
+    initialize_sentry(
+        dsn=sentry_dsn,
+        environment=os.getenv('ENVIRONMENT', 'development'),
+        traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.1')),
+    )
+    logger.info("Sentry error tracking initialized")
+else:
+    logger.info("Sentry DSN not configured - error tracking disabled")
+
+# Create rate limiter
+limiter = create_limiter(default_limit=os.getenv('DEFAULT_RATE_LIMIT', '100/minute'))
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+
+# Add exception handler for rate limiting
+app.add_exception_handler(RateLimitExceeded, rate_limit_error_handler)
+
 # Include the router in the main app
 app.include_router(api_router)
 
+# Add middleware (order matters - first added is outermost)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -3740,9 +3776,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Add custom middleware
+app.add_middleware(RequestTrackerMiddleware)
+app.add_middleware(ErrorHandlerMiddleware)
+
 logger = logging.getLogger(__name__)

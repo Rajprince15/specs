@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import LoadingFallback from "@/components/LoadingFallback";
 import SkipToMain from "@/components/SkipToMain";
 import InstallPrompt from "@/components/InstallPrompt";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/components/Toast";
 
 // Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";
@@ -109,14 +111,16 @@ function App() {
   };
 
   return (
-    <HelmetProvider>
-      <div className="App">
-        <BrowserRouter>
-          <SkipToMain />
-          <InstallPrompt />
-          <Toaster position="top-center" richColors />
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
+    <ErrorBoundary>
+      <ToastProvider>
+        <HelmetProvider>
+          <div className="App">
+            <BrowserRouter>
+              <SkipToMain />
+              <InstallPrompt />
+              <Toaster position="top-center" richColors />
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
             <Route
               path="/"
               element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} />}
@@ -223,11 +227,13 @@ function App() {
               path="/compare"
               element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} />}
             />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </div>
-    </HelmetProvider>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </div>
+        </HelmetProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
