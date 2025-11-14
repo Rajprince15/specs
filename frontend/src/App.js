@@ -12,6 +12,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/context/ThemeContext";
+import "@/i18n"; // Initialize i18n
 
 // Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";

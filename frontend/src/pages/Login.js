@@ -8,8 +8,10 @@ import { Glasses, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import { useTranslation } from 'react-i18next';
 
 const Login = ({ onLogin }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ const Login = ({ onLogin }) => {
         navigate('/products');
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Login failed');
+      toast.error(error.response?.data?.detail || t('auth.loginError'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ const Login = ({ onLogin }) => {
           <nav role="navigation" aria-label="Authentication navigation">
           <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8" aria-label="Back to Home">
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-            Back to Home
+            {t('common.back')}
           </Link>
           </nav>
 
@@ -59,15 +61,15 @@ const Login = ({ onLogin }) => {
                 <Glasses className="w-8 h-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-center">Welcome Back</CardTitle>
+            <CardTitle className="text-3xl font-bold text-center">{t('common.welcome')}</CardTitle>
             <CardDescription className="text-center text-base">
-              Login to your Gee Ess Opticals account
+              {t('auth.login')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   data-testid="email-input"
                   id="email"
@@ -80,7 +82,7 @@ const Login = ({ onLogin }) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <Input
                   data-testid="password-input"
                   id="password"
@@ -98,14 +100,14 @@ const Login = ({ onLogin }) => {
                 disabled={loading}
                 className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg"
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? `${t('common.loading')}` : t('auth.signIn')}
               </Button>
             </form>
             <div className="mt-6 text-center">
               <p className="text-gray-600">
-                Don't have an account?{' '}
+                {t('auth.noAccount')}{' '}
                 <Link to="/register" className="text-blue-600 hover:underline font-semibold">
-                  Register here
+                  {t('auth.signUp')}
                 </Link>
               </p>
               <p className="text-sm text-gray-500 mt-4">

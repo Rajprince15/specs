@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Glasses, Heart } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
+import LanguageSelector from '@/components/LanguageSelector';
 
 const Navigation = ({ 
   user, 
@@ -23,6 +24,9 @@ const Navigation = ({
         <div className="flex items-center gap-3">
           {/* Theme Toggle - Always visible */}
           <ThemeToggle />
+          
+          {/* Language Selector - Always visible */}
+          <LanguageSelector />
           
           {user ? (
             <>
