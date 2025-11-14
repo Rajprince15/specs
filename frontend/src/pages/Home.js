@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingBag, Glasses, TrendingUp, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import SEO from '@/components/SEO';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
@@ -36,14 +37,21 @@ const Home = ({ user, onLogout, cartCount }) => {
     }
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="Premium Eyewear Online"
+        description="Shop the finest collection of eyewear at Gee Ess Opticals. Discover stylish glasses, sunglasses, and frames from top brands. Quality eyewear for men, women, and kids with free shipping."
+        keywords="eyewear online, buy glasses online, sunglasses, designer frames, prescription glasses"
+        ogType="website"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-blue-600" />
+          <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
+            <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
+              Gee Ess Opticals
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -91,8 +99,10 @@ const Home = ({ user, onLogout, cartCount }) => {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-6">
+      {/* Main Content */}
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden py-20 px-6" aria-label="Hero section">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 fade-in">
@@ -118,8 +128,9 @@ const Home = ({ user, onLogout, cartCount }) => {
               <div className="relative z-10">
                 <img
                   src="https://images.unsplash.com/photo-1759910546772-73e4bb7fdadd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwxfHxleWVnbGFzc2VzJTIwY29sbGVjdGlvbnxlbnwwfHx8fDE3NjI5Njk3NzR8MA&ixlib=rb-4.1.0&q=85"
-                  alt="Eyeglasses Collection"
+                  alt="Premium eyeglasses collection featuring modern frames and designer sunglasses"
                   className="rounded-3xl shadow-2xl"
+                  loading="eager"
                 />
               </div>
               <div className="absolute -top-10 -right-10 w-72 h-72 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full blur-3xl opacity-30"></div>
@@ -131,7 +142,7 @@ const Home = ({ user, onLogout, cartCount }) => {
 
       {/* Recommended Products - Only for logged in users */}
       {user && recommendedProducts.length > 0 && (
-        <section className="py-16 px-6 bg-gradient-to-br from-purple-50 to-blue-50">
+        <section className="py-16 px-6 bg-gradient-to-br from-purple-50 to-blue-50" aria-label="Recommended products">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Recommended For You

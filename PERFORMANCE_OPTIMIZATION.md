@@ -55,7 +55,7 @@ All tables already have proper primary indexes:
 - Wishlist: user_id, product_id
 - Recently_viewed: user_id, product_id, viewed_at
 
-#### ✅ New Composite Indexes (performance_indexes.sql)
+#### ✅ New Composite Indexes (Integrated in mysql_schema.sql)
 
 **Product Search Optimization:**
 ```sql
@@ -286,8 +286,8 @@ redis-cli KEYS "cart:*"
 - [ ] `REDIS_URL` set in production environment
 - [ ] Redis maxmemory configured (1-4GB recommended)
 - [ ] Redis password authentication enabled
-- [ ] Composite indexes created (`performance_indexes.sql`)
-- [ ] Table statistics analyzed
+- [ ] Database schema deployed with performance indexes (included in `mysql_schema.sql`)
+- [ ] Table statistics analyzed (ANALYZE TABLE commands included)
 - [ ] Monitor cache hit rate
 - [ ] Set up Redis monitoring/alerting
 
@@ -418,3 +418,4 @@ npm run analyze  # If analyzer configured
 **Last Updated**: 2025-01-12
 **Phase**: 5A - Performance Optimization
 **Status**: ✅ COMPLETED
+**Note**: Performance indexes are now integrated in main `mysql_schema.sql` file (consolidated from separate file)

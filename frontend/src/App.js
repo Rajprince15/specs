@@ -1,10 +1,13 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import "@/App.css";
+import "@/styles/accessibility.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import axios from "axios";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import LoadingFallback from "@/components/LoadingFallback";
+import SkipToMain from "@/components/SkipToMain";
 
 // Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";
@@ -105,11 +108,13 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Toaster position="top-center" richColors />
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
+    <HelmetProvider>
+      <div className="App">
+        <BrowserRouter>
+          <SkipToMain />
+          <Toaster position="top-center" richColors />
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
             <Route
               path="/"
               element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} />}
@@ -220,6 +225,7 @@ function App() {
         </Suspense>
       </BrowserRouter>
     </div>
+    </HelmetProvider>
   );
 }
 
