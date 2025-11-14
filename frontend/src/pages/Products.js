@@ -194,6 +194,37 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }
   };
 
+  // Toggle product for comparison
+  const toggleCompare = (product) => {
+    setCompareProducts(prev => {
+      const exists = prev.find(p => p.id === product.id);
+      if (exists) {
+        return prev.filter(p => p.id !== product.id);
+      } else {
+        if (prev.length >= 4) {
+          toast.error('You can compare maximum 4 products at a time');
+          return prev;
+        }
+        return [...prev, product];
+      }
+    });
+  };
+
+  // Remove product from compare
+  const removeFromCompare = (productId) => {
+    setCompareProducts(prev => prev.filter(p => p.id !== productId));
+  };
+
+  // Navigate to compare page
+  const goToCompare = () => {
+    if (compareProducts.length < 2) {
+      toast.error('Please select at least 2 products to compare');
+      return;
+    }
+    const productIds = compareProducts.map(p => p.id).join(',');
+    navigate(`/compare?products=${productIds}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Navigation */}
@@ -546,9 +577,21 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
               <Card
                 key={product.id}
                 data-testid={`product-card-${product.id}`}
-                className="product-card glass border-0 overflow-hidden cursor-pointer"
+                className="product-card glass border-0 overflow-hidden cursor-pointer relative"
                 onClick={() => navigate(`/products/${product.id}`)}
               >
+                {/* Compare Checkbox */}
+                <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-2 glass p-2 rounded-lg">
+                    <Checkbox
+                      checked={compareProducts.some(p => p.id === product.id)}
+                      onCheckedChange={() => toggleCompare(product)}
+                      className="border-2 border-blue-500 data-[state=checked]:bg-blue-600"
+                    />
+                    <span className="text-xs font-medium text-gray-700">Compare</span>
+                  </div>
+                </div>
+                
                 <div className="aspect-square overflow-hidden bg-gray-100">
                   <img
                     src={product.image_url}
@@ -599,6 +642,64 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
           </>
         )}
       </div>
+
+      {/* Floating Compare Bar */}
+      {compareProducts.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom">
+          <div className="glass border-2 border-blue-500 rounded-2xl shadow-2xl p-4 min-w-[400px] max-w-4xl">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <GitCompare className="w-6 h-6 text-blue-600" />
+                <div>
+                  <h3 className="font-bold text-gray-900">Compare Products</h3>
+                  <p className="text-sm text-gray-600">
+                    {compareProducts.length} product{compareProducts.length > 1 ? 's' : ''} selected (Max: 4)
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={goToCompare}
+                  disabled={compareProducts.length < 2}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+                >
+                  Compare Now
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCompareProducts([])}
+                >
+                  Clear All
+                </Button>
+              </div>
+            </div>
+            
+            {/* Product Thumbnails */}
+            <div className="flex gap-2 mt-4 overflow-x-auto">
+              {compareProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-300"
+                >
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={() => removeFromCompare(product.id)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

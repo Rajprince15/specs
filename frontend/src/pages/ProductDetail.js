@@ -3,7 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, ChevronLeft, ChevronRight, ZoomIn, GitCompare, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -22,6 +23,9 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [productImages, setProductImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  
+  // Compare state
+  const [compareProducts, setCompareProducts] = useState([]);
 
   useEffect(() => {
     fetchProduct();
@@ -146,6 +150,37 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
     setEditingReview(null);
     setRating(5);
     setComment('');
+  };
+
+  // Toggle product for comparison
+  const toggleCompare = (product) => {
+    setCompareProducts(prev => {
+      const exists = prev.find(p => p.id === product.id);
+      if (exists) {
+        return prev.filter(p => p.id !== product.id);
+      } else {
+        if (prev.length >= 4) {
+          toast.error('You can compare maximum 4 products at a time');
+          return prev;
+        }
+        return [...prev, product];
+      }
+    });
+  };
+
+  // Remove product from compare
+  const removeFromCompare = (productId) => {
+    setCompareProducts(prev => prev.filter(p => p.id !== productId));
+  };
+
+  // Navigate to compare page
+  const goToCompare = () => {
+    if (compareProducts.length < 2) {
+      toast.error('Please select at least 2 products to compare');
+      return;
+    }
+    const productIds = compareProducts.map(p => p.id).join(',');
+    navigate(`/compare?products=${productIds}`);
   };
 
   const nextImage = () => {
@@ -356,16 +391,32 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="space-y-4">
               <Button
                 data-testid="add-to-cart-btn"
                 onClick={addToCart}
                 disabled={product.stock === 0}
-                className="flex-1 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg"
+                className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Add to Cart
               </Button>
+              
+              {/* Compare Checkbox */}
+              <div className="glass p-4 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={compareProducts.some(p => p.id === product.id)}
+                    onCheckedChange={() => toggleCompare(product)}
+                    className="border-2 border-blue-500 data-[state=checked]:bg-blue-600"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">Add to Compare</p>
+                    <p className="text-sm text-gray-600">Compare this product with others</p>
+                  </div>
+                  <GitCompare className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
             </div>
           </div>
         </div>

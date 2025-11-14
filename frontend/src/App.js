@@ -20,6 +20,7 @@ import Analytics from "@/pages/Analytics";
 import Inventory from "@/pages/Inventory";
 import Users from "@/pages/Users";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import Compare from "@/pages/Compare";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -202,6 +203,10 @@ function App() {
                 <PaymentSuccess user={user} onLogout={handleLogout} cartCount={cartCount} />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/compare"
+            element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} />}
           />
         </Routes>
       </BrowserRouter>
