@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal } from 'lucide-react';
+import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal, GitCompare, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -22,6 +23,9 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [recentSearches, setRecentSearches] = useState([]);
   const searchRef = useRef(null);
   const suggestionsRef = useRef(null);
+  
+  // Compare products state
+  const [compareProducts, setCompareProducts] = useState([]);
 
   useEffect(() => {
     fetchProducts();
