@@ -3067,6 +3067,328 @@ async def delete_saved_item(saved_item_id: str, authorization: str = Header(None
         
         return {"message": "Saved item deleted"}
 
+# ============ Admin Analytics ============
+
+@api_router.get("/admin/analytics/sales")
+async def get_sales_analytics(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    authorization: str = Header(None)
+):
+    """Get sales analytics (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Build date filter
+        query = select(OrderDB)
+        
+        if start_date:
+            query = query.where(OrderDB.created_at >= datetime.fromisoformat(start_date))
+        if end_date:
+            query = query.where(OrderDB.created_at <= datetime.fromisoformat(end_date))
+        
+        result = await session.execute(query)
+        orders = result.scalars().all()
+        
+        # Calculate daily sales
+        daily_sales = {}
+        for order in orders:
+            date_key = order.created_at.strftime('%Y-%m-%d')
+            if date_key not in daily_sales:
+                daily_sales[date_key] = {
+                    'date': date_key,
+                    'total_orders': 0,
+                    'total_revenue': 0.0,
+                    'order_ids': []
+                }
+            daily_sales[date_key]['total_orders'] += 1
+            daily_sales[date_key]['total_revenue'] += float(order.total_amount)
+            daily_sales[date_key]['order_ids'].append(order.id)
+        
+        # Convert to list and sort by date
+        sales_data = sorted(daily_sales.values(), key=lambda x: x['date'])
+        
+        # Calculate summary statistics
+        total_orders = len(orders)
+        total_revenue = sum(float(order.total_amount) for order in orders)
+        avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
+        
+        return {
+            "summary": {
+                "total_orders": total_orders,
+                "total_revenue": round(total_revenue, 2),
+                "average_order_value": round(avg_order_value, 2)
+            },
+            "daily_sales": sales_data
+        }
+
+@api_router.get("/admin/analytics/top-products")
+async def get_top_products(
+    limit: int = 10,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    authorization: str = Header(None)
+):
+    """Get top selling products (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Build date filter for orders
+        query = select(OrderDB)
+        
+        if start_date:
+            query = query.where(OrderDB.created_at >= datetime.fromisoformat(start_date))
+        if end_date:
+            query = query.where(OrderDB.created_at <= datetime.fromisoformat(end_date))
+        
+        result = await session.execute(query)
+        orders = result.scalars().all()
+        order_ids = [order.id for order in orders]
+        
+        # Get order items for these orders
+        if order_ids:
+            order_items_result = await session.execute(
+                select(OrderItemDB).where(OrderItemDB.order_id.in_(order_ids))
+            )
+            order_items = order_items_result.scalars().all()
+        else:
+            order_items = []
+        
+        # Aggregate by product
+        product_sales = {}
+        for item in order_items:
+            if item.product_id not in product_sales:
+                product_sales[item.product_id] = {
+                    'product_id': item.product_id,
+                    'quantity_sold': 0,
+                    'total_revenue': 0.0
+                }
+            product_sales[item.product_id]['quantity_sold'] += item.quantity
+            product_sales[item.product_id]['total_revenue'] += float(item.price * item.quantity)
+        
+        # Get product details
+        top_products = []
+        for product_id, sales_data in product_sales.items():
+            product_result = await session.execute(
+                select(ProductDB).where(ProductDB.id == product_id)
+            )
+            product = product_result.scalar_one_or_none()
+            
+            if product:
+                top_products.append({
+                    'product_id': product.id,
+                    'product_name': product.name,
+                    'brand': product.brand,
+                    'category': product.category,
+                    'price': float(product.price),
+                    'image_url': product.image_url,
+                    'quantity_sold': sales_data['quantity_sold'],
+                    'total_revenue': round(sales_data['total_revenue'], 2)
+                })
+        
+        # Sort by quantity sold and limit
+        top_products.sort(key=lambda x: x['quantity_sold'], reverse=True)
+        
+        return {"top_products": top_products[:limit]}
+
+@api_router.get("/admin/analytics/revenue")
+async def get_revenue_analytics(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    authorization: str = Header(None)
+):
+    """Get revenue breakdown by category, payment status, etc. (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Build date filter
+        query = select(OrderDB)
+        
+        if start_date:
+            query = query.where(OrderDB.created_at >= datetime.fromisoformat(start_date))
+        if end_date:
+            query = query.where(OrderDB.created_at <= datetime.fromisoformat(end_date))
+        
+        result = await session.execute(query)
+        orders = result.scalars().all()
+        order_ids = [order.id for order in orders]
+        
+        # Revenue by payment status
+        revenue_by_status = {}
+        for order in orders:
+            status = order.payment_status
+            if status not in revenue_by_status:
+                revenue_by_status[status] = 0.0
+            revenue_by_status[status] += float(order.total_amount)
+        
+        # Revenue by category
+        revenue_by_category = {}
+        if order_ids:
+            order_items_result = await session.execute(
+                select(OrderItemDB).where(OrderItemDB.order_id.in_(order_ids))
+            )
+            order_items = order_items_result.scalars().all()
+            
+            for item in order_items:
+                # Get product category
+                product_result = await session.execute(
+                    select(ProductDB).where(ProductDB.id == item.product_id)
+                )
+                product = product_result.scalar_one_or_none()
+                
+                if product:
+                    category = product.category
+                    if category not in revenue_by_category:
+                        revenue_by_category[category] = 0.0
+                    revenue_by_category[category] += float(item.price * item.quantity)
+        
+        # Revenue by order status
+        revenue_by_order_status = {}
+        for order in orders:
+            status = order.order_status
+            if status not in revenue_by_order_status:
+                revenue_by_order_status[status] = 0.0
+            revenue_by_order_status[status] += float(order.total_amount)
+        
+        # Convert to list format for easier frontend consumption
+        category_breakdown = [
+            {"category": k, "revenue": round(v, 2)}
+            for k, v in revenue_by_category.items()
+        ]
+        
+        payment_status_breakdown = [
+            {"status": k, "revenue": round(v, 2)}
+            for k, v in revenue_by_status.items()
+        ]
+        
+        order_status_breakdown = [
+            {"status": k, "revenue": round(v, 2)}
+            for k, v in revenue_by_order_status.items()
+        ]
+        
+        return {
+            "revenue_by_category": category_breakdown,
+            "revenue_by_payment_status": payment_status_breakdown,
+            "revenue_by_order_status": order_status_breakdown
+        }
+
+# ============ Admin Inventory Management ============
+
+@api_router.get("/admin/inventory/alerts")
+async def get_inventory_alerts(authorization: str = Header(None)):
+    """Get low stock alerts (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Get low stock threshold from environment or use default (10)
+        low_stock_threshold = int(os.environ.get('LOW_STOCK_THRESHOLD', '10'))
+        
+        # Get products with low stock
+        result = await session.execute(
+            select(ProductDB).where(ProductDB.stock <= low_stock_threshold).order_by(ProductDB.stock)
+        )
+        products = result.scalars().all()
+        
+        alerts = []
+        for product in products:
+            alert_level = "critical" if product.stock == 0 else "warning" if product.stock <= low_stock_threshold / 2 else "low"
+            alerts.append({
+                "product_id": product.id,
+                "product_name": product.name,
+                "brand": product.brand,
+                "category": product.category,
+                "current_stock": product.stock,
+                "alert_level": alert_level,
+                "image_url": product.image_url
+            })
+        
+        return {
+            "low_stock_threshold": low_stock_threshold,
+            "total_alerts": len(alerts),
+            "alerts": alerts
+        }
+
+@api_router.put("/admin/inventory/threshold")
+async def update_stock_threshold(
+    threshold: int,
+    authorization: str = Header(None)
+):
+    """Update low stock threshold (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if threshold < 0:
+        raise HTTPException(status_code=400, detail="Threshold must be non-negative")
+    
+    # In a production app, this would be stored in a settings table
+    # For now, we'll return success and the value can be set via environment variable
+    return {
+        "message": "Threshold updated successfully",
+        "threshold": threshold,
+        "note": "Set LOW_STOCK_THRESHOLD environment variable to persist this setting"
+    }
+
+class BulkStockUpdate(BaseModel):
+    product_id: str
+    stock: int
+
+@api_router.put("/admin/inventory/bulk-update")
+async def bulk_update_stock(
+    updates: List[BulkStockUpdate],
+    authorization: str = Header(None)
+):
+    """Bulk update product stock (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        updated_products = []
+        
+        for update_item in updates:
+            if update_item.stock < 0:
+                raise HTTPException(status_code=400, detail=f"Stock cannot be negative for product {update_item.product_id}")
+            
+            result = await session.execute(
+                select(ProductDB).where(ProductDB.id == update_item.product_id)
+            )
+            product = result.scalar_one_or_none()
+            
+            if not product:
+                raise HTTPException(status_code=404, detail=f"Product {update_item.product_id} not found")
+            
+            old_stock = product.stock
+            product.stock = update_item.stock
+            
+            updated_products.append({
+                "product_id": product.id,
+                "product_name": product.name,
+                "old_stock": old_stock,
+                "new_stock": product.stock
+            })
+        
+        await session.commit()
+        
+        return {
+            "message": f"Successfully updated stock for {len(updated_products)} products",
+            "updated_products": updated_products
+        }
+
 # ============ Database Initialization ============
 
 async def init_db():

@@ -16,6 +16,8 @@ import OrderTracking from "@/pages/OrderTracking";
 import Profile from "@/pages/Profile";
 import Addresses from "@/pages/Addresses";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Analytics from "@/pages/Analytics";
+import Inventory from "@/pages/Inventory";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -165,6 +167,22 @@ function App() {
             element={
               <ProtectedRoute adminOnly={true}>
                 <AdminDashboard user={user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <Analytics user={user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/inventory"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <Inventory user={user} onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />
