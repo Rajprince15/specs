@@ -8,6 +8,7 @@ import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal, GitCompar
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const navigate = useNavigate();
@@ -230,14 +231,21 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="Shop Premium Eyewear & Glasses"
+        description="Browse our extensive collection of premium eyewear, glasses, and sunglasses. Find the perfect frames for men, women, and kids at Gee Ess Opticals. Free shipping on all orders."
+        keywords="shop glasses online, eyewear collection, buy sunglasses, designer frames, prescription eyeglasses"
+        ogImage="https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=1200&h=630&fit=crop"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-blue-600" />
+          <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
+            <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
+              Gee Ess Opticals
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -704,7 +712,8 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

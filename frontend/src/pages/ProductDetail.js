@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, ChevronLeft, ChevronRight, ZoomIn, GitCompare, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const { productId } = useParams();
@@ -215,16 +216,26 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-blue-600" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
-            </span>
-          </Link>
+    <>
+      {product && (
+        <SEO
+          title={`${product.name} - ${product.brand}`}
+          description={`${product.description || `Shop ${product.name} by ${product.brand} at Gee Ess Opticals.`} Premium eyewear with free shipping. Price: $${product.price}`}
+          keywords={`${product.brand}, ${product.name}, ${product.category}, ${product.frame_type}, eyewear, glasses`}
+          ogImage={product.image_url || 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=1200&h=630&fit=crop'}
+          ogType="product"
+        />
+      )}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
+              <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Gee Ess Opticals
+              </span>
+            </Link>
           <div className="flex items-center gap-4">
             {user ? (
               <>
@@ -684,7 +695,8 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

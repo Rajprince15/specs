@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingBag, Glasses, Trash2, Minus, Plus, CreditCard, Tag, Bookmark, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const navigate = useNavigate();
@@ -288,16 +289,23 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-blue-600" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
-            </span>
-          </Link>
+    <>
+      <SEO
+        title="Shopping Cart"
+        description="Review your cart and checkout. Secure payment options available for your eyewear purchase at Gee Ess Opticals."
+        keywords="shopping cart, checkout, secure payment, buy glasses"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
+              <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Gee Ess Opticals
+              </span>
+            </Link>
           <div className="flex items-center gap-4">
             <Link to="/products">
               <Button data-testid="products-btn" variant="outline">Products</Button>
@@ -621,8 +629,9 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

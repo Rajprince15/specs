@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Glasses, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Register = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -36,12 +37,19 @@ const Register = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
+    <>
+      <SEO
+        title="Create Your Account"
+        description="Join Gee Ess Opticals today. Create an account to shop premium eyewear, save your favorites, and enjoy exclusive benefits."
+        keywords="register, sign up, create account, join"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8" aria-label="Back to Home">
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+            Back to Home
+          </Link>
 
         <Card data-testid="register-card" className="glass border-0 shadow-2xl">
           <CardHeader className="space-y-4">
@@ -140,8 +148,9 @@ const Register = ({ onLogin }) => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
