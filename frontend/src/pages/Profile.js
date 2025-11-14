@@ -174,6 +174,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           My Profile
@@ -452,6 +453,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
           </TabsContent>
         </Tabs>
       </div>
+      </main>
     </div>
     </>
   );

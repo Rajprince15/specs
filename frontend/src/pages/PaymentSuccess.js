@@ -91,6 +91,7 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-3xl mx-auto px-6 py-20">
         <Card className="glass border-0 shadow-2xl">
           <CardContent className="p-12 text-center space-y-6">
@@ -141,6 +142,7 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
           </CardContent>
         </Card>
       </div>
+      </main>
     </div>
     </>
   );

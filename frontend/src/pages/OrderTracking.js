@@ -312,7 +312,7 @@ const Navigation = ({ user, onLogout, cartCount }) => {
   const navigate = useNavigate();
 
   return (
-    <nav className="backdrop-blur-md bg-white/80 border-b sticky top-0 z-50 shadow-sm">
+    <nav className="backdrop-blur-md bg-white/80 border-b sticky top-0 z-50 shadow-sm" role="navigation" aria-label="Main navigation">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">

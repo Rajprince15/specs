@@ -103,7 +103,7 @@ const Analytics = ({ user, onLogout }) => {
             <div className="flex items-center gap-4">
               <Link to="/admin" className="flex items-center gap-2 hover:opacity-80">
                 <ArrowLeft className="h-5 w-5" />
-                <span>Back to Dashboard</span>
+                <span className="font-semibold text-gray-900">Gee Ess Opticals - Analytics</span>
               </Link>
             </div>
             <div className="flex items-center gap-4">

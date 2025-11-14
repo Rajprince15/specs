@@ -115,7 +115,7 @@ const Users = ({ user, onLogout }) => {
                 <UsersIcon className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                User Management
+                Gee Ess Opticals - User Management
               </span>
             </Link>
             <div className="flex items-center gap-4">
@@ -135,6 +135,7 @@ const Users = ({ user, onLogout }) => {
       </nav>
 
       {/* Main Content */}
+      <main id="main-content">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -518,6 +519,7 @@ const Users = ({ user, onLogout }) => {
           ) : null}
         </DialogContent>
       </Dialog>
+      </main>
       </div>
     </>
   );

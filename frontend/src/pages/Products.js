@@ -713,7 +713,6 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
           </div>
         </div>
       )}
-      </div>
       </main>
       </div>
     </>
