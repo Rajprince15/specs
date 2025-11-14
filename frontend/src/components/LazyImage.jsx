@@ -88,4 +88,5 @@ const LazyImage = ({
   );
 };
 
-export default LazyImage;
+// Memoize to prevent unnecessary re-renders when props haven't changed
+export default React.memo(LazyImage);

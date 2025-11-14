@@ -14,4 +14,5 @@ const LoadingFallback = () => {
   );
 };
 
-export default LoadingFallback;
+// Memoize to prevent unnecessary re-renders
+export default React.memo(LoadingFallback);
