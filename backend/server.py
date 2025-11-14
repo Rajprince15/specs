@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Header
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Header, Depends
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -609,9 +609,7 @@ async def login(credentials: UserLogin):
 # ============ User Profile Routes ============
 
 @api_router.get("/user/profile")
-async def get_user_profile(user_data: dict = Header(None, alias="Authorization")):
-    current_user = await get_current_user(user_data)
-    
+async def get_user_profile(current_user: dict = Depends(get_current_user)):
     async with async_session_maker() as session:
         result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
         user = result.scalar_one_or_none()
@@ -632,9 +630,8 @@ async def get_user_profile(user_data: dict = Header(None, alias="Authorization")
 @api_router.put("/user/profile")
 async def update_user_profile(
     profile_data: UserProfileUpdate,
-    user_data: dict = Header(None, alias="Authorization")
+    current_user: dict = Depends(get_current_user)
 ):
-    current_user = await get_current_user(user_data)
     
     async with async_session_maker() as session:
         result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
@@ -664,9 +661,8 @@ async def update_user_profile(
 @api_router.put("/user/password")
 async def change_password(
     password_data: PasswordChange,
-    user_data: dict = Header(None, alias="Authorization")
+    current_user: dict = Depends(get_current_user)
 ):
-    current_user = await get_current_user(user_data)
     
     async with async_session_maker() as session:
         result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
@@ -689,9 +685,7 @@ async def change_password(
 # ============ Email Preferences Routes ============
 
 @api_router.get("/user/email-preferences")
-async def get_email_preferences(user_data: dict = Header(None, alias="Authorization")):
-    current_user = await get_current_user(user_data)
-    
+async def get_email_preferences(current_user: dict = Depends(get_current_user)):
     async with async_session_maker() as session:
         result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
         user = result.scalar_one_or_none()
@@ -709,9 +703,8 @@ async def get_email_preferences(user_data: dict = Header(None, alias="Authorizat
 @api_router.put("/user/email-preferences")
 async def update_email_preferences(
     preferences: EmailPreferences,
-    user_data: dict = Header(None, alias="Authorization")
+    current_user: dict = Depends(get_current_user)
 ):
-    current_user = await get_current_user(user_data)
     
     async with async_session_maker() as session:
         result = await session.execute(select(UserDB).where(UserDB.id == current_user['user_id']))
@@ -741,9 +734,7 @@ async def update_email_preferences(
 # ============ Address Routes ============
 
 @api_router.get("/user/addresses")
-async def get_addresses(user_data: dict = Header(None, alias="Authorization")):
-    current_user = await get_current_user(user_data)
-    
+async def get_addresses(current_user: dict = Depends(get_current_user)):
     async with async_session_maker() as session:
         result = await session.execute(
             select(AddressDB)
@@ -768,9 +759,8 @@ async def get_addresses(user_data: dict = Header(None, alias="Authorization")):
 @api_router.post("/user/addresses")
 async def create_address(
     address_data: AddressCreate,
-    user_data: dict = Header(None, alias="Authorization")
+    current_user: dict = Depends(get_current_user)
 ):
-    current_user = await get_current_user(user_data)
     
     async with async_session_maker() as session:
         # If this is set as default, unset all other defaults
@@ -815,9 +805,8 @@ async def create_address(
 async def update_address(
     address_id: str,
     address_data: AddressUpdate,
-    user_data: dict = Header(None, alias="Authorization")
+    current_user: dict = Depends(get_current_user)
 ):
-    current_user = await get_current_user(user_data)
     
     async with async_session_maker() as session:
         result = await session.execute(
@@ -872,9 +861,8 @@ async def update_address(
 @api_router.delete("/user/addresses/{address_id}")
 async def delete_address(
     address_id: str,
-    user_data: dict = Header(None, alias="Authorization")
+    current_user: dict = Depends(get_current_user)
 ):
-    current_user = await get_current_user(user_data)
     
     async with async_session_maker() as session:
         result = await session.execute(
