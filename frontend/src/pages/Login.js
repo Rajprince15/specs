@@ -59,7 +59,7 @@ const Login = ({ onLogin }) => {
             </div>
             <CardTitle className="text-3xl font-bold text-center">Welcome Back</CardTitle>
             <CardDescription className="text-center text-base">
-              Login to your LensKart account
+              Login to your Gee Ess Opticals account
             </CardDescription>
           </CardHeader>
           <CardContent>

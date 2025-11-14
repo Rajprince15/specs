@@ -270,11 +270,12 @@ const Home = ({ user, onLogout, cartCount }) => {
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Glasses className="w-6 h-6" />
-            <span className="text-xl font-bold">LensKart</span>
+            <span className="text-xl font-bold">Gee Ess Opticals</span>
           </div>
-          <p className="text-gray-400">© 2025 LensKart. All rights reserved.</p>
+          <p className="text-gray-400">© 2025 Gee Ess Opticals. All rights reserved.</p>
         </div>
       </footer>
+    </main>
     </div>
   );
 };

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Glasses, Package, Users, DollarSign, Plus, Edit, Trash2, Images, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const AdminDashboard = ({ user, onLogout }) => {
   const [stats, setStats] = useState({ total_products: 0, total_orders: 0, total_users: 0, total_revenue: 0 });
@@ -279,15 +280,21 @@ const AdminDashboard = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="Admin Dashboard"
+        description="Manage your eyewear store. View analytics, manage products, orders, and inventory from the admin dashboard."
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Admin navigation">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <Link to="/" className="flex items-center gap-2">
               <Glasses className="w-8 h-8 text-blue-600" />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                LensKart Admin
+                Gee Ess Opticals Admin
               </span>
             </Link>
             <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
@@ -324,6 +331,7 @@ const AdminDashboard = ({ user, onLogout }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -836,7 +844,10 @@ const AdminDashboard = ({ user, onLogout }) => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+      </main>
+      </div>
+    </>
   );
 };
 

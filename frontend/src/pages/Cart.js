@@ -142,7 +142,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
       amount: response.data.amount,
       currency: response.data.currency,
       order_id: response.data.order_id,
-      name: "LensKart",
+      name: "Gee Ess Opticals",
       description: "Eyewear Purchase",
       image: `${originUrl}/logo.png`,
       handler: async (razorpayResponse) => {

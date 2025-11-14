@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { TrendingUp, DollarSign, Package, ShoppingCart, Calendar, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 import {
   LineChart,
   Line,
@@ -88,9 +89,15 @@ const Analytics = ({ user, onLogout }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-cyan-50">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-lg border-b border-purple-100 sticky top-0 z-50">
+    <>
+      <SEO
+        title="Sales Analytics"
+        description="View sales analytics, revenue insights, and top-performing products. Admin dashboard for business intelligence."
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-cyan-50">
+        {/* Navigation */}
+        <nav className="bg-white/80 backdrop-blur-lg border-b border-purple-100 sticky top-0 z-50" role="navigation" aria-label="Admin navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">

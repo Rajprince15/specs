@@ -60,7 +60,7 @@ const Register = ({ onLogin }) => {
             </div>
             <CardTitle className="text-3xl font-bold text-center">Create Account</CardTitle>
             <CardDescription className="text-center text-base">
-              Join LensKart today
+              Join Gee Ess Opticals today
             </CardDescription>
           </CardHeader>
           <CardContent>

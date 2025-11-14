@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Glasses, ShoppingBag, ArrowLeft, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Compare = ({ user, onLogout, cartCount }) => {
   const navigate = useNavigate();
@@ -103,14 +104,20 @@ const Compare = ({ user, onLogout, cartCount }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="Compare Eyewear Products"
+        description="Compare eyewear products side-by-side at Gee Ess Opticals. Easily compare features, prices, and specifications to find your perfect glasses or sunglasses."
+        keywords="compare eyewear, compare glasses, compare sunglasses, product comparison"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Glasses className="w-8 h-8 text-blue-600" />
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
+              Gee Ess Opticals
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -159,6 +166,7 @@ const Compare = ({ user, onLogout, cartCount }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -287,7 +295,9 @@ const Compare = ({ user, onLogout, cartCount }) => {
           </div>
         </div>
       </div>
-    </div>
+      </main>
+      </div>
+    </>
   );
 };
 

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ShoppingBag, Glasses, MapPin, Plus, Edit, Trash2, Home as HomeIcon, Briefcase, MapPinned, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Addresses = ({ user, onLogout, cartCount }) => {
   const navigate = useNavigate();
@@ -143,14 +144,21 @@ const Addresses = ({ user, onLogout, cartCount }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="Manage Addresses"
+        description="Manage your shipping addresses at Gee Ess Opticals. Add, edit, and set default addresses for convenient eyewear delivery."
+        keywords="shipping addresses, delivery address, manage addresses"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Glasses className="w-8 h-8 text-blue-600" />
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
+              Gee Ess Opticals
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -189,6 +197,7 @@ const Addresses = ({ user, onLogout, cartCount }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -389,6 +398,7 @@ const Addresses = ({ user, onLogout, cartCount }) => {
           </div>
         )}
       </div>
+      </main>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -499,7 +509,8 @@ const Addresses = ({ user, onLogout, cartCount }) => {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </>
   );
 };
 

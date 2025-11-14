@@ -319,7 +319,7 @@ const Navigation = ({ user, onLogout, cartCount }) => {
           <Link to="/" className="flex items-center space-x-2">
             <Glasses className="h-8 w-8 text-purple-600" />
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              LensKart
+              Gee Ess Opticals
             </span>
           </Link>
 
