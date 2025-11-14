@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShoppingBag, Glasses, User, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Profile = ({ user, onLogout, cartCount }) => {
   const navigate = useNavigate();
@@ -105,16 +106,31 @@ const Profile = ({ user, onLogout, cartCount }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <p className="text-gray-600 text-lg">Loading profile...</p>
-      </div>
+      <>
+        <SEO
+          title="My Profile"
+          description="Manage your account settings, update personal information, and configure preferences at Gee Ess Opticals."
+          keywords="user profile, account settings, personal information"
+          noindex={true}
+        />
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center" role="status" aria-live="polite">
+          <p className="text-gray-600 text-lg">Loading profile...</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="My Profile"
+        description="Manage your account settings, update personal information, and configure preferences at Gee Ess Opticals."
+        keywords="user profile, account settings, personal information"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Glasses className="w-8 h-8 text-blue-600" />

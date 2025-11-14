@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Glasses, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const PaymentSuccess = ({ user, onLogout, cartCount }) => {
   const [searchParams] = useSearchParams();
@@ -55,9 +56,16 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="Payment Successful"
+        description="Your order has been successfully placed at Gee Ess Opticals. Thank you for your purchase!"
+        keywords="payment successful, order confirmation, purchase complete"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Glasses className="w-8 h-8 text-blue-600" />
@@ -134,6 +142,7 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

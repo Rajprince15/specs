@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Glasses, Package, Truck, CheckCircle, Clock, MapPin, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const OrderTracking = ({ user, onLogout, cartCount }) => {
   const { orderId } = useParams();
@@ -72,20 +73,35 @@ const OrderTracking = ({ user, onLogout, cartCount }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
-        <div className="flex justify-center items-center h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <>
+        <SEO
+          title="Track Your Order"
+          description="Track your eyewear order status and delivery details at Gee Ess Opticals. Get real-time updates on your glasses and sunglasses shipment."
+          keywords="order tracking, delivery status, shipment tracking, order status"
+          noindex={true}
+        />
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+          <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
+          <div className="flex justify-center items-center h-[60vh]" role="status" aria-live="polite">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" aria-label="Loading order tracking information"></div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!tracking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
-        <div className="container mx-auto px-4 py-8">
+      <>
+        <SEO
+          title="Order Not Found"
+          description="Track your eyewear order status and delivery details at Gee Ess Opticals."
+          keywords="order tracking"
+          noindex={true}
+        />
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+          <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
+          <main id="main-content" className="container mx-auto px-4 py-8">
           <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-xl max-w-2xl mx-auto">
             <CardContent className="p-8 text-center">
               <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -98,7 +114,9 @@ const OrderTracking = ({ user, onLogout, cartCount }) => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
+    </div>
+    </>
     );
   }
 
@@ -106,10 +124,17 @@ const OrderTracking = ({ user, onLogout, cartCount }) => {
   const StatusIcon = currentStatusInfo.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-      <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
+    <>
+      <SEO
+        title="Track Your Order"
+        description="Track your eyewear order status and delivery details at Gee Ess Opticals. Get real-time updates on your glasses and sunglasses shipment."
+        keywords="order tracking, delivery status, shipment tracking, order status"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
 
-      <div className="container mx-auto px-4 py-8">
+        <main id="main-content" className="container mx-auto px-4 py-8">
         {/* Back Button */}
         <Button
           onClick={() => navigate('/orders')}
@@ -278,8 +303,9 @@ const OrderTracking = ({ user, onLogout, cartCount }) => {
             </CardContent>
           </Card>
         )}
-      </div>
+      </main>
     </div>
+    </>
   );
 };
 

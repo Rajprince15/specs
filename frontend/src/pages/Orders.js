@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingBag, Glasses, Package, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Orders = ({ user, onLogout, cartCount }) => {
   const [orders, setOrders] = useState([]);
@@ -41,14 +42,21 @@ const Orders = ({ user, onLogout, cartCount }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav className="glass sticky top-0 z-50 border-b">
+    <>
+      <SEO
+        title="My Orders"
+        description="Track and manage your eyewear orders at Gee Ess Opticals. View order history, shipping status, and delivery details for your premium glasses and sunglasses."
+        keywords="order tracking, eyewear orders, order history, shipping status"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Navigation */}
+        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-blue-600" />
+          <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
+            <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              LensKart
+              Gee Ess Opticals
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -76,18 +84,18 @@ const Orders = ({ user, onLogout, cartCount }) => {
       </nav>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <main id="main-content" className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           My Orders
         </h1>
 
         {loading ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20" role="status" aria-live="polite">
             <p className="text-gray-600 text-lg">Loading orders...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-20">
-            <Package className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+            <Package className="w-20 h-20 text-gray-300 mx-auto mb-4" aria-hidden="true" />
             <p className="text-gray-600 text-lg mb-6">No orders yet</p>
             <Link to="/products">
               <Button data-testid="shop-now-btn" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
@@ -156,8 +164,9 @@ const Orders = ({ user, onLogout, cartCount }) => {
             ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
+    </>
   );
 };
 
