@@ -191,6 +191,31 @@ class RecentlyViewedDB(Base):
     product_id: Mapped[str] = mapped_column(String(36), index=True)
     viewed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class CouponDB(Base):
+    __tablename__ = "coupons"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    discount_type: Mapped[str] = mapped_column(String(20))  # 'percentage' or 'fixed'
+    discount_value: Mapped[float] = mapped_column(Float)
+    min_purchase: Mapped[float] = mapped_column(Float, default=0)
+    max_discount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # For percentage coupons
+    usage_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # None = unlimited
+    used_count: Mapped[int] = mapped_column(Integer, default=0)
+    valid_from: Mapped[datetime] = mapped_column(DateTime)
+    valid_until: Mapped[datetime] = mapped_column(DateTime)
+    is_active: Mapped[bool] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class SavedItemDB(Base):
+    __tablename__ = "saved_items"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    product_id: Mapped[str] = mapped_column(String(36), index=True)
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    saved_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 # ============ Pydantic Models ============
 
 class User(BaseModel):
@@ -403,6 +428,62 @@ class RecentlyViewed(BaseModel):
     user_id: str
     product_id: str
     viewed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Coupon(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str
+    discount_type: str  # 'percentage' or 'fixed'
+    discount_value: float
+    min_purchase: float = 0
+    max_discount: Optional[float] = None
+    usage_limit: Optional[int] = None
+    used_count: int = 0
+    valid_from: datetime
+    valid_until: datetime
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CreateCoupon(BaseModel):
+    code: str
+    discount_type: str  # 'percentage' or 'fixed'
+    discount_value: float
+    min_purchase: float = 0
+    max_discount: Optional[float] = None
+    usage_limit: Optional[int] = None
+    valid_from: datetime
+    valid_until: datetime
+    is_active: bool = True
+
+class UpdateCoupon(BaseModel):
+    code: Optional[str] = None
+    discount_type: Optional[str] = None
+    discount_value: Optional[float] = None
+    min_purchase: Optional[float] = None
+    max_discount: Optional[float] = None
+    usage_limit: Optional[int] = None
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    is_active: Optional[bool] = None
+
+class ValidateCouponRequest(BaseModel):
+    code: str
+    cart_total: float
+
+class ValidateCouponResponse(BaseModel):
+    valid: bool
+    message: str
+    discount_amount: float = 0
+    final_amount: float = 0
+    coupon: Optional[Coupon] = None
+
+class SavedItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    product_id: str
+    quantity: int = 1
+    saved_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ============ Helper Functions ============
 
@@ -2475,6 +2556,458 @@ async def get_admin_stats(authorization: str = Header(None)):
             "total_users": total_users,
             "total_revenue": float(total_revenue)
         }
+
+# ============ Coupon Routes ============
+
+@api_router.post("/coupons/validate", response_model=ValidateCouponResponse)
+async def validate_coupon(request: ValidateCouponRequest, authorization: str = Header(None)):
+    """Validate a coupon code and calculate discount"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Find the coupon by code
+        result = await session.execute(
+            select(CouponDB).where(CouponDB.code == request.code.upper())
+        )
+        coupon = result.scalar_one_or_none()
+        
+        if not coupon:
+            return ValidateCouponResponse(
+                valid=False,
+                message="Invalid coupon code",
+                discount_amount=0,
+                final_amount=request.cart_total
+            )
+        
+        # Check if coupon is active
+        if not coupon.is_active:
+            return ValidateCouponResponse(
+                valid=False,
+                message="This coupon is no longer active",
+                discount_amount=0,
+                final_amount=request.cart_total
+            )
+        
+        # Check validity dates
+        now = datetime.now(timezone.utc)
+        if now < coupon.valid_from:
+            return ValidateCouponResponse(
+                valid=False,
+                message="This coupon is not yet valid",
+                discount_amount=0,
+                final_amount=request.cart_total
+            )
+        
+        if now > coupon.valid_until:
+            return ValidateCouponResponse(
+                valid=False,
+                message="This coupon has expired",
+                discount_amount=0,
+                final_amount=request.cart_total
+            )
+        
+        # Check usage limit
+        if coupon.usage_limit and coupon.used_count >= coupon.usage_limit:
+            return ValidateCouponResponse(
+                valid=False,
+                message="This coupon has reached its usage limit",
+                discount_amount=0,
+                final_amount=request.cart_total
+            )
+        
+        # Check minimum purchase
+        if request.cart_total < coupon.min_purchase:
+            return ValidateCouponResponse(
+                valid=False,
+                message=f"Minimum purchase of ${coupon.min_purchase:.2f} required",
+                discount_amount=0,
+                final_amount=request.cart_total
+            )
+        
+        # Calculate discount
+        discount_amount = 0
+        if coupon.discount_type == "percentage":
+            discount_amount = (request.cart_total * coupon.discount_value) / 100
+            # Apply max discount if specified
+            if coupon.max_discount and discount_amount > coupon.max_discount:
+                discount_amount = coupon.max_discount
+        elif coupon.discount_type == "fixed":
+            discount_amount = coupon.discount_value
+            # Don't let discount exceed cart total
+            if discount_amount > request.cart_total:
+                discount_amount = request.cart_total
+        
+        final_amount = max(0, request.cart_total - discount_amount)
+        
+        return ValidateCouponResponse(
+            valid=True,
+            message="Coupon applied successfully!",
+            discount_amount=discount_amount,
+            final_amount=final_amount,
+            coupon=Coupon(
+                id=coupon.id,
+                code=coupon.code,
+                discount_type=coupon.discount_type,
+                discount_value=coupon.discount_value,
+                min_purchase=coupon.min_purchase,
+                max_discount=coupon.max_discount,
+                usage_limit=coupon.usage_limit,
+                used_count=coupon.used_count,
+                valid_from=coupon.valid_from,
+                valid_until=coupon.valid_until,
+                is_active=bool(coupon.is_active),
+                created_at=coupon.created_at
+            )
+        )
+
+@api_router.post("/orders/apply-coupon")
+async def apply_coupon_to_order(order_id: str, coupon_code: str, authorization: str = Header(None)):
+    """Apply a coupon to an existing order (before payment)"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get the order
+        result = await session.execute(
+            select(OrderDB).where(OrderDB.id == order_id, OrderDB.user_id == user['user_id'])
+        )
+        order = result.scalar_one_or_none()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        if order.payment_status != "pending":
+            raise HTTPException(status_code=400, detail="Cannot apply coupon to paid orders")
+        
+        # Validate coupon
+        validate_req = ValidateCouponRequest(code=coupon_code, cart_total=order.total_amount)
+        validation = await validate_coupon(validate_req, authorization)
+        
+        if not validation.valid:
+            raise HTTPException(status_code=400, detail=validation.message)
+        
+        # Update order total
+        order.total_amount = validation.final_amount
+        await session.commit()
+        
+        # Increment coupon usage
+        if validation.coupon:
+            coupon_result = await session.execute(
+                select(CouponDB).where(CouponDB.id == validation.coupon.id)
+            )
+            coupon_db = coupon_result.scalar_one_or_none()
+            if coupon_db:
+                coupon_db.used_count += 1
+                await session.commit()
+        
+        return {
+            "message": "Coupon applied successfully",
+            "original_amount": order.total_amount + validation.discount_amount,
+            "discount_amount": validation.discount_amount,
+            "final_amount": validation.final_amount
+        }
+
+# ============ Admin Coupon Management ============
+
+@api_router.get("/admin/coupons")
+async def get_all_coupons(authorization: str = Header(None)):
+    """Get all coupons (admin only)"""
+    user = await get_current_user(authorization)
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(CouponDB).order_by(CouponDB.created_at.desc())
+        )
+        coupons = result.scalars().all()
+        
+        return [
+            {
+                "id": c.id,
+                "code": c.code,
+                "discount_type": c.discount_type,
+                "discount_value": float(c.discount_value),
+                "min_purchase": float(c.min_purchase),
+                "max_discount": float(c.max_discount) if c.max_discount else None,
+                "usage_limit": c.usage_limit,
+                "used_count": c.used_count,
+                "valid_from": c.valid_from.isoformat(),
+                "valid_until": c.valid_until.isoformat(),
+                "is_active": bool(c.is_active),
+                "created_at": c.created_at.isoformat()
+            }
+            for c in coupons
+        ]
+
+@api_router.post("/admin/coupons")
+async def create_coupon(coupon: CreateCoupon, authorization: str = Header(None)):
+    """Create a new coupon (admin only)"""
+    user = await get_current_user(authorization)
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Check if coupon code already exists
+        existing = await session.execute(
+            select(CouponDB).where(CouponDB.code == coupon.code.upper())
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Coupon code already exists")
+        
+        # Create new coupon
+        new_coupon = CouponDB(
+            id=str(uuid.uuid4()),
+            code=coupon.code.upper(),
+            discount_type=coupon.discount_type,
+            discount_value=coupon.discount_value,
+            min_purchase=coupon.min_purchase,
+            max_discount=coupon.max_discount,
+            usage_limit=coupon.usage_limit,
+            used_count=0,
+            valid_from=coupon.valid_from,
+            valid_until=coupon.valid_until,
+            is_active=coupon.is_active
+        )
+        
+        session.add(new_coupon)
+        await session.commit()
+        
+        return {
+            "id": new_coupon.id,
+            "code": new_coupon.code,
+            "message": "Coupon created successfully"
+        }
+
+@api_router.put("/admin/coupons/{coupon_id}")
+async def update_coupon(coupon_id: str, coupon_update: UpdateCoupon, authorization: str = Header(None)):
+    """Update a coupon (admin only)"""
+    user = await get_current_user(authorization)
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(CouponDB).where(CouponDB.id == coupon_id)
+        )
+        coupon = result.scalar_one_or_none()
+        
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found")
+        
+        # Update fields
+        if coupon_update.code is not None:
+            coupon.code = coupon_update.code.upper()
+        if coupon_update.discount_type is not None:
+            coupon.discount_type = coupon_update.discount_type
+        if coupon_update.discount_value is not None:
+            coupon.discount_value = coupon_update.discount_value
+        if coupon_update.min_purchase is not None:
+            coupon.min_purchase = coupon_update.min_purchase
+        if coupon_update.max_discount is not None:
+            coupon.max_discount = coupon_update.max_discount
+        if coupon_update.usage_limit is not None:
+            coupon.usage_limit = coupon_update.usage_limit
+        if coupon_update.valid_from is not None:
+            coupon.valid_from = coupon_update.valid_from
+        if coupon_update.valid_until is not None:
+            coupon.valid_until = coupon_update.valid_until
+        if coupon_update.is_active is not None:
+            coupon.is_active = coupon_update.is_active
+        
+        await session.commit()
+        
+        return {"message": "Coupon updated successfully"}
+
+@api_router.delete("/admin/coupons/{coupon_id}")
+async def delete_coupon(coupon_id: str, authorization: str = Header(None)):
+    """Delete a coupon (admin only)"""
+    user = await get_current_user(authorization)
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(CouponDB).where(CouponDB.id == coupon_id)
+        )
+        coupon = result.scalar_one_or_none()
+        
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found")
+        
+        await session.delete(coupon)
+        await session.commit()
+        
+        return {"message": "Coupon deleted successfully"}
+
+# ============ Saved Items Routes ============
+
+@api_router.get("/saved-items")
+async def get_saved_items(authorization: str = Header(None)):
+    """Get user's saved items"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(SavedItemDB, ProductDB)
+            .join(ProductDB, SavedItemDB.product_id == ProductDB.id)
+            .where(SavedItemDB.user_id == user['user_id'])
+            .order_by(SavedItemDB.saved_at.desc())
+        )
+        saved_items = result.all()
+        
+        return [
+            {
+                "id": item.SavedItemDB.id,
+                "product": {
+                    "id": item.ProductDB.id,
+                    "name": item.ProductDB.name,
+                    "brand": item.ProductDB.brand,
+                    "price": float(item.ProductDB.price),
+                    "description": item.ProductDB.description,
+                    "category": item.ProductDB.category,
+                    "frame_type": item.ProductDB.frame_type,
+                    "frame_shape": item.ProductDB.frame_shape,
+                    "color": item.ProductDB.color,
+                    "image_url": item.ProductDB.image_url,
+                    "stock": item.ProductDB.stock
+                },
+                "quantity": item.SavedItemDB.quantity,
+                "saved_at": item.SavedItemDB.saved_at.isoformat()
+            }
+            for item in saved_items
+        ]
+
+@api_router.post("/cart/{cart_item_id}/save")
+async def save_cart_item(cart_item_id: str, authorization: str = Header(None)):
+    """Move a cart item to saved items"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get cart item
+        result = await session.execute(
+            select(CartItemDB).where(
+                CartItemDB.id == cart_item_id,
+                CartItemDB.user_id == user['user_id']
+            )
+        )
+        cart_item = result.scalar_one_or_none()
+        
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="Cart item not found")
+        
+        # Check if already saved
+        existing = await session.execute(
+            select(SavedItemDB).where(
+                SavedItemDB.user_id == user['user_id'],
+                SavedItemDB.product_id == cart_item.product_id
+            )
+        )
+        if existing.scalar_one_or_none():
+            # Just remove from cart
+            await session.delete(cart_item)
+            await session.commit()
+            return {"message": "Item already in saved items. Removed from cart."}
+        
+        # Create saved item
+        saved_item = SavedItemDB(
+            id=str(uuid.uuid4()),
+            user_id=user['user_id'],
+            product_id=cart_item.product_id,
+            quantity=cart_item.quantity
+        )
+        
+        session.add(saved_item)
+        
+        # Remove from cart
+        await session.delete(cart_item)
+        
+        await session.commit()
+        
+        return {"message": "Item moved to saved items"}
+
+@api_router.post("/saved-items/{saved_item_id}/move-to-cart")
+async def move_saved_item_to_cart(saved_item_id: str, authorization: str = Header(None)):
+    """Move a saved item to cart"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        # Get saved item
+        result = await session.execute(
+            select(SavedItemDB).where(
+                SavedItemDB.id == saved_item_id,
+                SavedItemDB.user_id == user['user_id']
+            )
+        )
+        saved_item = result.scalar_one_or_none()
+        
+        if not saved_item:
+            raise HTTPException(status_code=404, detail="Saved item not found")
+        
+        # Check product stock
+        product_result = await session.execute(
+            select(ProductDB).where(ProductDB.id == saved_item.product_id)
+        )
+        product = product_result.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        if product.stock < saved_item.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Only {product.stock} items in stock"
+            )
+        
+        # Check if already in cart
+        existing_cart = await session.execute(
+            select(CartItemDB).where(
+                CartItemDB.user_id == user['user_id'],
+                CartItemDB.product_id == saved_item.product_id
+            )
+        )
+        cart_item = existing_cart.scalar_one_or_none()
+        
+        if cart_item:
+            # Update quantity
+            cart_item.quantity += saved_item.quantity
+        else:
+            # Create cart item
+            cart_item = CartItemDB(
+                id=str(uuid.uuid4()),
+                user_id=user['user_id'],
+                product_id=saved_item.product_id,
+                quantity=saved_item.quantity
+            )
+            session.add(cart_item)
+        
+        # Remove from saved items
+        await session.delete(saved_item)
+        
+        await session.commit()
+        
+        return {"message": "Item moved to cart"}
+
+@api_router.delete("/saved-items/{saved_item_id}")
+async def delete_saved_item(saved_item_id: str, authorization: str = Header(None)):
+    """Delete a saved item"""
+    user = await get_current_user(authorization)
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(SavedItemDB).where(
+                SavedItemDB.id == saved_item_id,
+                SavedItemDB.user_id == user['user_id']
+            )
+        )
+        saved_item = result.scalar_one_or_none()
+        
+        if not saved_item:
+            raise HTTPException(status_code=404, detail="Saved item not found")
+        
+        await session.delete(saved_item)
+        await session.commit()
+        
+        return {"message": "Saved item deleted"}
 
 # ============ Database Initialization ============
 

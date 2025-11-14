@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingBag, Glasses, Trash2, Minus, Plus, CreditCard } from 'lucide-react';
+import { ShoppingBag, Glasses, Trash2, Minus, Plus, CreditCard, Tag, Bookmark, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -13,10 +13,21 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [paymentGateway, setPaymentGateway] = useState('stripe');
   const [availableGateways, setAvailableGateways] = useState([]);
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  
+  // Saved items state
+  const [savedItems, setSavedItems] = useState([]);
+  const [savedItemsLoading, setSavedItemsLoading] = useState(false);
 
   useEffect(() => {
     fetchCart();
     fetchAvailableGateways();
+    fetchSavedItems();
   }, []);
 
   const fetchAvailableGateways = async () => {
@@ -185,6 +196,97 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }, 0);
   };
 
+  const calculateFinalTotal = () => {
+    const subtotal = calculateTotal();
+    return subtotal - discount;
+  };
+
+  // Coupon functions
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Please enter a coupon code');
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const response = await axiosInstance.post('/coupons/validate', {
+        code: couponCode.toUpperCase(),
+        cart_total: calculateTotal()
+      });
+
+      if (response.data.valid) {
+        setAppliedCoupon(response.data.coupon);
+        setDiscount(response.data.discount_amount);
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message);
+        setAppliedCoupon(null);
+        setDiscount(0);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to apply coupon');
+      setAppliedCoupon(null);
+      setDiscount(0);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setDiscount(0);
+    toast.info('Coupon removed');
+  };
+
+  // Saved items functions
+  const fetchSavedItems = async () => {
+    setSavedItemsLoading(true);
+    try {
+      const response = await axiosInstance.get('/saved-items');
+      setSavedItems(response.data);
+    } catch (error) {
+      console.error('Failed to load saved items');
+    } finally {
+      setSavedItemsLoading(false);
+    }
+  };
+
+  const saveForLater = async (cartItemId) => {
+    try {
+      await axiosInstance.post(`/cart/${cartItemId}/save`);
+      toast.success('Item saved for later');
+      fetchCart();
+      fetchCartCount();
+      fetchSavedItems();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save item');
+    }
+  };
+
+  const moveToCart = async (savedItemId) => {
+    try {
+      await axiosInstance.post(`/saved-items/${savedItemId}/move-to-cart`);
+      toast.success('Item moved to cart');
+      fetchCart();
+      fetchCartCount();
+      fetchSavedItems();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to move item');
+    }
+  };
+
+  const deleteSavedItem = async (savedItemId) => {
+    try {
+      await axiosInstance.delete(`/saved-items/${savedItemId}`);
+      toast.success('Saved item removed');
+      fetchSavedItems();
+    } catch (error) {
+      toast.error('Failed to remove saved item');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Navigation */}
@@ -267,52 +369,66 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                data-testid={`decrement-qty-${item.id}`}
-                                size="sm"
-                                variant="outline"
-                                onClick={() => decrementQuantity(item)}
-                                disabled={item.quantity <= 1}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              <input
-                                data-testid={`quantity-input-${item.id}`}
-                                type="number"
-                                min="1"
-                                max={item.product?.stock}
-                                value={item.quantity}
-                                onChange={(e) => handleQuantityChange(item, e.target.value)}
-                                className="w-16 text-center border rounded-md py-1 font-semibold"
-                              />
-                              <Button
-                                data-testid={`increment-qty-${item.id}`}
-                                size="sm"
-                                variant="outline"
-                                onClick={() => incrementQuantity(item)}
-                                disabled={item.quantity >= item.product?.stock}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  data-testid={`decrement-qty-${item.id}`}
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => decrementQuantity(item)}
+                                  disabled={item.quantity <= 1}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                                <input
+                                  data-testid={`quantity-input-${item.id}`}
+                                  type="number"
+                                  min="1"
+                                  max={item.product?.stock}
+                                  value={item.quantity}
+                                  onChange={(e) => handleQuantityChange(item, e.target.value)}
+                                  className="w-16 text-center border rounded-md py-1 font-semibold"
+                                />
+                                <Button
+                                  data-testid={`increment-qty-${item.id}`}
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => incrementQuantity(item)}
+                                  disabled={item.quantity >= item.product?.stock}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Subtotal: <span className="font-semibold text-gray-900">${(item.product?.price * item.quantity).toFixed(2)}</span>
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-600">
-                              Subtotal: <span className="font-semibold text-gray-900">${(item.product?.price * item.quantity).toFixed(2)}</span>
-                            </div>
+                            <Button
+                              data-testid={`remove-item-${item.id}`}
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeFromCart(item.product_id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove
+                            </Button>
                           </div>
-                          <Button
-                            data-testid={`remove-item-${item.id}`}
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => removeFromCart(item.product_id)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Remove
-                          </Button>
+                          <div className="flex justify-end">
+                            <Button
+                              data-testid={`save-for-later-${item.id}`}
+                              size="sm"
+                              variant="outline"
+                              onClick={() => saveForLater(item.id)}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Bookmark className="w-4 h-4 mr-2" />
+                              Save for Later
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -321,17 +437,122 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
               ))}
             </div>
 
+            {/* Saved Items */}
+            {savedItems.length > 0 && (
+              <div className="lg:col-span-2 mt-8">
+                <Card className="glass border-0">
+                  <CardContent className="p-6">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Saved for Later</h2>
+                    <div className="space-y-4">
+                      {savedItems.map((item) => (
+                        <div key={item.id} className="flex gap-6 p-4 border rounded-lg">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            <img
+                              src={item.product?.image_url}
+                              alt={item.product?.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div>
+                              <p className="text-sm text-gray-500 uppercase tracking-wide">
+                                {item.product?.brand}
+                              </p>
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                {item.product?.name}
+                              </h3>
+                              <p className="text-xl font-bold text-blue-600">
+                                ${item.product?.price.toFixed(2)}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                              <Button
+                                data-testid={`move-to-cart-${item.id}`}
+                                size="sm"
+                                onClick={() => moveToCart(item.id)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                Move to Cart
+                              </Button>
+                              <Button
+                                data-testid={`delete-saved-${item.id}`}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => deleteSavedItem(item.id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <Card className="glass border-0 sticky top-24">
                 <CardContent className="p-6 space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900">Order Summary</h2>
                   
+                  {/* Coupon Section */}
+                  <div className="space-y-3 pb-4 border-b">
+                    <div className="flex items-center gap-2 text-gray-700 font-semibold">
+                      <Tag className="w-5 h-5" />
+                      <span>Apply Coupon</span>
+                    </div>
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-green-600" />
+                          <span className="font-semibold text-green-700">{appliedCoupon.code}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={removeCoupon}
+                          className="h-6 w-6 p-0 hover:bg-green-100"
+                        >
+                          <X className="w-4 h-4 text-green-700" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter coupon code"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          className="flex-1 px-3 py-2 border rounded-md text-sm"
+                          disabled={couponLoading}
+                        />
+                        <Button
+                          onClick={applyCoupon}
+                          disabled={couponLoading || !couponCode.trim()}
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          {couponLoading ? 'Applying...' : 'Apply'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="space-y-3">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal</span>
                       <span>${calculateTotal().toFixed(2)}</span>
                     </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span>-${discount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-gray-600">
                       <span>Shipping</span>
                       <span className="text-green-600">Free</span>
@@ -339,7 +560,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-xl font-bold text-gray-900">
                         <span>Total</span>
-                        <span data-testid="cart-total" className="text-blue-600">${calculateTotal().toFixed(2)}</span>
+                        <span data-testid="cart-total" className="text-blue-600">${calculateFinalTotal().toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

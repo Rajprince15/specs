@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Glasses, Package, Users, DollarSign, Plus, Edit, Trash2, Images } from 'lucide-react';
+import { Glasses, Package, Users, DollarSign, Plus, Edit, Trash2, Images, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -35,10 +35,27 @@ const AdminDashboard = ({ user, onLogout }) => {
     stock: 100
   });
 
+  // Coupon management state
+  const [coupons, setCoupons] = useState([]);
+  const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState(null);
+  const [couponForm, setCouponForm] = useState({
+    code: '',
+    discount_type: 'percentage',
+    discount_value: '',
+    min_purchase: '0',
+    max_discount: '',
+    usage_limit: '',
+    valid_from: '',
+    valid_until: '',
+    is_active: true
+  });
+
   useEffect(() => {
     fetchStats();
     fetchProducts();
     fetchOrders();
+    fetchCoupons();
   }, []);
 
   const fetchStats = async () => {

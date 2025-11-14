@@ -10,6 +10,8 @@
 USE specs;
 
 -- Drop existing tables if they exist (use with caution in production)
+DROP TABLE IF EXISTS saved_items;
+DROP TABLE IF EXISTS coupons;
 DROP TABLE IF EXISTS recently_viewed;
 DROP TABLE IF EXISTS product_images;
 DROP TABLE IF EXISTS wishlist;
@@ -250,6 +252,47 @@ CREATE TABLE recently_viewed (
     INDEX idx_user_id (user_id),
     INDEX idx_product_id (product_id),
     INDEX idx_viewed_at (viewed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- COUPONS TABLE
+-- ==================================================================
+-- Stores discount coupon codes and their details
+-- ==================================================================
+CREATE TABLE coupons (
+    id CHAR(36) PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    discount_type ENUM('percentage', 'fixed') NOT NULL,
+    discount_value DECIMAL(10, 2) NOT NULL,
+    min_purchase DECIMAL(10, 2) DEFAULT 0,
+    max_discount DECIMAL(10, 2) NULL COMMENT 'Maximum discount for percentage coupons',
+    usage_limit INT NULL COMMENT 'NULL = unlimited',
+    used_count INT DEFAULT 0,
+    valid_from DATETIME NOT NULL,
+    valid_until DATETIME NOT NULL,
+    is_active TINYINT DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_code (code),
+    INDEX idx_is_active (is_active),
+    INDEX idx_valid_until (valid_until)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================================================================
+-- SAVED_ITEMS TABLE
+-- ==================================================================
+-- Stores items saved for later by users
+-- ==================================================================
+CREATE TABLE saved_items (
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    product_id CHAR(36) NOT NULL,
+    quantity INT DEFAULT 1,
+    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product_saved (user_id, product_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_product_id (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==================================================================
