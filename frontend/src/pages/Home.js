@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Glasses, TrendingUp, Shield } from 'lucide-react';
+import { TrendingUp, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import SEO from '@/components/SEO';
+import Navigation from '@/components/Navigation';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
@@ -44,60 +45,9 @@ const Home = ({ user, onLogout, cartCount }) => {
         keywords="eyewear online, buy glasses online, sunglasses, designer frames, prescription glasses"
         ogType="website"
       />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Navigation */}
-        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
-            <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Gee Ess Opticals
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            {user ? (
-              <>
-                {user.role === 'admin' ? (
-                  <Link to="/admin">
-                    <Button data-testid="admin-dashboard-btn" variant="outline">Admin Dashboard</Button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link to="/cart">
-                      <Button data-testid="cart-btn" variant="outline" className="relative">
-                        <ShoppingBag className="w-5 h-5" />
-                        {cartCount > 0 && (
-                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                            {cartCount}
-                          </span>
-                        )}
-                      </Button>
-                    </Link>
-                    <Link to="/orders">
-                      <Button data-testid="orders-btn" variant="outline">Orders</Button>
-                    </Link>
-                    <Link to="/profile">
-                      <Button data-testid="profile-btn" variant="outline">Profile</Button>
-                    </Link>
-                  </>
-                )}
-                <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button data-testid="login-btn" variant="outline">Login</Button>
-                </Link>
-                <Link to="/register">
-                  <Button data-testid="register-btn">Register</Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
 
       {/* Main Content */}
       <main id="main-content">
@@ -111,7 +61,7 @@ const Home = ({ user, onLogout, cartCount }) => {
                   See the World
                 </span>
                 <br />
-                <span className="text-gray-900">Differently</span>
+                <span className="text-gray-900 dark:text-white">Differently</span>
               </h1>
               <p className="text-lg md:text-xl text-gray-600 max-w-xl">
                 Discover premium eyewear that combines style, comfort, and clarity. Your perfect frames are just a click away.
