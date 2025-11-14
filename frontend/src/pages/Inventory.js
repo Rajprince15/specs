@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertTriangle, Package, Settings, ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
+import SEO from '@/components/SEO';
 
 const Inventory = ({ user, onLogout }) => {
   const [alerts, setAlerts] = useState([]);
@@ -134,9 +135,15 @@ const Inventory = ({ user, onLogout }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-cyan-50">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-lg border-b border-purple-100 sticky top-0 z-50">
+    <>
+      <SEO
+        title="Inventory Management"
+        description="Manage product inventory, monitor stock levels, and receive low stock alerts. Admin dashboard for inventory control."
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-cyan-50">
+        {/* Navigation */}
+        <nav className="bg-white/80 backdrop-blur-lg border-b border-purple-100 sticky top-0 z-50" role="navigation" aria-label="Admin navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">
@@ -358,7 +365,8 @@ const Inventory = ({ user, onLogout }) => {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -367,6 +367,7 @@ const Analytics = ({ user, onLogout }) => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

@@ -113,10 +113,9 @@ const OrderTracking = ({ user, onLogout, cartCount }) => {
               </Button>
             </CardContent>
           </Card>
+          </main>
         </div>
-      </main>
-    </div>
-    </>
+      </>
     );
   }
 

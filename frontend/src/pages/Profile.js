@@ -453,6 +453,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
         </Tabs>
       </div>
     </div>
+    </>
   );
 };
 

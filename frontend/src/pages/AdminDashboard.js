@@ -332,7 +332,7 @@ const AdminDashboard = ({ user, onLogout }) => {
 
       {/* Content */}
       <main id="main-content">
-      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Dashboard
@@ -844,9 +844,9 @@ const AdminDashboard = ({ user, onLogout }) => {
           </div>
         </DialogContent>
       </Dialog>
-      </div>
+        </div>
       </main>
-      </div>
+    </div>
     </>
   );
 };

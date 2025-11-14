@@ -277,6 +277,7 @@ const Home = ({ user, onLogout, cartCount }) => {
       </footer>
     </main>
     </div>
+    </>
   );
 };
 
