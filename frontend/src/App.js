@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import LoadingFallback from "@/components/LoadingFallback";
 import SkipToMain from "@/components/SkipToMain";
+import InstallPrompt from "@/components/InstallPrompt";
 
 // Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";
@@ -112,6 +113,7 @@ function App() {
       <div className="App">
         <BrowserRouter>
           <SkipToMain />
+          <InstallPrompt />
           <Toaster position="top-center" richColors />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
