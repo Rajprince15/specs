@@ -1,26 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import LoadingFallback from "@/components/LoadingFallback";
+
+// Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import Products from "@/pages/Products";
-import ProductDetail from "@/pages/ProductDetail";
-import Cart from "@/pages/Cart";
-import Wishlist from "@/pages/Wishlist";
-import Orders from "@/pages/Orders";
-import OrderTracking from "@/pages/OrderTracking";
-import Profile from "@/pages/Profile";
-import Addresses from "@/pages/Addresses";
-import AdminDashboard from "@/pages/AdminDashboard";
-import Analytics from "@/pages/Analytics";
-import Inventory from "@/pages/Inventory";
-import Users from "@/pages/Users";
-import PaymentSuccess from "@/pages/PaymentSuccess";
-import Compare from "@/pages/Compare";
+
+// Lazy load less critical pages
+const Products = lazy(() => import("@/pages/Products"));
+const ProductDetail = lazy(() => import("@/pages/ProductDetail"));
+const Cart = lazy(() => import("@/pages/Cart"));
+const Wishlist = lazy(() => import("@/pages/Wishlist"));
+const Orders = lazy(() => import("@/pages/Orders"));
+const OrderTracking = lazy(() => import("@/pages/OrderTracking"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const Addresses = lazy(() => import("@/pages/Addresses"));
+const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
+const Compare = lazy(() => import("@/pages/Compare"));
+
+// Lazy load admin pages (heavy and used by few users)
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
+const Inventory = lazy(() => import("@/pages/Inventory"));
+const Users = lazy(() => import("@/pages/Users"));
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -101,114 +108,116 @@ function App() {
     <div className="App">
       <BrowserRouter>
         <Toaster position="top-center" richColors />
-        <Routes>
-          <Route
-            path="/"
-            element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} />}
-          />
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/register" element={<Register onLogin={handleLogin} />} />
-          <Route
-            path="/products"
-            element={<Products user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />}
-          />
-          <Route
-            path="/products/:productId"
-            element={<ProductDetail user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />}
-          />
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <Cart user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/wishlist"
-            element={
-              <ProtectedRoute>
-                <Wishlist user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} fetchCartCount={fetchCartCount} fetchWishlistCount={fetchWishlistCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <Orders user={user} onLogout={handleLogout} cartCount={cartCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders/:orderId/tracking"
-            element={
-              <ProtectedRoute>
-                <OrderTracking user={user} onLogout={handleLogout} cartCount={cartCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile user={user} onLogout={handleLogout} cartCount={cartCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/addresses"
-            element={
-              <ProtectedRoute>
-                <Addresses user={user} onLogout={handleLogout} cartCount={cartCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <AdminDashboard user={user} onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/analytics"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <Analytics user={user} onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/inventory"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <Inventory user={user} onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <Users user={user} onLogout={handleLogout} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment-success"
-            element={
-              <ProtectedRoute>
-                <PaymentSuccess user={user} onLogout={handleLogout} cartCount={cartCount} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/compare"
-            element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} />}
-          />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route
+              path="/"
+              element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} />}
+            />
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/register" element={<Register onLogin={handleLogin} />} />
+            <Route
+              path="/products"
+              element={<Products user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />}
+            />
+            <Route
+              path="/products/:productId"
+              element={<ProductDetail user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />}
+            />
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <Cart user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wishlist"
+              element={
+                <ProtectedRoute>
+                  <Wishlist user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} fetchCartCount={fetchCartCount} fetchWishlistCount={fetchWishlistCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <Orders user={user} onLogout={handleLogout} cartCount={cartCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders/:orderId/tracking"
+              element={
+                <ProtectedRoute>
+                  <OrderTracking user={user} onLogout={handleLogout} cartCount={cartCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile user={user} onLogout={handleLogout} cartCount={cartCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/addresses"
+              element={
+                <ProtectedRoute>
+                  <Addresses user={user} onLogout={handleLogout} cartCount={cartCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboard user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <Analytics user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/inventory"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <Inventory user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <Users user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute>
+                  <PaymentSuccess user={user} onLogout={handleLogout} cartCount={cartCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/compare"
+              element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} />}
+            />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </div>
   );
