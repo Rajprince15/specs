@@ -616,70 +616,130 @@ Break down development into small, manageable phases that can be completed in 4-
 ---
 
 ## 🟠 PHASE 4A: Coupon System (5 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED
 **Estimated Time:** 40-45 minutes
 
 ### Backend Tasks:
-- [ ] Create coupons table
-- [ ] POST /api/coupons/validate
-- [ ] POST /api/orders/apply-coupon
-- [ ] GET/POST/PUT/DELETE /api/admin/coupons
+- [x] Create coupons table
+- [x] POST /api/coupons/validate
+- [x] POST /api/orders/apply-coupon
+- [x] GET/POST/PUT/DELETE /api/admin/coupons
 
 ### Frontend Tasks:
-- [ ] Coupon input in cart
-- [ ] Apply coupon button
-- [ ] Discount display
-- [ ] Admin coupon management
+- [x] Coupon input in cart
+- [x] Apply coupon button
+- [x] Discount display
+- [x] Admin coupon management
 
 ### Testing:
 - [ ] Test valid coupon
 - [ ] Test invalid coupon
 - [ ] Test discount calculation
 
+### Implementation Details:
+- Backend: Complete coupon system implemented (lines 2560-2840 in server.py)
+- Backend: CouponDB model with discount_type (percentage/fixed), min_purchase, max_discount, usage_limit
+- Backend: Full validation logic (active status, validity dates, usage limits, minimum purchase)
+- Backend: Admin CRUD APIs for coupon management
+- Frontend: Cart.js has complete coupon application UI with input, apply button, and discount display
+- Frontend: Applied coupon shown with remove button in green badge
+- Frontend: AdminDashboard.js now has complete admin coupon management:
+  * fetchCoupons() function implemented
+  * Coupons table displaying all coupons with code, type, value, usage stats, validity, status
+  * Create/Edit coupon dialog with full form (code, type, value, min purchase, max discount, usage limit, dates, active status)
+  * Edit button opens dialog with pre-filled coupon data
+  * Delete button with confirmation
+  * Active/Inactive status badges
+  * "Add Coupon" button with green gradient styling
+- Database: coupons table exists in mysql_schema.sql with all required fields
+
 ---
 
 ## 🟠 PHASE 4B: Save for Later (3 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 25-30 minutes
 
 ### Backend Tasks:
-- [ ] Create saved_items table
-- [ ] GET /api/saved-items
-- [ ] POST /api/cart/{item_id}/save
-- [ ] POST /api/saved-items/{id}/move-to-cart
+- [x] Create saved_items table
+- [x] GET /api/saved-items
+- [x] POST /api/cart/{item_id}/save
+- [x] POST /api/saved-items/{id}/move-to-cart
+- [x] DELETE /api/saved-items/{id}
 
 ### Frontend Tasks:
-- [ ] Save for later button in cart
-- [ ] Saved items section
-- [ ] Move to cart button
+- [x] Save for later button in cart
+- [x] Saved items section
+- [x] Move to cart button
+- [x] Delete saved item button
 
 ### Testing:
 - [ ] Test save item
 - [ ] Test move to cart
 - [ ] Test delete saved item
 
+### Implementation Details:
+- Backend: SavedItemDB model with user_id, product_id, quantity, saved_at (lines 210-217 in server.py)
+- Backend: GET /api/saved-items returns saved items with full product details via JOIN (lines 2844-2878)
+- Backend: POST /api/cart/{cart_item_id}/save moves item from cart to saved items (lines 2880-2926)
+- Backend: POST /api/saved-items/{saved_item_id}/move-to-cart moves item back to cart (lines 2928-2988)
+- Backend: DELETE /api/saved-items/{saved_item_id} removes saved item (lines 2990-3010)
+- Backend: Handles duplicate prevention and quantity management
+- Frontend: Cart.js - "Save for Later" button on each cart item with Bookmark icon (lines 421-430)
+- Frontend: Cart.js - "Saved for Later" section displays below cart (lines 440-498)
+- Frontend: Cart.js - Each saved item has "Move to Cart" and "Delete" buttons
+- Frontend: Cart.js - Shows product image, name, brand, price, quantity, and stock status
+- Frontend: Cart.js - State management for savedItems with loading states (lines 23-25)
+- Frontend: Cart.js - Auto-refreshes both cart and saved items after operations
+- Database: saved_items table exists in mysql_schema.sql (lines 280-296)
+
 ---
 
 ## 🟠 PHASE 4C: Search Autocomplete (4 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 35-40 minutes
 
 ### Backend Tasks:
-- [ ] GET /api/search/suggestions?q=query
-- [ ] Product name matching
-- [ ] Brand matching
-- [ ] Category suggestions
+- [x] GET /api/search/suggestions?q=query
+- [x] Product name matching
+- [x] Brand matching
+- [x] Category suggestions
 
 ### Frontend Tasks:
-- [ ] Search dropdown with suggestions
-- [ ] Product suggestions with images
-- [ ] Keyboard navigation
-- [ ] Recent searches
+- [x] Search dropdown with suggestions
+- [x] Product suggestions with images
+- [x] Keyboard navigation
+- [x] Recent searches
 
 ### Testing:
 - [ ] Test suggestions appear
 - [ ] Test keyboard navigation
 - [ ] Test click to search
+
+### Implementation Details:
+- Backend: GET /api/search/suggestions endpoint implemented (after line 982 in server.py)
+- Backend: Searches products by name, brand, and description using ILIKE
+- Backend: Returns up to 8 product suggestions with full details (id, name, brand, price, image, category)
+- Backend: Returns up to 5 matching brands (distinct)
+- Backend: Returns matching categories from ['men', 'women', 'kids', 'sunglasses']
+- Backend: Only shows in-stock products (stock > 0)
+- Backend: Requires minimum 2 characters for suggestions
+- Frontend: Enhanced Products.js with autocomplete functionality
+- Frontend: Search suggestions dropdown with shadow and border styling
+- Frontend: Recent searches section (stored in localStorage, max 5)
+- Frontend: Product suggestions with image thumbnail, name, brand, and price
+- Frontend: Brand suggestions with search icon
+- Frontend: Category suggestions with shopping bag icon
+- Frontend: Keyboard navigation support:
+  * Arrow Down: Navigate to next suggestion
+  * Arrow Up: Navigate to previous suggestion
+  * Enter: Select highlighted suggestion or perform search
+  * Escape: Close suggestions dropdown
+- Frontend: Click outside to close dropdown
+- Frontend: Selected item highlighted with blue background
+- Frontend: Debounced search (300ms delay) for better performance
+- Frontend: Auto-save searches to recent searches on search execution
+- Frontend: No results message when no matches found
+- Frontend: Hover effects on all suggestion items
 
 ---
 
@@ -957,23 +1017,62 @@ making it easier to support multiple payment gateways through a unified interfac
 | Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
 | Phase 2 (UX) | 5 | 20 | ✅ COMPLETED |
 | Phase 3 (Engagement) | 6 | 26 | ✅ COMPLETED |
-| Phase 4 (Advanced) | 8 | 29 | 🟡 1/8 Done |
+| Phase 4 (Advanced) | 8 | 29 | 🟡 4/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
 | **TOTAL** | **35** | **140** | **20/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 59.3% Complete (83/140 credits)
+## 🎯 Current Progress: 66.4% Complete (93/140 credits)
 
 ---
 
-**Last Updated:** 2025-01-12 (Phase 3 Completed - All 6 Features)
-**Version:** 3.1  
+**Last Updated:** 2025-01-12 (Phase 4A, 4B & 4C Complete)
+**Version:** 3.3  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 3.3 (2025-01-12)
+- ✅ **Completed Phase 4C: Search Autocomplete** (Full Stack)
+- ✅ Backend: GET /api/search/suggestions endpoint with intelligent matching
+- ✅ Backend: Searches products by name, brand, description (ILIKE)
+- ✅ Backend: Returns up to 8 products, 5 brands, and matching categories
+- ✅ Backend: Only shows in-stock products, requires min 2 characters
+- ✅ Frontend: Enhanced search with real-time autocomplete dropdown
+- ✅ Frontend: Product suggestions with images, name, brand, price
+- ✅ Frontend: Brand and category suggestions with icons
+- ✅ Frontend: Recent searches (localStorage, max 5 items)
+- ✅ Frontend: Full keyboard navigation (arrows, enter, escape)
+- ✅ Frontend: Debounced search (300ms) for performance
+- ✅ Frontend: Click outside to close, hover effects
+- ✅ Frontend: No results message with icon
+- 🎯 **Phase 4 Progress: 50% Complete** (4/8 phases done)
+
+### Version 3.2 (2025-01-12)
+- ✅ **Completed Phase 4A: Coupon System** (Full Stack)
+- ✅ Backend: Complete coupon system with validation and admin CRUD APIs
+- ✅ Frontend: Coupon input, apply button, and discount display in Cart
+- ✅ Frontend: Admin coupon management UI now complete:
+  * fetchCoupons() function implemented
+  * Coupons table with code, type, value, usage stats, validity, and status
+  * Create/Edit coupon dialog with comprehensive form
+  * Edit button with pre-filled data
+  * Delete button with confirmation
+  * Active/Inactive status badges
+  * Green gradient "Add Coupon" button
+- ✅ **Completed Phase 4B: Save for Later** (Full Stack)
+- ✅ Backend: SavedItemDB model with complete CRUD operations
+- ✅ Backend: GET /api/saved-items returns saved items with product details via JOIN
+- ✅ Backend: POST /api/cart/{cart_item_id}/save moves item from cart to saved items
+- ✅ Backend: POST /api/saved-items/{saved_item_id}/move-to-cart moves item back to cart
+- ✅ Backend: DELETE /api/saved-items/{saved_item_id} removes saved item
+- ✅ Frontend: "Save for Later" button on each cart item
+- ✅ Frontend: "Saved for Later" section displays below cart with product details
+- ✅ Frontend: "Move to Cart" and "Delete" buttons for saved items
+- ✅ Database: Both coupons and saved_items tables in mysql_schema.sql
 
 ### Version 3.1 (2025-01-12)
 - ✅ Completed Phase 3D: Order Tracking (Full Stack)

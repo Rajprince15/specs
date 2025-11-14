@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingBag, Glasses, Search, Plus } from 'lucide-react';
+import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 
@@ -14,10 +14,79 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
+  
+  // Autocomplete states
+  const [suggestions, setSuggestions] = useState({ products: [], brands: [], categories: [] });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const searchRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
   useEffect(() => {
     fetchProducts();
+    loadRecentSearches();
   }, [category]);
+
+  // Load recent searches from localStorage
+  const loadRecentSearches = () => {
+    const saved = localStorage.getItem('recentSearches');
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
+  };
+
+  // Save search to recent searches
+  const saveRecentSearch = (query) => {
+    if (!query.trim()) return;
+    let recent = [...recentSearches];
+    // Remove if already exists
+    recent = recent.filter(s => s.toLowerCase() !== query.toLowerCase());
+    // Add to beginning
+    recent.unshift(query);
+    // Keep only last 5
+    recent = recent.slice(0, 5);
+    setRecentSearches(recent);
+    localStorage.setItem('recentSearches', JSON.stringify(recent));
+  };
+
+  // Fetch search suggestions
+  const fetchSuggestions = async (query) => {
+    if (!query || query.length < 2) {
+      setSuggestions({ products: [], brands: [], categories: [] });
+      return;
+    }
+    try {
+      const response = await axiosInstance.get('/search/suggestions', { params: { q: query } });
+      setSuggestions(response.data);
+    } catch (error) {
+      console.error('Failed to fetch suggestions');
+    }
+  };
+
+  // Debounce search suggestions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search.length >= 2) {
+        fetchSuggestions(search);
+      } else {
+        setSuggestions({ products: [], brands: [], categories: [] });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target) &&
+          suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -32,16 +101,82 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }
   };
 
-  const handleSearch = async () => {
-    if (!search.trim()) {
+  const handleSearch = async (query = search) => {
+    if (!query.trim()) {
       fetchProducts();
       return;
     }
     try {
-      const response = await axiosInstance.get('/products', { params: { search } });
+      const response = await axiosInstance.get('/products', { params: { search: query } });
       setProducts(response.data);
+      saveRecentSearch(query);
+      setShowSuggestions(false);
     } catch (error) {
       toast.error('Search failed');
+    }
+  };
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e) => {
+    const totalItems = suggestions.products.length + suggestions.brands.length + suggestions.categories.length + recentSearches.length;
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < totalItems - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        handleSelectSuggestion(selectedIndex);
+      } else {
+        handleSearch();
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
+    }
+  };
+
+  // Handle selecting a suggestion
+  const handleSelectSuggestion = (index) => {
+    let currentIndex = 0;
+    
+    // Recent searches
+    if (index < recentSearches.length) {
+      const query = recentSearches[index];
+      setSearch(query);
+      handleSearch(query);
+      return;
+    }
+    currentIndex += recentSearches.length;
+    
+    // Products
+    if (index < currentIndex + suggestions.products.length) {
+      const product = suggestions.products[index - currentIndex];
+      navigate(`/products/${product.id}`);
+      setShowSuggestions(false);
+      return;
+    }
+    currentIndex += suggestions.products.length;
+    
+    // Brands
+    if (index < currentIndex + suggestions.brands.length) {
+      const brand = suggestions.brands[index - currentIndex];
+      setSearch(brand);
+      handleSearch(brand);
+      return;
+    }
+    currentIndex += suggestions.brands.length;
+    
+    // Categories
+    if (index < currentIndex + suggestions.categories.length) {
+      const cat = suggestions.categories[index - currentIndex];
+      setCategory(cat);
+      setSearch('');
+      setShowSuggestions(false);
+      return;
     }
   };
 
@@ -134,20 +269,153 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
         {/* Filters */}
         {showFilters && (
           <div className="glass p-6 rounded-2xl mb-8 space-y-6">
-            {/* Search Bar */}
+            {/* Search Bar with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Search
               </label>
-              <div className="flex gap-2">
-                <Input
-                  data-testid="search-input"
-                  type="text"
-                  placeholder="Search for eyeglasses, brands..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-12"
-                />
+              <div className="relative" ref={searchRef}>
+                <div className="flex gap-2">
+                  <Input
+                    data-testid="search-input"
+                    type="text"
+                    placeholder="Search for eyeglasses, brands..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setShowSuggestions(true);
+                      setSelectedIndex(-1);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setShowSuggestions(true)}
+                    className="h-12"
+                  />
+                </div>
+
+                {/* Autocomplete Dropdown */}
+                {showSuggestions && (search.length >= 2 || recentSearches.length > 0) && (
+                  <div 
+                    ref={suggestionsRef}
+                    className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-[500px] overflow-y-auto"
+                  >
+                    {/* Recent Searches */}
+                    {recentSearches.length > 0 && search.length < 2 && (
+                      <div className="p-3 border-b">
+                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Recent Searches</div>
+                        {recentSearches.map((recent, idx) => (
+                          <div
+                            key={`recent-${idx}`}
+                            className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
+                              selectedIndex === idx ? 'bg-blue-50' : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => {
+                              setSearch(recent);
+                              handleSearch(recent);
+                            }}
+                          >
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700">{recent}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Product Suggestions */}
+                    {suggestions.products.length > 0 && (
+                      <div className="p-3 border-b">
+                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Products</div>
+                        {suggestions.products.map((product, idx) => {
+                          const itemIndex = recentSearches.length + idx;
+                          return (
+                            <div
+                              key={product.id}
+                              className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
+                                selectedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => {
+                                navigate(`/products/${product.id}`);
+                                setShowSuggestions(false);
+                              }}
+                            >
+                              <img 
+                                src={product.image_url} 
+                                alt={product.name}
+                                className="w-12 h-12 object-cover rounded-md"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">{product.name}</div>
+                                <div className="text-sm text-gray-500">{product.brand}</div>
+                              </div>
+                              <div className="text-blue-600 font-semibold">${product.price.toFixed(2)}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Brand Suggestions */}
+                    {suggestions.brands.length > 0 && (
+                      <div className="p-3 border-b">
+                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Brands</div>
+                        {suggestions.brands.map((brand, idx) => {
+                          const itemIndex = recentSearches.length + suggestions.products.length + idx;
+                          return (
+                            <div
+                              key={`brand-${idx}`}
+                              className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
+                                selectedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => {
+                                setSearch(brand);
+                                handleSearch(brand);
+                              }}
+                            >
+                              <Search className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-700">{brand}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Category Suggestions */}
+                    {suggestions.categories.length > 0 && (
+                      <div className="p-3">
+                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Categories</div>
+                        {suggestions.categories.map((cat, idx) => {
+                          const itemIndex = recentSearches.length + suggestions.products.length + suggestions.brands.length + idx;
+                          return (
+                            <div
+                              key={`cat-${idx}`}
+                              className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
+                                selectedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => {
+                                setCategory(cat);
+                                setSearch('');
+                                setShowSuggestions(false);
+                              }}
+                            >
+                              <ShoppingBag className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-700 capitalize">{cat}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* No Results */}
+                    {search.length >= 2 && 
+                     suggestions.products.length === 0 && 
+                     suggestions.brands.length === 0 && 
+                     suggestions.categories.length === 0 && (
+                      <div className="p-6 text-center text-gray-500">
+                        <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                        <p>No results found for "{search}"</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

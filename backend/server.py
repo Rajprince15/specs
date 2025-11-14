@@ -981,6 +981,64 @@ async def get_product(product_id: str):
             "created_at": product.created_at.isoformat() if product.created_at else None
         }
 
+@api_router.get("/search/suggestions")
+async def get_search_suggestions(q: str = ""):
+    """Get search suggestions for autocomplete"""
+    if not q or len(q) < 2:
+        return {
+            "products": [],
+            "brands": [],
+            "categories": []
+        }
+    
+    query = q.lower().strip()
+    
+    async with async_session_maker() as session:
+        # Search products by name, brand, or description
+        product_result = await session.execute(
+            select(ProductDB)
+            .where(
+                or_(
+                    ProductDB.name.ilike(f"%{query}%"),
+                    ProductDB.brand.ilike(f"%{query}%"),
+                    ProductDB.description.ilike(f"%{query}%")
+                )
+            )
+            .where(ProductDB.stock > 0)  # Only show in-stock products
+            .limit(8)  # Limit to 8 product suggestions
+        )
+        products = product_result.scalars().all()
+        
+        # Get unique brands that match
+        brand_result = await session.execute(
+            select(ProductDB.brand)
+            .where(ProductDB.brand.ilike(f"%{query}%"))
+            .where(ProductDB.stock > 0)
+            .distinct()
+            .limit(5)
+        )
+        brands = [brand for brand in brand_result.scalars().all()]
+        
+        # Get matching categories
+        all_categories = ['men', 'women', 'kids', 'sunglasses']
+        matching_categories = [cat for cat in all_categories if query in cat.lower()]
+        
+        return {
+            "products": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "brand": p.brand,
+                    "price": float(p.price),
+                    "image_url": p.image_url,
+                    "category": p.category
+                }
+                for p in products
+            ],
+            "brands": brands,
+            "categories": matching_categories
+        }
+
 @api_router.post("/products")
 async def create_product(product_data: ProductCreate, authorization: str = Header(None)):
     user = await get_current_user(authorization)

@@ -201,6 +201,83 @@ const AdminDashboard = ({ user, onLogout }) => {
     }
   };
 
+  // Coupon management functions
+  const fetchCoupons = async () => {
+    try {
+      const response = await axiosInstance.get('/admin/coupons');
+      setCoupons(response.data);
+    } catch (error) {
+      toast.error('Failed to load coupons');
+    }
+  };
+
+  const handleCouponSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const couponData = {
+        ...couponForm,
+        discount_value: parseFloat(couponForm.discount_value),
+        min_purchase: parseFloat(couponForm.min_purchase),
+        max_discount: couponForm.max_discount ? parseFloat(couponForm.max_discount) : null,
+        usage_limit: couponForm.usage_limit ? parseInt(couponForm.usage_limit) : null,
+        valid_from: new Date(couponForm.valid_from).toISOString(),
+        valid_until: new Date(couponForm.valid_until).toISOString()
+      };
+
+      if (editingCoupon) {
+        await axiosInstance.put(`/admin/coupons/${editingCoupon.id}`, couponData);
+        toast.success('Coupon updated successfully');
+      } else {
+        await axiosInstance.post('/admin/coupons', couponData);
+        toast.success('Coupon created successfully');
+      }
+
+      setShowCouponDialog(false);
+      setEditingCoupon(null);
+      setCouponForm({
+        code: '',
+        discount_type: 'percentage',
+        discount_value: '',
+        min_purchase: '0',
+        max_discount: '',
+        usage_limit: '',
+        valid_from: '',
+        valid_until: '',
+        is_active: true
+      });
+      fetchCoupons();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save coupon');
+    }
+  };
+
+  const handleEditCoupon = (coupon) => {
+    setEditingCoupon(coupon);
+    setCouponForm({
+      code: coupon.code,
+      discount_type: coupon.discount_type,
+      discount_value: coupon.discount_value.toString(),
+      min_purchase: coupon.min_purchase.toString(),
+      max_discount: coupon.max_discount ? coupon.max_discount.toString() : '',
+      usage_limit: coupon.usage_limit ? coupon.usage_limit.toString() : '',
+      valid_from: coupon.valid_from.split('T')[0],
+      valid_until: coupon.valid_until.split('T')[0],
+      is_active: coupon.is_active
+    });
+    setShowCouponDialog(true);
+  };
+
+  const handleDeleteCoupon = async (couponId) => {
+    if (!window.confirm('Are you sure you want to delete this coupon?')) return;
+    try {
+      await axiosInstance.delete(`/admin/coupons/${couponId}`);
+      toast.success('Coupon deleted successfully');
+      fetchCoupons();
+    } catch (error) {
+      toast.error('Failed to delete coupon');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Navigation */}
@@ -439,6 +516,204 @@ const AdminDashboard = ({ user, onLogout }) => {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Coupon Management */}
+        <Card className="glass border-0">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Coupon Management</h2>
+              <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => { 
+                      setEditingCoupon(null); 
+                      setCouponForm({ 
+                        code: '', 
+                        discount_type: 'percentage', 
+                        discount_value: '', 
+                        min_purchase: '0', 
+                        max_discount: '', 
+                        usage_limit: '', 
+                        valid_from: '', 
+                        valid_until: '', 
+                        is_active: true 
+                      }); 
+                    }} 
+                    className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add Coupon
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}</DialogTitle>
+                    <DialogDescription>Fill in the coupon details below</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCouponSubmit} className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="coupon-code">Coupon Code</Label>
+                        <Input 
+                          id="coupon-code" 
+                          value={couponForm.code} 
+                          onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })} 
+                          placeholder="e.g., SAVE20"
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="discount-type">Discount Type</Label>
+                        <Select value={couponForm.discount_type} onValueChange={(value) => setCouponForm({ ...couponForm, discount_type: value })}>
+                          <SelectTrigger id="discount-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">Percentage (%)</SelectItem>
+                            <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="discount-value">Discount Value</Label>
+                        <Input 
+                          id="discount-value" 
+                          type="number" 
+                          step="0.01" 
+                          value={couponForm.discount_value} 
+                          onChange={(e) => setCouponForm({ ...couponForm, discount_value: e.target.value })} 
+                          placeholder={couponForm.discount_type === 'percentage' ? '20' : '10.00'}
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="min-purchase">Minimum Purchase ($)</Label>
+                        <Input 
+                          id="min-purchase" 
+                          type="number" 
+                          step="0.01" 
+                          value={couponForm.min_purchase} 
+                          onChange={(e) => setCouponForm({ ...couponForm, min_purchase: e.target.value })} 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="max-discount">Max Discount ($) - Optional</Label>
+                        <Input 
+                          id="max-discount" 
+                          type="number" 
+                          step="0.01" 
+                          value={couponForm.max_discount} 
+                          onChange={(e) => setCouponForm({ ...couponForm, max_discount: e.target.value })} 
+                          placeholder="Leave empty for no limit"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="usage-limit">Usage Limit - Optional</Label>
+                        <Input 
+                          id="usage-limit" 
+                          type="number" 
+                          value={couponForm.usage_limit} 
+                          onChange={(e) => setCouponForm({ ...couponForm, usage_limit: e.target.value })} 
+                          placeholder="Leave empty for unlimited"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="valid-from">Valid From</Label>
+                        <Input 
+                          id="valid-from" 
+                          type="date" 
+                          value={couponForm.valid_from} 
+                          onChange={(e) => setCouponForm({ ...couponForm, valid_from: e.target.value })} 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="valid-until">Valid Until</Label>
+                        <Input 
+                          id="valid-until" 
+                          type="date" 
+                          value={couponForm.valid_until} 
+                          onChange={(e) => setCouponForm({ ...couponForm, valid_until: e.target.value })} 
+                          required 
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="is-active"
+                        checked={couponForm.is_active}
+                        onChange={(e) => setCouponForm({ ...couponForm, is_active: e.target.checked })}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <Label htmlFor="is-active" className="cursor-pointer">Active (users can use this coupon)</Label>
+                    </div>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700">
+                      {editingCoupon ? 'Update Coupon' : 'Create Coupon'}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Code</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Type</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Value</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Usage</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Valid Until</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Status</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {coupons.map((coupon) => (
+                    <tr key={coupon.id} className="border-b hover:bg-white/50">
+                      <td className="py-3 px-4 font-semibold text-blue-600">{coupon.code}</td>
+                      <td className="py-3 px-4 text-gray-600 capitalize">{coupon.discount_type}</td>
+                      <td className="py-3 px-4 text-gray-900">
+                        {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `$${coupon.discount_value.toFixed(2)}`}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {coupon.used_count} / {coupon.usage_limit || '∞'}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {new Date(coupon.valid_until).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        {coupon.is_active ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>
+                        ) : (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Inactive</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEditCoupon(coupon)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteCoupon(coupon.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {coupons.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="py-8 text-center text-gray-500">
+                        No coupons created yet. Click "Add Coupon" to create one.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>
