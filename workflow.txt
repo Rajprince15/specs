@@ -966,8 +966,10 @@ making it easier to support multiple payment gateways through a unified interfac
 ### Implementation Details:
 - **Backend**: Complete Redis caching integrated for products, cart, search suggestions
 - **Backend**: Cache invalidation on all mutations (create, update, delete)
-- **Backend**: Composite indexes added for common query patterns (performance_indexes.sql)
+- **Backend**: Composite indexes merged into main mysql_schema.sql (no separate files)
+- **Backend**: Performance indexes include: category+price, brand+stock, user+status, and more
 - **Backend**: Full-text search index for product searches
+- **Backend**: ANALYZE TABLE commands included for query optimizer statistics
 - **Backend**: Redis connection lifecycle managed in startup/shutdown events
 - **Frontend**: Route-based code splitting with lazy loading (App.js)
 - **Frontend**: LazyImage component with Intersection Observer + React.memo
@@ -976,6 +978,7 @@ making it easier to support multiple payment gateways through a unified interfac
 - **Security**: Cache is payment-gateway agnostic, works with Stripe/Razorpay/any gateway
 - **Configuration**: redis.conf with optimized settings for caching
 - **Documentation**: Complete performance guide in PERFORMANCE_OPTIMIZATION.md
+- **Database**: All indexes consolidated in single mysql_schema.sql file
 
 ---
 
@@ -1123,13 +1126,25 @@ making it easier to support multiple payment gateways through a unified interfac
 
 ---
 
-**Last Updated:** 2025-01-12 (Phase 4H Complete - Fixed Critical Bugs!)
-**Version:** 3.6.1  
+**Last Updated:** 2025-01-12 (Database Schema Consolidated - Performance Indexes Merged)
+**Version:** 3.6.2  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 3.6.2 (2025-01-12)
+- 🗄️ **Database Schema Consolidation**
+- ✅ Merged performance_indexes.sql into main mysql_schema.sql
+- ✅ Single unified schema file with all performance optimizations
+- ✅ Performance indexes now included in main schema (before sample data)
+- ✅ Removed separate performance_indexes.sql file
+- ✅ Updated Phase 5A documentation to reflect consolidated schema
+- ✅ All composite indexes: category+price, brand+stock, user+status, product+rating, etc.
+- ✅ Full-text search index for product searches included
+- ✅ ANALYZE TABLE commands included for query optimizer statistics
+- 🎯 **Cleaner project structure with single SQL schema file**
 
 ### Version 3.6.1 (2025-01-12)
 - 🐛 **Fixed Critical Bugs in Phase 4H: Product Comparison**
