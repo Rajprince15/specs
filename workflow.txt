@@ -823,26 +823,47 @@ Break down development into small, manageable phases that can be completed in 4-
 ---
 
 ## 🟠 PHASE 4F: Admin User Management (4 Credits)
-**Status:** ❌ TODO  
+**Status:** ✅ COMPLETED  
 **Estimated Time:** 35-40 minutes
 
 ### Backend Tasks:
-- [ ] GET /api/admin/users
-- [ ] GET /api/admin/users/{id}
-- [ ] PUT /api/admin/users/{id}
-- [ ] PUT /api/admin/users/{id}/block
+- [x] GET /api/admin/users
+- [x] GET /api/admin/users/{id}
+- [x] PUT /api/admin/users/{id}
+- [x] PUT /api/admin/users/{id}/block
+- [x] Added is_blocked field to UserDB model
+- [x] Block check added to login endpoint
 
 ### Frontend Tasks:
-- [ ] Users management page
-- [ ] Users table with search
-- [ ] View user details
-- [ ] Block/unblock user
-- [ ] View user orders
+- [x] Users management page
+- [x] Users table with search
+- [x] View user details
+- [x] Block/unblock user
+- [x] View user orders
 
 ### Testing:
 - [ ] Test user list
 - [ ] Test user details
 - [ ] Test block user
+
+### Implementation Details:
+- Backend: UserDB model updated with is_blocked field (0 for active, 1 for blocked)
+- Backend: GET /api/admin/users with pagination, search, and filtering (lines 3405-3471)
+- Backend: GET /api/admin/users/{user_id} returns detailed user info with statistics (lines 3473-3562)
+- Backend: Statistics include: total orders, total spent, cart items, wishlist items, reviews count
+- Backend: Recent orders (last 10) included in user details
+- Backend: PUT /api/admin/users/{user_id} for updating user information (lines 3564-3608)
+- Backend: PUT /api/admin/users/{user_id}/block toggles block status (lines 3610-3645)
+- Backend: Cannot block admin users (validation in place)
+- Backend: Login endpoint checks is_blocked status and prevents blocked users from logging in
+- Frontend: Users.js page created with comprehensive user management interface
+- Frontend: Users table with search, pagination, role badges, status badges
+- Frontend: View user details dialog with statistics cards (orders, spent, cart, wishlist, reviews)
+- Frontend: Recent orders table in user details
+- Frontend: Block/Unblock button with confirmation
+- Frontend: Route added to App.js (/admin/users) as admin-only protected route
+- Frontend: Navigation link added to AdminDashboard
+- Database: mysql_schema.sql updated with is_blocked column and index
 
 ---
 
@@ -1050,23 +1071,45 @@ making it easier to support multiple payment gateways through a unified interfac
 | Phase 1 (MVP) | 8 | 32 | ✅ COMPLETED |
 | Phase 2 (UX) | 5 | 20 | ✅ COMPLETED |
 | Phase 3 (Engagement) | 6 | 26 | ✅ COMPLETED |
-| Phase 4 (Advanced) | 8 | 29 | 🟡 6/8 Done |
+| Phase 4 (Advanced) | 8 | 29 | 🟡 7/8 Done |
 | Phase 5 (Polish) | 8 | 33 | ❌ TODO |
-| **TOTAL** | **35** | **140** | **22/35 Done** |
+| **TOTAL** | **35** | **140** | **23/35 Done** |
 
 ---
 
-## 🎯 Current Progress: 72.9% Complete (102/140 credits)
+## 🎯 Current Progress: 75.7% Complete (106/140 credits)
 
 ---
 
-**Last Updated:** 2025-01-12 (Phase 4D & 4E Complete)
-**Version:** 3.4  
+**Last Updated:** 2025-01-12 (Phase 4F Complete)
+**Version:** 3.5  
 **Organization:** Optimized for 4-5 credits per phase
 
 ---
 
 ## 📝 Recent Updates
+
+### Version 3.5 (2025-01-12)
+- ✅ **Completed Phase 4F: Admin User Management** (Full Stack)
+- ✅ Backend: UserDB model updated with is_blocked field
+- ✅ Backend: GET /api/admin/users with pagination and search (name, email, phone)
+- ✅ Backend: GET /api/admin/users/{user_id} returns detailed user info with statistics
+- ✅ Backend: Statistics include total orders, total spent, cart items, wishlist items, reviews count
+- ✅ Backend: Recent orders (last 10) included in user details response
+- ✅ Backend: PUT /api/admin/users/{user_id} for updating user information
+- ✅ Backend: PUT /api/admin/users/{user_id}/block toggles block status
+- ✅ Backend: Validation prevents blocking admin users
+- ✅ Backend: Login endpoint checks is_blocked status and prevents blocked users from logging in
+- ✅ Frontend: Users.js page created with comprehensive user management interface
+- ✅ Frontend: Users table with search, pagination, role badges, and status badges
+- ✅ Frontend: View user details dialog with activity statistics cards
+- ✅ Frontend: Recent orders table in user details dialog
+- ✅ Frontend: Block/Unblock button functionality
+- ✅ Frontend: Route added to App.js (/admin/users) as admin-only protected route
+- ✅ Frontend: Navigation link added to AdminDashboard
+- ✅ Database: mysql_schema.sql updated with is_blocked column and index
+- 🎯 **Phase 4 Progress: 87.5% Complete** (7/8 phases done)
+- 🎯 **Note**: Phase 4G (Razorpay Payment) was already completed in Phase 1E
 
 ### Version 3.4 (2025-01-12)
 - ✅ **Completed Phase 4D: Admin Sales Analytics** (Full Stack)

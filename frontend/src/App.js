@@ -18,6 +18,7 @@ import Addresses from "@/pages/Addresses";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Analytics from "@/pages/Analytics";
 import Inventory from "@/pages/Inventory";
+import Users from "@/pages/Users";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -183,6 +184,14 @@ function App() {
             element={
               <ProtectedRoute adminOnly={true}>
                 <Inventory user={user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <Users user={user} onLogout={handleLogout} />
               </ProtectedRoute>
             }
           />

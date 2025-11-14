@@ -68,6 +68,7 @@ class UserDB(Base):
     phone: Mapped[str] = mapped_column(String(50))
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     role: Mapped[str] = mapped_column(String(50), default="user")
+    is_blocked: Mapped[int] = mapped_column(Integer, default=0)  # 0 for not blocked, 1 for blocked
     email_welcome: Mapped[int] = mapped_column(Integer, default=1)  # 1 for enabled, 0 for disabled
     email_order_confirmation: Mapped[int] = mapped_column(Integer, default=1)
     email_payment_receipt: Mapped[int] = mapped_column(Integer, default=1)
@@ -588,6 +589,10 @@ async def login(credentials: UserLogin):
         
         if not user:
             raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        # Check if user is blocked
+        if user.is_blocked == 1:
+            raise HTTPException(status_code=403, detail="Your account has been blocked. Please contact support.")
         
         # Verify password
         if not pwd_context.verify(credentials.password, user.password):
@@ -3387,6 +3392,243 @@ async def bulk_update_stock(
         return {
             "message": f"Successfully updated stock for {len(updated_products)} products",
             "updated_products": updated_products
+        }
+
+# ============ Admin User Management APIs ============
+
+class UpdateUserRequest(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    role: Optional[str] = None
+
+@api_router.get("/admin/users")
+async def get_all_users(
+    authorization: str = Header(None),
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20
+):
+    """Get all users with pagination and search (admin only)"""
+    user = await get_current_user(authorization)
+    
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Build query
+        query = select(UserDB)
+        
+        # Apply search filter
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    UserDB.name.ilike(search_pattern),
+                    UserDB.email.ilike(search_pattern),
+                    UserDB.phone.ilike(search_pattern)
+                )
+            )
+        
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await session.execute(count_query)
+        total = total_result.scalar()
+        
+        # Apply pagination
+        offset = (page - 1) * limit
+        query = query.offset(offset).limit(limit).order_by(UserDB.created_at.desc())
+        
+        result = await session.execute(query)
+        users = result.scalars().all()
+        
+        users_list = [
+            {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "phone": u.phone,
+                "address": u.address,
+                "role": u.role,
+                "is_blocked": bool(u.is_blocked),
+                "created_at": u.created_at.isoformat()
+            }
+            for u in users
+        ]
+        
+        return {
+            "users": users_list,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit
+        }
+
+@api_router.get("/admin/users/{user_id}")
+async def get_user_details(
+    user_id: str,
+    authorization: str = Header(None)
+):
+    """Get detailed user information including order history (admin only)"""
+    admin = await get_current_user(authorization)
+    
+    if admin['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Get user details
+        user_result = await session.execute(
+            select(UserDB).where(UserDB.id == user_id)
+        )
+        user = user_result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user's orders with total spent
+        orders_result = await session.execute(
+            select(OrderDB).where(OrderDB.user_id == user_id).order_by(OrderDB.created_at.desc())
+        )
+        orders = orders_result.scalars().all()
+        
+        # Get cart items count
+        cart_result = await session.execute(
+            select(func.count()).select_from(CartDB).where(CartDB.user_id == user_id)
+        )
+        cart_count = cart_result.scalar()
+        
+        # Get wishlist items count
+        wishlist_result = await session.execute(
+            select(func.count()).select_from(WishlistDB).where(WishlistDB.user_id == user_id)
+        )
+        wishlist_count = wishlist_result.scalar()
+        
+        # Get reviews count
+        reviews_result = await session.execute(
+            select(func.count()).select_from(ReviewDB).where(ReviewDB.user_id == user_id)
+        )
+        reviews_count = reviews_result.scalar()
+        
+        # Calculate total spent
+        total_spent = sum(order.total_amount for order in orders if order.payment_status == 'paid')
+        
+        orders_list = [
+            {
+                "id": order.id,
+                "total_amount": float(order.total_amount),
+                "order_status": order.order_status,
+                "payment_status": order.payment_status,
+                "created_at": order.created_at.isoformat()
+            }
+            for order in orders
+        ]
+        
+        return {
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "phone": user.phone,
+                "address": user.address,
+                "role": user.role,
+                "is_blocked": bool(user.is_blocked),
+                "created_at": user.created_at.isoformat()
+            },
+            "statistics": {
+                "total_orders": len(orders),
+                "total_spent": float(total_spent),
+                "cart_items": cart_count,
+                "wishlist_items": wishlist_count,
+                "reviews_count": reviews_count
+            },
+            "recent_orders": orders_list[:10]  # Last 10 orders
+        }
+
+@api_router.put("/admin/users/{user_id}")
+async def update_user(
+    user_id: str,
+    update_data: UpdateUserRequest,
+    authorization: str = Header(None)
+):
+    """Update user information (admin only)"""
+    admin = await get_current_user(authorization)
+    
+    if admin['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserDB).where(UserDB.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update fields if provided
+        if update_data.name is not None:
+            user.name = update_data.name
+        if update_data.phone is not None:
+            user.phone = update_data.phone
+        if update_data.address is not None:
+            user.address = update_data.address
+        if update_data.role is not None and update_data.role in ['user', 'admin']:
+            user.role = update_data.role
+        
+        await session.commit()
+        
+        return {
+            "message": "User updated successfully",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "phone": user.phone,
+                "address": user.address,
+                "role": user.role,
+                "is_blocked": bool(user.is_blocked)
+            }
+        }
+
+@api_router.put("/admin/users/{user_id}/block")
+async def block_unblock_user(
+    user_id: str,
+    authorization: str = Header(None)
+):
+    """Block or unblock a user (admin only)"""
+    admin = await get_current_user(authorization)
+    
+    if admin['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserDB).where(UserDB.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Prevent blocking admin users
+        if user.role == 'admin':
+            raise HTTPException(status_code=400, detail="Cannot block admin users")
+        
+        # Toggle block status
+        user.is_blocked = 1 if user.is_blocked == 0 else 0
+        
+        await session.commit()
+        
+        status = "blocked" if user.is_blocked == 1 else "unblocked"
+        
+        return {
+            "message": f"User {status} successfully",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "is_blocked": bool(user.is_blocked)
+            }
         }
 
 # ============ Database Initialization ============
