@@ -753,7 +753,8 @@ const AdminDashboard = ({ user, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </main>
 
       {/* Image Management Dialog */}
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
@@ -817,7 +818,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                     <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
                       <img
                         src={image.image_url}
-                        alt="Product"
+                        alt="Product image"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -844,9 +845,7 @@ const AdminDashboard = ({ user, onLogout }) => {
           </div>
         </DialogContent>
       </Dialog>
-        </div>
-      </main>
-    </div>
+      </div>
     </>
   );
 };

@@ -324,6 +324,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Shopping Cart
@@ -630,6 +631,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
           </div>
         )}
         </div>
+      </main>
       </div>
     </>
   );

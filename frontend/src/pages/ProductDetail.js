@@ -282,6 +282,7 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       </nav>
 
       {/* Content */}
+      <main id="main-content">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <Link to="/products" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8">
           <ArrowLeft className="w-4 h-4" />
@@ -695,6 +696,8 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
           </div>
         </div>
       )}
+      </div>
+      </main>
       </div>
     </>
   );
