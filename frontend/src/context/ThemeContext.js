@@ -11,20 +11,15 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Initialize theme from localStorage or system preference
+  // Initialize theme - always default to light for new users
   const [theme, setTheme] = useState(() => {
-    // Check localStorage first
+    // Check localStorage first - if user has set a preference, use it
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       return savedTheme;
     }
     
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
-    // Default to light
+    // Default to light mode for new users
     return 'light';
   });
 
@@ -42,7 +37,7 @@ export const ThemeProvider = ({ children }) => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Listen for system theme changes
+  // Listen for system theme changes (only if user hasn't set a preference)
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     

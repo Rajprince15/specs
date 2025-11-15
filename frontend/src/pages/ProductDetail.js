@@ -478,21 +478,7 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
                 </Button>
               </div>
               
-              {/* Compare Checkbox */}
-              <div className="glass p-4 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={compareProducts.some(p => p.id === product.id)}
-                    onCheckedChange={() => toggleCompare(product)}
-                    className="border-2 border-blue-500 data-[state=checked]:bg-blue-600"
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">Add to Compare</p>
-                    <p className="text-sm text-gray-600">Compare this product with others</p>
-                  </div>
-                  <GitCompare className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>

@@ -287,6 +287,40 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
     setShowSuggestions(false);
   };
 
+  // Filter and sort products
+  const filteredAndSortedProducts = () => {
+    let filtered = [...products];
+
+    // Apply price range filter
+    filtered = filtered.filter(
+      (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
+    );
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'price_asc':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'name_asc':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'name_desc':
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'newest':
+      default:
+        // Assuming products are already sorted by newest from backend
+        break;
+    }
+
+    return filtered;
+  };
+
+  const displayProducts = filteredAndSortedProducts();
+
   return (
     <>
       <SEO
@@ -579,7 +613,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
           <div className="text-center py-20">
             <p className="text-gray-600 text-lg">Loading products...</p>
           </div>
-        ) : products.length === 0 ? (
+        ) : displayProducts.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-600 text-lg">No products found</p>
             <Button onClick={clearFilters} className="mt-4">Clear Filters</Button>
@@ -587,12 +621,12 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
         ) : (
           <>
             <div className="mb-6">
-              <p className="text-gray-600">
-                Showing <span className="font-semibold text-gray-900">{products.length}</span> products
+              <p className="text-gray-600 dark:text-gray-400">
+                Showing <span className="font-semibold text-gray-900 dark:text-gray-100">{displayProducts.length}</span> of <span className="font-semibold text-gray-900 dark:text-gray-100">{products.length}</span> products
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {displayProducts.map((product) => (
               <Card
                 key={product.id}
                 data-testid={`product-card-${product.id}`}

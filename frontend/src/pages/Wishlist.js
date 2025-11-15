@@ -67,7 +67,7 @@ const Wishlist = ({ user, onLogout, cartCount, wishlistCount, fetchCartCount, fe
           keywords="wishlist, saved items, favorite eyewear, saved glasses"
           noindex={true}
         />
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
           <Navigation user={user} onLogout={onLogout} cartCount={cartCount} wishlistCount={wishlistCount} />
           <div className="flex justify-center items-center h-[60vh]" role="status" aria-live="polite">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" aria-label="Loading wishlist"></div>
@@ -85,7 +85,7 @@ const Wishlist = ({ user, onLogout, cartCount, wishlistCount, fetchCartCount, fe
         keywords="wishlist, saved items, favorite eyewear, saved glasses"
         noindex={true}
       />
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Navigation user={user} onLogout={onLogout} cartCount={cartCount} wishlistCount={wishlistCount} />
 
         <main id="main-content" className="container mx-auto px-4 py-8">

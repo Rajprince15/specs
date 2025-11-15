@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Shield, ShoppingBag, Glasses, Star, Truck, Award, Clock, Sparkles, Tag, Users, CheckCircle } from 'lucide-react';
+import { TrendingUp, Shield, ShoppingBag, Glasses, Star, Truck, Award, Clock, Sparkles, Tag, Users, CheckCircle, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '@/utils/formatters';
+import { useInstallPWA } from '@/hooks/useInstallPWA';
+import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
@@ -16,6 +18,16 @@ const Home = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount }) => 
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isInstallable, isInstalled, installApp } = useInstallPWA();
+
+  const handleInstall = async () => {
+    const success = await installApp();
+    if (success) {
+      toast.success('App installed successfully!', {
+        description: 'You can now access the app from your home screen.'
+      });
+    }
+  };
 
   useEffect(() => {
     fetchTrendingProducts();
@@ -78,12 +90,23 @@ const Home = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount }) => 
               <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-xl">
                 {t('home.hero.subtitle')}
               </p>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/products">
-                  <Button data-testid="shop-now-btn" size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg">
+                  <Button data-testid="shop-now-btn" size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg">
                     {t('home.hero.cta')}
                   </Button>
                 </Link>
+                {isInstallable && !isInstalled && (
+                  <Button 
+                    onClick={handleInstall}
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 px-8 py-6 text-lg"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Install App
+                  </Button>
+                )}
               </div>
             </div>
             <div className="relative">
