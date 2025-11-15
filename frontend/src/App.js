@@ -13,6 +13,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/context/ThemeContext";
 import "@/i18n"; // Initialize i18n
+import { initializeAnalytics, setUserId } from "@/utils/analytics";
+import usePageTracking from "@/hooks/usePageTracking";
 
 // Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";
@@ -58,11 +60,23 @@ function App() {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
 
+  // Initialize Google Analytics 4
+  useEffect(() => {
+    initializeAnalytics();
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      
+      // Set user ID for analytics tracking
+      if (parsedUser.id) {
+        setUserId(parsedUser.id);
+      }
+      
       fetchCartCount();
       fetchWishlistCount();
     }
@@ -112,18 +126,17 @@ function App() {
     return children;
   };
 
-  return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <HelmetProvider>
-            <div className="App">
-              <BrowserRouter>
-                <SkipToMain />
-                <InstallPrompt />
-                <Toaster position="top-center" richColors />
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
+  // Inner component to use routing hooks
+  const AppContent = () => {
+    usePageTracking(); // Track page views on route changes
+    
+    return (
+      <>
+        <SkipToMain />
+        <InstallPrompt />
+        <Toaster position="top-center" richColors />
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
             <Route
               path="/"
               element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} />}
@@ -230,8 +243,20 @@ function App() {
               path="/compare"
               element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} />}
             />
-                  </Routes>
-                </Suspense>
+          </Routes>
+        </Suspense>
+      </>
+    );
+  };
+
+  return (
+    <ErrorBoundary>
+      <ThemeProvider>
+        <ToastProvider>
+          <HelmetProvider>
+            <div className="App">
+              <BrowserRouter>
+                <AppContent />
               </BrowserRouter>
             </div>
           </HelmetProvider>

@@ -6,6 +6,7 @@ import { Glasses, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import { trackPurchase } from '@/utils/analytics';
 
 const PaymentSuccess = ({ user, onLogout, cartCount }) => {
   const [searchParams] = useSearchParams();
@@ -38,6 +39,17 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
 
       if (response.data.payment_status === 'paid') {
         toast.success('Payment successful!');
+        
+        // Track purchase in Google Analytics
+        if (response.data.order) {
+          trackPurchase({
+            order_id: response.data.order.id,
+            total_amount: response.data.order.total_amount,
+            items: response.data.order.items || [],
+            payment_method: response.data.order.payment_method || 'stripe'
+          });
+        }
+        
         setLoading(false);
         return;
       } else if (response.data.status === 'expired') {

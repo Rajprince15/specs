@@ -8,6 +8,7 @@ import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, Che
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import { trackProductView as trackProductViewGA, trackAddToCart, trackReviewSubmit } from '@/utils/analytics';
 
 const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const { productId } = useParams();
@@ -43,6 +44,11 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       } catch (error) {
         console.error('Failed to track product view');
       }
+    }
+    
+    // Track product view in Google Analytics
+    if (product) {
+      trackProductViewGA(product);
     }
   };
 
@@ -96,6 +102,12 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
     try {
       await axiosInstance.post('/cart', { product_id: productId, quantity: 1 });
       toast.success('Added to cart');
+      
+      // Track add to cart in Google Analytics
+      if (product) {
+        trackAddToCart(product, 1);
+      }
+      
       fetchCartCount();
     } catch (error) {
       toast.error('Failed to add to cart');
@@ -116,6 +128,9 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       } else {
         await axiosInstance.post(`/products/${productId}/reviews`, { rating, comment });
         toast.success('Review submitted successfully');
+        
+        // Track review submission in Google Analytics
+        trackReviewSubmit(productId, rating);
       }
       setRating(5);
       setComment('');

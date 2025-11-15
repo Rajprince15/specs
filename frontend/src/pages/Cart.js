@@ -6,6 +6,7 @@ import { ShoppingBag, Glasses, Trash2, Minus, Plus, CreditCard, Tag, Bookmark, X
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import { trackBeginCheckout, trackRemoveFromCart, trackApplyCoupon } from '@/utils/analytics';
 
 const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const navigate = useNavigate();
@@ -57,8 +58,17 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
 
   const removeFromCart = async (productId) => {
     try {
+      // Find the item being removed for analytics
+      const item = cartItems.find(i => i.product_id === productId);
+      
       await axiosInstance.delete(`/cart/${productId}`);
       toast.success('Item removed from cart');
+      
+      // Track remove from cart in Google Analytics
+      if (item && item.product) {
+        trackRemoveFromCart(item.product, item.quantity);
+      }
+      
       fetchCart();
       fetchCartCount();
     } catch (error) {
@@ -112,6 +122,13 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
       toast.error('Cart is empty');
       return;
     }
+
+    // Track begin checkout in Google Analytics
+    const cartValue = cartItems.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0
+    );
+    trackBeginCheckout(cartItems, cartValue);
 
     setCheckoutLoading(true);
     
@@ -220,6 +237,9 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
         setAppliedCoupon(response.data.coupon);
         setDiscount(response.data.discount_amount);
         toast.success(response.data.message);
+        
+        // Track coupon application in Google Analytics
+        trackApplyCoupon(couponCode.toUpperCase(), response.data.discount_amount);
       } else {
         toast.error(response.data.message);
         setAppliedCoupon(null);

@@ -8,6 +8,7 @@ import { Glasses, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import { trackSignUp, setUserId } from '@/utils/analytics';
 
 const Register = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -28,6 +29,13 @@ const Register = ({ onLogin }) => {
       const response = await axiosInstance.post('/auth/register', formData);
       toast.success(response.data.message);
       onLogin(response.data.user, response.data.token);
+      
+      // Track sign up event
+      trackSignUp('email');
+      if (response.data.user?.id) {
+        setUserId(response.data.user.id);
+      }
+      
       navigate('/products');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Registration failed');

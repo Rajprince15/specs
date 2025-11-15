@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
 import { useTranslation } from 'react-i18next';
+import { trackLogin, setUserId } from '@/utils/analytics';
 
 const Login = ({ onLogin }) => {
   const { t } = useTranslation();
@@ -24,6 +25,12 @@ const Login = ({ onLogin }) => {
       const response = await axiosInstance.post('/auth/login', formData);
       toast.success(response.data.message);
       onLogin(response.data.user, response.data.token);
+      
+      // Track login event
+      trackLogin('email');
+      if (response.data.user?.id) {
+        setUserId(response.data.user.id);
+      }
       
       if (response.data.user.role === 'admin') {
         navigate('/admin');
