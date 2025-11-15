@@ -21,7 +21,8 @@ import {
   User,
   MapPin,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
@@ -122,6 +123,50 @@ const AdminOrders = ({ user, onLogout }) => {
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update order');
       console.error('Error updating order:', error);
+    }
+  };
+
+  // Update payment status
+  const handleUpdatePaymentStatus = async (orderId, newStatus) => {
+    try {
+      await axiosInstance.put(`/admin/orders/${orderId}/payment-status`, newStatus, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      toast.success('Payment status updated successfully', {
+        description: `Status changed to ${newStatus}`
+      });
+      
+      // Refresh order details if dialog is open
+      if (showDetailsDialog && orderDetails?.id === orderId) {
+        handleViewDetails(orderId);
+      }
+      fetchOrders();
+    } catch (error) {
+      toast.error('Failed to update payment status', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+      console.error('Error updating payment status:', error);
+    }
+  };
+
+  // Delete order
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order? This action cannot be undone and will permanently delete all order data.')) {
+      return;
+    }
+
+    try {
+      await axiosInstance.delete(`/admin/orders/${orderId}`);
+      toast.success('Order deleted successfully', {
+        description: 'All order data has been permanently removed'
+      });
+      setShowDetailsDialog(false);
+      fetchOrders();
+    } catch (error) {
+      toast.error('Failed to delete order', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+      console.error('Error deleting order:', error);
     }
   };
 
@@ -482,6 +527,64 @@ const AdminOrders = ({ user, onLogout }) => {
                     <p className="font-mono text-sm">{orderDetails.tracking_number}</p>
                   </div>
                 )}
+              </div>
+
+              {/* Payment Status Update & Delete Actions */}
+              <div className="border-t pt-4 space-y-4">
+                <div>
+                  <Label className="text-gray-700 mb-2 block">Update Payment Status</Label>
+                  <Select
+                    value={orderDetails.payment_status}
+                    onValueChange={(value) => handleUpdatePaymentStatus(orderDetails.id, value)}
+                  >
+                    <SelectTrigger className="w-full md:w-64">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-yellow-600" />
+                          <span>Pending</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="paid">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>Paid</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="failed">
+                        <div className="flex items-center gap-2">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                          <span>Failed</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="refunded">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-blue-600" />
+                          <span>Refunded</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => handleUpdateOrder(orderDetails)}
+                    className="flex-1"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Update Order Status
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteOrder(orderDetails.id)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Order
+                  </Button>
+                </div>
               </div>
 
               {/* Shipping Address */}

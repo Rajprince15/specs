@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal, GitCompare, X } from 'lucide-react';
+import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal, GitCompare, X, Heart } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import { ProductAddedToast } from '@/components/EnhancedToast';
 
 const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const navigate = useNavigate();
@@ -195,11 +196,53 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
       return;
     }
     try {
+      const product = products.find(p => p.id === productId);
       await axiosInstance.post('/cart', { product_id: productId, quantity: 1 });
-      toast.success('Added to cart');
+      
+      // Show enhanced toast with product details
+      toast.custom((t) => (
+        <ProductAddedToast 
+          product={product} 
+          action="cart"
+        />
+      ), { duration: 5000 });
+      
       fetchCartCount();
     } catch (error) {
-      toast.error('Failed to add to cart');
+      toast.error('Failed to add to cart', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+    }
+  };
+
+  // Add to wishlist
+  const addToWishlist = async (productId, e) => {
+    if (e) e.stopPropagation();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const product = products.find(p => p.id === productId);
+      await axiosInstance.post('/wishlist', { product_id: productId });
+      
+      // Show enhanced toast with product details
+      toast.custom((t) => (
+        <ProductAddedToast 
+          product={product} 
+          action="wishlist"
+        />
+      ), { duration: 5000 });
+    } catch (error) {
+      if (error.response?.status === 409) {
+        toast.error('Already in wishlist', {
+          description: 'This product is already in your wishlist'
+        });
+      } else {
+        toast.error('Failed to add to wishlist', {
+          description: error.response?.data?.detail || 'Please try again'
+        });
+      }
     }
   };
 
@@ -617,6 +660,15 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
                     <span className="text-xs font-medium text-gray-700">Compare</span>
                   </div>
                 </div>
+
+                {/* Wishlist Button */}
+                <button
+                  onClick={(e) => addToWishlist(product.id, e)}
+                  className="absolute top-2 right-2 z-10 p-2.5 bg-white/90 hover:bg-pink-50 rounded-full shadow-lg transition-all hover:scale-110 group"
+                  aria-label="Add to wishlist"
+                >
+                  <Heart className="w-5 h-5 text-gray-600 group-hover:text-pink-500 group-hover:fill-pink-500 transition-colors" />
+                </button>
                 
                 <div className="aspect-square overflow-hidden bg-gray-100">
                   <img
@@ -646,20 +698,22 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
                     </span>
                   )}
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <p className="text-2xl font-bold text-blue-600">₹{product.price.toFixed(2)}</p>
-                    <Button
-                      data-testid={`add-to-cart-${product.id}`}
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(product.id);
-                      }}
-                      disabled={product.stock === 0}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        data-testid={`add-to-cart-${product.id}`}
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product.id);
+                        }}
+                        disabled={product.stock === 0}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

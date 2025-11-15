@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users as UsersIcon, Search, Eye, Shield, ShieldOff, ChevronLeft, ChevronRight, UserCircle, Mail, Phone, MapPin, Calendar, Package, Heart, ShoppingCart, MessageSquare, DollarSign } from 'lucide-react';
+import { Users as UsersIcon, Search, Eye, Shield, ShieldOff, ChevronLeft, ChevronRight, UserCircle, Mail, Phone, MapPin, Calendar, Package, Heart, ShoppingCart, MessageSquare, DollarSign, Trash2, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
@@ -85,6 +85,59 @@ const Users = ({ user, onLogout }) => {
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update user status');
       console.error('Error blocking/unblocking user:', error);
+    }
+  };
+
+  // Delete user
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user? This will permanently delete the user and ALL their data (orders, cart, reviews, etc.). This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await axiosInstance.delete(`/admin/users/${userId}`);
+      toast.success('User deleted successfully', {
+        description: 'All user data has been permanently removed'
+      });
+      setShowDetailsDialog(false);
+      fetchUsers();
+    } catch (error) {
+      toast.error('Failed to delete user', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  // Change user role
+  const handleChangeRole = async (userId, currentRole) => {
+    const newRole = currentRole === 'admin' ? 'customer' : 'admin';
+    const message = newRole === 'admin' 
+      ? 'Are you sure you want to make this user an admin? They will have full access to admin features.'
+      : 'Are you sure you want to remove admin privileges from this user?';
+
+    if (!window.confirm(message)) {
+      return;
+    }
+
+    try {
+      await axiosInstance.put(`/admin/users/${userId}/role`, newRole, {
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      toast.success(`User role updated to ${newRole}`, {
+        description: `User now has ${newRole} privileges`
+      });
+      
+      // Refresh details if dialog is open
+      if (showDetailsDialog && userDetails?.user?.id === userId) {
+        handleViewDetails(userId);
+      }
+      fetchUsers();
+    } catch (error) {
+      toast.error('Failed to update user role', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+      console.error('Error updating user role:', error);
     }
   };
 
@@ -499,22 +552,42 @@ const Users = ({ user, onLogout }) => {
               )}
 
               {/* Actions */}
-              {userDetails.user.role !== 'admin' && (
-                <div className="flex justify-end gap-2 pt-4 border-t">
+              <div className="flex justify-between items-center gap-3 pt-4 border-t">
+                <div className="flex gap-2">
                   <Button
-                    variant={userDetails.user.is_blocked ? "default" : "destructive"}
-                    onClick={() => {
-                      handleBlockUnblock(userDetails.user.id, userDetails.user.is_blocked);
-                    }}
+                    variant="outline"
+                    onClick={() => handleChangeRole(userDetails.user.id, userDetails.user.role)}
                   >
-                    {userDetails.user.is_blocked ? (
-                      <><Shield className="w-4 h-4 mr-2" /> Unblock User</>
-                    ) : (
-                      <><ShieldOff className="w-4 h-4 mr-2" /> Block User</>
-                    )}
+                    <UserCog className="w-4 h-4 mr-2" />
+                    {userDetails.user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                   </Button>
+                  
+                  {userDetails.user.role !== 'admin' && (
+                    <Button
+                      variant={userDetails.user.is_blocked ? "default" : "destructive"}
+                      onClick={() => {
+                        handleBlockUnblock(userDetails.user.id, userDetails.user.is_blocked);
+                      }}
+                    >
+                      {userDetails.user.is_blocked ? (
+                        <><Shield className="w-4 h-4 mr-2" /> Unblock User</>
+                      ) : (
+                        <><ShieldOff className="w-4 h-4 mr-2" /> Block User</>
+                      )}
+                    </Button>
+                  )}
                 </div>
-              )}
+                
+                {userDetails.user.role !== 'admin' && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteUser(userDetails.user.id)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete User
+                  </Button>
+                )}
+              </div>
             </div>
           ) : null}
         </DialogContent>

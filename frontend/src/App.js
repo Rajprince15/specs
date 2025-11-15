@@ -39,6 +39,8 @@ const Analytics = lazy(() => import("@/pages/Analytics"));
 const Inventory = lazy(() => import("@/pages/Inventory"));
 const Users = lazy(() => import("@/pages/Users"));
 const AdminOrders = lazy(() => import("@/pages/AdminOrders"));
+const AdminPayments = lazy(() => import("@/pages/AdminPayments"));
+const AdminReviews = lazy(() => import("@/pages/AdminReviews"));
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -167,7 +169,22 @@ function App() {
       <>
         <SkipToMain />
         <InstallPrompt />
-        <Toaster position="top-center" richColors />
+        <Toaster 
+          position="top-right" 
+          richColors 
+          duration={5000}
+          toastOptions={{
+            style: {
+              background: 'white',
+              color: '#0f172a',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+            },
+            className: 'dark:bg-gray-800 dark:text-white dark:border-gray-700',
+          }}
+        />
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route
@@ -277,6 +294,22 @@ function App() {
               element={
                 <ProtectedRoute adminOnly={true}>
                   <AdminOrders user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/payments"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminPayments user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reviews"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminReviews user={user} onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />

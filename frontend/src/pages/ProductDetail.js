@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, ChevronLeft, ChevronRight, ZoomIn, GitCompare, X } from 'lucide-react';
+import { ShoppingBag, Glasses, ArrowLeft, ShoppingCart, Star, Edit2, Trash2, ChevronLeft, ChevronRight, ZoomIn, GitCompare, X, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
 import { trackProductView as trackProductViewGA, trackAddToCart, trackReviewSubmit } from '@/utils/analytics';
+import { ProductAddedToast } from '@/components/EnhancedToast';
 
 const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const { productId } = useParams();
@@ -101,7 +102,14 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }
     try {
       await axiosInstance.post('/cart', { product_id: productId, quantity: 1 });
-      toast.success('Added to cart');
+      
+      // Show enhanced toast with product details
+      toast.custom((t) => (
+        <ProductAddedToast 
+          product={product} 
+          action="cart"
+        />
+      ), { duration: 5000 });
       
       // Track add to cart in Google Analytics
       if (product) {
@@ -110,7 +118,37 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
       
       fetchCartCount();
     } catch (error) {
-      toast.error('Failed to add to cart');
+      toast.error('Failed to add to cart', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+    }
+  };
+
+  const addToWishlist = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      await axiosInstance.post('/wishlist', { product_id: productId });
+      
+      // Show enhanced toast with product details
+      toast.custom((t) => (
+        <ProductAddedToast 
+          product={product} 
+          action="wishlist"
+        />
+      ), { duration: 5000 });
+    } catch (error) {
+      if (error.response?.status === 409) {
+        toast.error('Already in wishlist', {
+          description: 'This product is already in your wishlist'
+        });
+      } else {
+        toast.error('Failed to add to wishlist', {
+          description: error.response?.data?.detail || 'Please try again'
+        });
+      }
     }
   };
 
@@ -419,15 +457,26 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
             </div>
 
             <div className="space-y-4">
-              <Button
-                data-testid="add-to-cart-btn"
-                onClick={addToCart}
-                disabled={product.stock === 0}
-                className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg"
-              >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Add to Cart
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  data-testid="add-to-cart-btn"
+                  onClick={addToCart}
+                  disabled={product.stock === 0}
+                  className="flex-1 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Add to Cart
+                </Button>
+                
+                <Button
+                  onClick={addToWishlist}
+                  variant="outline"
+                  className="h-14 px-6 border-2 border-pink-500 text-pink-600 hover:bg-pink-50 hover:text-pink-700"
+                >
+                  <Heart className="w-5 h-5" />
+                </Button>
+              </div>
               
               {/* Compare Checkbox */}
               <div className="glass p-4 rounded-xl">

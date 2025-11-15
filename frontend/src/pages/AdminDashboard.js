@@ -332,6 +332,18 @@ const AdminDashboard = ({ user, onLogout }) => {
                 Orders
               </Button>
             </Link>
+            <Link to="/admin/payments">
+              <Button variant="ghost" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Payments
+              </Button>
+            </Link>
+            <Link to="/admin/reviews">
+              <Button variant="ghost" className="text-pink-600 hover:text-pink-700 hover:bg-pink-50">
+                <Users className="w-4 h-4 mr-2" />
+                Reviews
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
