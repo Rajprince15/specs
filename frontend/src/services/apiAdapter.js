@@ -228,20 +228,43 @@ class ApiAdapter {
       if (cleanUrl === 'user/profile' && method === 'PUT') {
         return mockApiService.updateUserProfile(data);
       }
+      if (cleanUrl === 'user/password' && method === 'PUT') {
+        return mockApiService.updatePassword(data);
+      }
+      if (cleanUrl === 'user/email-preferences' && method === 'GET') {
+        return mockApiService.getEmailPreferences();
+      }
+      if (cleanUrl === 'user/email-preferences' && method === 'PUT') {
+        return mockApiService.updateEmailPreferences(data);
+      }
 
       // Addresses routes
       if (cleanUrl === 'addresses' && method === 'GET') {
         return mockApiService.getAddresses();
       }
+      if (cleanUrl === 'user/addresses' && method === 'GET') {
+        return mockApiService.getAddresses();
+      }
       if (cleanUrl === 'addresses' && method === 'POST') {
+        return mockApiService.addAddress(data);
+      }
+      if (cleanUrl === 'user/addresses' && method === 'POST') {
         return mockApiService.addAddress(data);
       }
       if (cleanUrl.match(/^addresses\/[^/]+$/) && method === 'PUT') {
         const id = cleanUrl.split('/')[1];
         return mockApiService.updateAddress(id, data);
       }
+      if (cleanUrl.match(/^user\/addresses\/[^/]+$/) && method === 'PUT') {
+        const id = cleanUrl.split('/')[2];
+        return mockApiService.updateAddress(id, data);
+      }
       if (cleanUrl.match(/^addresses\/[^/]+$/) && method === 'DELETE') {
         const id = cleanUrl.split('/')[1];
+        return mockApiService.deleteAddress(id);
+      }
+      if (cleanUrl.match(/^user\/addresses\/[^/]+$/) && method === 'DELETE') {
+        const id = cleanUrl.split('/')[2];
         return mockApiService.deleteAddress(id);
       }
 

@@ -175,7 +175,7 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={<Navigate to="/products" replace />}
+              element={<Navigate to="/home" replace />}
             />
             <Route
               path="/home"

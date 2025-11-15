@@ -476,6 +476,46 @@ class MockApiService {
     return { data: updatedUser };
   }
 
+  async updatePassword(passwordData) {
+    await delay();
+    const { currentUser } = getMockState();
+    if (!currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // In mock mode, just return success
+    return { data: { message: 'Password updated successfully' } };
+  }
+
+  async getEmailPreferences() {
+    await delay();
+    const { currentUser } = getMockState();
+    if (!currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // Return default email preferences
+    return { 
+      data: {
+        email_welcome: true,
+        email_order_confirmation: true,
+        email_payment_receipt: true,
+        email_shipping_notification: true
+      }
+    };
+  }
+
+  async updateEmailPreferences(preferences) {
+    await delay();
+    const { currentUser } = getMockState();
+    if (!currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    // In mock mode, just return the preferences back
+    return { data: preferences };
+  }
+
   // Addresses endpoints
   async getAddresses() {
     await delay();

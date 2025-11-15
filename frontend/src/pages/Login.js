@@ -17,12 +17,12 @@ const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
-  // Redirect to products if user is already logged in
+  // Redirect to home if user is already logged in
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     if (token && userData) {
-      navigate('/products');
+      navigate('/');
     }
   }, [navigate]);
 
@@ -44,7 +44,7 @@ const Login = ({ onLogin }) => {
       if (response.data.user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/home');
+        navigate('/');
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || t('auth.loginError'));
@@ -71,7 +71,7 @@ const Login = ({ onLogin }) => {
       if (response.data.user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/home');
+        navigate('/');
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Demo login failed');
@@ -91,7 +91,7 @@ const Login = ({ onLogin }) => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6">
         <main id="main-content" className="w-full max-w-md">
           <nav role="navigation" aria-label="Authentication navigation">
-          <Link to="/home" className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-8" aria-label="Back to Home">
+          <Link to="/" className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-8" aria-label="Back to Home">
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             {t('common.back')}
           </Link>
