@@ -1,29 +1,22 @@
 import { format as dateFnsFormat } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 
-// Currency formatter
-export const formatCurrency = (amount, currencyCode = 'USD', locale = 'en') => {
+// Currency formatter - Default to INR
+export const formatCurrency = (amount, currencyCode = 'INR', locale = 'en') => {
   try {
-    // Map language codes to currency codes
-    const currencyMap = {
-      en: 'USD',
-      hi: 'INR',
-    };
+    // Default currency is INR for all locales
+    const currency = 'INR';
 
-    // Get currency based on locale
-    const currency = currencyMap[locale] || currencyCode;
-
-    // Format using Intl.NumberFormat
-    return new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-US', {
+    // Format using Intl.NumberFormat with Indian locale
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(amount);
   } catch (error) {
-    // Fallback formatting
-    const symbol = locale === 'hi' ? '₹' : '$';
-    return `${symbol}${amount.toFixed(2)}`;
+    // Fallback formatting with INR symbol
+    return `₹${amount.toFixed(2)}`;
   }
 };
 
@@ -51,7 +44,7 @@ export const formatDateTime = (date, locale = 'en') => {
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     
-    return new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-US', {
+    return new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -66,7 +59,7 @@ export const formatDateTime = (date, locale = 'en') => {
 // Number formatter
 export const formatNumber = (number, locale = 'en') => {
   try {
-    return new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-US').format(number);
+    return new Intl.NumberFormat('en-IN').format(number);
   } catch (error) {
     return number.toString();
   }
@@ -75,7 +68,7 @@ export const formatNumber = (number, locale = 'en') => {
 // Percentage formatter
 export const formatPercentage = (value, locale = 'en') => {
   try {
-    return new Intl.NumberFormat(locale === 'hi' ? 'hi-IN' : 'en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'percent',
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,

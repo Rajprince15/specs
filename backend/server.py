@@ -2840,7 +2840,18 @@ async def validate_coupon(request: ValidateCouponRequest, authorization: str = H
         
         # Check validity dates
         now = datetime.now(timezone.utc)
-        if now < coupon.valid_from:
+        
+        # Ensure coupon dates are timezone-aware for comparison
+        valid_from = coupon.valid_from
+        valid_until = coupon.valid_until
+        
+        # If dates from DB are naive (no timezone), make them UTC-aware
+        if valid_from.tzinfo is None:
+            valid_from = valid_from.replace(tzinfo=timezone.utc)
+        if valid_until.tzinfo is None:
+            valid_until = valid_until.replace(tzinfo=timezone.utc)
+        
+        if now < valid_from:
             return ValidateCouponResponse(
                 valid=False,
                 message="This coupon is not yet valid",
@@ -2848,7 +2859,7 @@ async def validate_coupon(request: ValidateCouponRequest, authorization: str = H
                 final_amount=request.cart_total
             )
         
-        if now > coupon.valid_until:
+        if now > valid_until:
             return ValidateCouponResponse(
                 valid=False,
                 message="This coupon has expired",
