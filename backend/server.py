@@ -33,9 +33,10 @@ DB_USER = os.environ.get('DB_USER', 'root')
 DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
 DB_NAME = os.environ.get('DB_NAME', 'specs')
 
-# Create async engine for MySQL
+# Create async engine for MySQL with query logging
 DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-engine = create_async_engine(DATABASE_URL, echo=False)
+# Set echo=True to see all SQL queries in terminal
+engine = create_async_engine(DATABASE_URL, echo=True)
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Password hashing
@@ -538,8 +539,25 @@ async def get_current_user(authorization: str = Header(None)):
     return payload
 
 async def get_db():
+    print("\n🔌 DATABASE SESSION CREATED")
     async with async_session_maker() as session:
         yield session
+    print("🔌 DATABASE SESSION CLOSED\n")
+
+# ============ Debug Logging Helpers ============
+
+def log_db_operation(operation: str, table: str, details: str = "", data: dict = None):
+    """Helper function to log database operations"""
+    print(f"\n{'─'*80}")
+    print(f"💾 DATABASE OPERATION")
+    print(f"{'─'*80}")
+    print(f"🔧 Operation: {operation}")
+    print(f"📊 Table: {table}")
+    if details:
+        print(f"📝 Details: {details}")
+    if data:
+        print(f"📦 Data: {data}")
+    print(f"{'─'*80}\n")
 
 
 # ============ Auth Routes ============
@@ -547,16 +565,23 @@ async def get_db():
 @api_router.post("/auth/register")
 @limiter.limit(RateLimit['register'])
 async def register(request: Request, response: Response, user_data: UserRegister):
+    log_db_operation("USER REGISTRATION", "users", f"Email: {user_data.email}")
+    
     async with async_session_maker() as session:
         # Check if user exists
+        log_db_operation("SELECT", "users", f"Checking if email exists: {user_data.email}")
         result = await session.execute(select(UserDB).where(UserDB.email == user_data.email))
         existing = result.scalar_one_or_none()
         
         if existing:
+            print("❌ User already exists!")
             raise HTTPException(status_code=400, detail="Email already registered")
+        
+        print("✅ Email available for registration")
         
         # Hash password
         hashed_password = pwd_context.hash(user_data.password)
+        print("🔒 Password hashed successfully")
         
         # Generate user ID
         user_id = str(uuid.uuid4())
@@ -578,15 +603,26 @@ async def register(request: Request, response: Response, user_data: UserRegister
             created_at=datetime.now(timezone.utc)
         )
         
+        log_db_operation("INSERT", "users", f"Creating user: {user_data.name}", {
+            "id": user_id,
+            "email": user_data.email,
+            "name": user_data.name
+        })
+        
         session.add(db_user)
         await session.commit()
         
+        print("✅ User created successfully in database")
+        
         # Send welcome email (async in background)
         try:
+            print("📧 Sending welcome email...")
             email_service.send_welcome_email(db_user.name, db_user.email)
+            print("✅ Welcome email sent")
         except Exception as e:
             # Log error but don't fail registration
             logging.error(f"Failed to send welcome email to {db_user.email}: {str(e)}")
+            print(f"⚠️  Failed to send welcome email: {str(e)}")
         
         # Generate token
         token = create_token(db_user.id, db_user.email, db_user.role)
@@ -600,9 +636,13 @@ async def register(request: Request, response: Response, user_data: UserRegister
 @api_router.post("/auth/login")
 @limiter.limit(RateLimit['login'])
 async def login(request: Request, response: Response, credentials: UserLogin):
+    log_db_operation("USER LOGIN", "users", f"Email: {credentials.email}")
+    
     # Check for admin login
     if credentials.email == ADMIN_EMAIL:
+        print("🔑 Admin login attempt detected")
         if credentials.password == ADMIN_PASSWORD:
+            print("✅ Admin credentials valid")
             token = create_token("admin-id", ADMIN_EMAIL, "admin")
             return {
                 "message": "Login successful",
@@ -610,23 +650,36 @@ async def login(request: Request, response: Response, credentials: UserLogin):
                 "user": {"id": "admin-id", "name": "Admin", "email": ADMIN_EMAIL, "role": "admin"}
             }
         else:
+            print("❌ Invalid admin password")
             raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Regular user login
+    print("🔑 Regular user login attempt")
     async with async_session_maker() as session:
+        log_db_operation("SELECT", "users", f"Looking up user: {credentials.email}")
         result = await session.execute(select(UserDB).where(UserDB.email == credentials.email))
         user = result.scalar_one_or_none()
         
         if not user:
+            print("❌ User not found")
             raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        print(f"✅ User found: {user.name}")
         
         # Check if user is blocked
         if user.is_blocked == 1:
+            print("❌ User is blocked")
             raise HTTPException(status_code=403, detail="Your account has been blocked. Please contact support.")
         
+        print("✅ User is not blocked")
+        
         # Verify password
+        print("🔒 Verifying password...")
         if not pwd_context.verify(credentials.password, user.password):
+            print("❌ Invalid password")
             raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        print("✅ Password valid")
         
         token = create_token(user.id, user.email, user.role)
         
@@ -1143,15 +1196,22 @@ async def get_cart(authorization: str = Header(None)):
     user = await get_current_user(authorization)
     user_id = user['user_id']
     
+    log_db_operation("GET CART", "cart", f"User ID: {user_id}")
+    
     async with async_session_maker() as session:
         result = await session.execute(select(CartItemDB).where(CartItemDB.user_id == user_id))
         cart_items = result.scalars().all()
+        
+        print(f"📦 Found {len(cart_items)} items in cart")
         
         # Fetch product details for each cart item
         cart_with_products = []
         for item in cart_items:
             product_result = await session.execute(select(ProductDB).where(ProductDB.id == item.product_id))
             product = product_result.scalar_one_or_none()
+            
+            if product:
+                print(f"   ├─ {product.name} (Qty: {item.quantity})")
             
             if product:
                 cart_with_products.append({
@@ -1181,17 +1241,24 @@ async def get_cart(authorization: str = Header(None)):
 async def add_to_cart(cart_data: AddToCart, authorization: str = Header(None)):
     user = await get_current_user(authorization)
     
+    log_db_operation("ADD TO CART", "cart", f"Product ID: {cart_data.product_id}, Quantity: {cart_data.quantity}")
+    
     async with async_session_maker() as session:
         # Check product stock first
+        print("🔍 Checking product availability...")
         product_result = await session.execute(
             select(ProductDB).where(ProductDB.id == cart_data.product_id)
         )
         product = product_result.scalar_one_or_none()
         
         if not product:
+            print("❌ Product not found")
             raise HTTPException(status_code=404, detail="Product not found")
         
+        print(f"✅ Product found: {product.name} (Stock: {product.stock})")
+        
         # Check if item already in cart
+        print("🔍 Checking if item already in cart...")
         result = await session.execute(
             select(CartItemDB).where(
                 (CartItemDB.user_id == user['user_id']) & 
@@ -1201,9 +1268,11 @@ async def add_to_cart(cart_data: AddToCart, authorization: str = Header(None)):
         existing = result.scalar_one_or_none()
         
         if existing:
+            print(f"📦 Item already in cart (Current qty: {existing.quantity})")
             # Check if new quantity exceeds stock
             new_quantity = existing.quantity + cart_data.quantity
             if new_quantity > product.stock:
+                print(f"❌ Not enough stock (Requested: {new_quantity}, Available: {product.stock})")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Only {product.stock} items available in stock"
@@ -3787,14 +3856,44 @@ async def init_db():
 async def startup_event():
     """Application startup with enhanced logging"""
     try:
+        print("\n" + "="*100)
+        print("🚀 " + " "*40 + "BACKEND STARTING UP" + " "*40)
+        print("="*100)
+        print("\n📋 CONFIGURATION:")
+        print(f"   ├─ Database Type: MySQL")
+        print(f"   ├─ Database Host: {DB_HOST}:{DB_PORT}")
+        print(f"   ├─ Database Name: {DB_NAME}")
+        print(f"   ├─ Database User: {DB_USER}")
+        print(f"   ├─ SQL Query Logging: ENABLED ✓")
+        print(f"   ├─ Request Logging: ENABLED ✓")
+        print(f"   └─ API Prefix: /api")
+        print("\n")
+        
         logger.info("")
         logger.info("=" * 70)
-        logger.info("[STARTUP] LENSKART E-COMMERCE BACKEND STARTING UP")
+        logger.info("[STARTUP] GEE ESS OPTICALS E-COMMERCE BACKEND STARTING UP")
         logger.info("=" * 70)
         logger.info("")
         
         # Initialize database
         await init_db()
+        
+        print("\n" + "="*100)
+        print("✅ " + " "*40 + "BACKEND SERVER READY" + " "*40)
+        print("="*100)
+        print("\n🌐 SERVER INFORMATION:")
+        print(f"   ├─ Server URL: http://0.0.0.0:8001")
+        print(f"   ├─ API Documentation: http://0.0.0.0:8001/docs")
+        print(f"   ├─ API Base Path: /api")
+        print(f"   └─ Admin Email: {ADMIN_EMAIL}")
+        print("\n🔍 DEBUGGING:")
+        print(f"   ├─ All API requests will be logged with timestamps")
+        print(f"   ├─ All SQL queries will be shown in terminal")
+        print(f"   ├─ Database operations will show detailed information")
+        print(f"   └─ Request/Response data will be displayed")
+        print("\n" + "="*100)
+        print("📡 Waiting for requests...\n")
+        
         logger.info("")
         logger.info("=" * 70)
         logger.info("[SUCCESS] BACKEND SERVER IS NOW RUNNING!")

@@ -148,19 +148,7 @@ products_data = [
         "image_url": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=500&q=80",
         "stock": 25,
     },
-    {
-        "id": "prod-010",
-        "name": "Minimalist Metal Frames",
-        "brand": "Oliver Peoples",
-        "price": 219.99,
-        "description": "Sleek minimalist design with premium metal construction.",
-        "category": "men",
-        "frame_type": "half-rim",
-        "frame_shape": "round",
-        "color": "Silver",
-        "image_url": "https://images.unsplash.com/photo-1542601098-3adb3b8c9e7d?w=500&q=80",
-        "stock": 55,
-    }
+    
 ]
 
 async def seed_database():
