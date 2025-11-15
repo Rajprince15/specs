@@ -11,8 +11,9 @@ import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
 import { ProductAddedToast } from '@/components/EnhancedToast';
+import Navigation from '@/components/Navigation';
 
-const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
+const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, fetchCartCount }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -296,58 +297,7 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         {/* Navigation */}
-        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
-            <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Gee Ess Opticals
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            {user ? (
-              <>
-                {user.role === 'admin' ? (
-                  <Link to="/admin">
-                    <Button data-testid="admin-dashboard-btn" variant="outline">Admin Dashboard</Button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link to="/cart">
-                      <Button data-testid="cart-btn" variant="outline" className="relative">
-                        <ShoppingBag className="w-5 h-5" />
-                        {cartCount > 0 && (
-                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                            {cartCount}
-                          </span>
-                        )}
-                      </Button>
-                    </Link>
-                    <Link to="/orders">
-                      <Button data-testid="orders-btn" variant="outline">Orders</Button>
-                    </Link>
-                    <Link to="/profile">
-                      <Button data-testid="profile-btn" variant="outline">Profile</Button>
-                    </Link>
-                  </>
-                )}
-                <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button data-testid="login-btn" variant="outline">Login</Button>
-                </Link>
-                <Link to="/register">
-                  <Button data-testid="register-btn">Register</Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} showWishlist={true} showSavedItems={true} />
 
       {/* Content */}
       <main id="main-content">

@@ -715,6 +715,378 @@ class MockApiService {
     }
     return { data: coupon };
   }
+
+  // ==================== COMPREHENSIVE ADMIN ENDPOINTS ====================
+  
+  // Admin Stats
+  async getAdminDashboardStats() {
+    await delay();
+    const { currentProducts, currentOrders, currentUsers } = getMockState();
+    const totalRevenue = currentOrders
+      .filter(o => o.payment_status === 'paid' || o.payment_status === 'refunded')
+      .reduce((sum, o) => sum + o.total_amount, 0);
+    
+    return {
+      data: {
+        total_users: currentUsers.length,
+        total_products: currentProducts.length,
+        total_orders: currentOrders.length,
+        total_revenue: totalRevenue
+      }
+    };
+  }
+
+  // Admin Orders Management
+  async updateOrderStatusAdmin(orderId, updateData) {
+    await delay();
+    const { currentOrders } = getMockState();
+    const order = currentOrders.find(o => o.id === orderId);
+    
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    
+    // Update order details
+    order.order_status = updateData.order_status || order.order_status;
+    order.tracking_number = updateData.tracking_number || order.tracking_number;
+    order.estimated_delivery = updateData.estimated_delivery || order.estimated_delivery;
+    order.updated_at = now();
+    
+    // Add tracking info if provided
+    if (updateData.description || updateData.location) {
+      if (!order.tracking) order.tracking = [];
+      order.tracking.unshift({
+        status: updateData.order_status,
+        description: updateData.description || `Order status updated to ${updateData.order_status}`,
+        location: updateData.location || 'System',
+        created_at: now()
+      });
+    }
+    
+    setMockState('currentOrders', currentOrders);
+    return { data: order };
+  }
+
+  async updateOrderPaymentStatus(orderId, paymentStatus) {
+    await delay();
+    const { currentOrders } = getMockState();
+    const order = currentOrders.find(o => o.id === orderId);
+    
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    
+    order.payment_status = paymentStatus;
+    order.updated_at = now();
+    
+    setMockState('currentOrders', currentOrders);
+    return { data: { message: 'Payment status updated successfully' } };
+  }
+
+  async deleteOrder(orderId) {
+    await delay();
+    const { currentOrders } = getMockState();
+    const newOrders = currentOrders.filter(o => o.id !== orderId);
+    setMockState('currentOrders', newOrders);
+    return { data: { message: 'Order deleted successfully' } };
+  }
+
+  // Admin Payments Management
+  async getAdminPayments(params = {}) {
+    await delay();
+    const { currentPayments } = getMockState();
+    const limit = params.limit || 100;
+    const offset = params.offset || 0;
+    
+    return { data: currentPayments.slice(offset, offset + limit) };
+  }
+
+  async getPaymentDetails(sessionId) {
+    await delay();
+    const { currentPayments } = getMockState();
+    const payment = currentPayments.find(p => p.session_id === sessionId);
+    
+    if (!payment) {
+      throw new Error('Payment not found');
+    }
+    
+    return { data: payment };
+  }
+
+  async updatePaymentStatus(sessionId, paymentStatus, status) {
+    await delay();
+    const { currentPayments } = getMockState();
+    const payment = currentPayments.find(p => p.session_id === sessionId);
+    
+    if (!payment) {
+      throw new Error('Payment not found');
+    }
+    
+    payment.payment_status = paymentStatus;
+    payment.status = status;
+    payment.updated_at = now();
+    
+    setMockState('currentPayments', currentPayments);
+    return { data: payment };
+  }
+
+  async deletePayment(sessionId) {
+    await delay();
+    const { currentPayments } = getMockState();
+    const newPayments = currentPayments.filter(p => p.session_id !== sessionId);
+    setMockState('currentPayments', newPayments);
+    return { data: { message: 'Payment deleted successfully' } };
+  }
+
+  // Admin Reviews Management
+  async getAdminReviews(params = {}) {
+    await delay();
+    const { currentReviews } = getMockState();
+    const limit = params.limit || 100;
+    const offset = params.offset || 0;
+    
+    return { data: currentReviews.slice(offset, offset + limit) };
+  }
+
+  async deleteReviewAdmin(reviewId) {
+    await delay();
+    const { currentReviews } = getMockState();
+    const newReviews = currentReviews.filter(r => r.id !== reviewId);
+    setMockState('currentReviews', newReviews);
+    return { data: { message: 'Review deleted successfully' } };
+  }
+
+  // Admin Analytics
+  async getAnalyticsSales(params = {}) {
+    await delay();
+    const { currentAnalytics } = getMockState();
+    
+    // If date filters provided, filter the daily sales data
+    let dailySales = currentAnalytics.sales.daily_sales;
+    if (params.start_date) {
+      dailySales = dailySales.filter(d => d.date >= params.start_date);
+    }
+    if (params.end_date) {
+      dailySales = dailySales.filter(d => d.date <= params.end_date);
+    }
+    
+    // Recalculate summary based on filtered data
+    const summary = {
+      total_orders: dailySales.reduce((sum, d) => sum + d.total_orders, 0),
+      total_revenue: dailySales.reduce((sum, d) => sum + d.total_revenue, 0),
+      average_order_value: 0
+    };
+    summary.average_order_value = summary.total_orders > 0 
+      ? summary.total_revenue / summary.total_orders 
+      : 0;
+    
+    return {
+      data: {
+        summary,
+        daily_sales: dailySales
+      }
+    };
+  }
+
+  async getAnalyticsTopProducts(params = {}) {
+    await delay();
+    const { currentAnalytics } = getMockState();
+    const limit = params.limit || 10;
+    
+    return { data: { top_products: currentAnalytics.top_products.slice(0, limit) } };
+  }
+
+  async getAnalyticsRevenue(params = {}) {
+    await delay();
+    const { currentAnalytics } = getMockState();
+    return { data: currentAnalytics.revenue };
+  }
+
+  // Admin Inventory Management
+  async getInventoryAlerts() {
+    await delay();
+    const { currentInventory } = getMockState();
+    return { data: currentInventory };
+  }
+
+  async updateInventoryThreshold(threshold) {
+    await delay();
+    const { currentInventory } = getMockState();
+    currentInventory.low_stock_threshold = threshold;
+    
+    // Recalculate alert levels based on new threshold
+    currentInventory.alerts = currentInventory.alerts.map(alert => {
+      const stock = alert.current_stock;
+      let level = 'low';
+      if (stock === 0) level = 'critical';
+      else if (stock < threshold / 2) level = 'warning';
+      return { ...alert, alert_level: level };
+    });
+    
+    setMockState('currentInventory', currentInventory);
+    return { data: { message: 'Threshold updated successfully' } };
+  }
+
+  async bulkUpdateStock(updates) {
+    await delay();
+    const { currentProducts, currentInventory } = getMockState();
+    
+    updates.forEach(update => {
+      const product = currentProducts.find(p => p.id === update.product_id);
+      if (product) {
+        product.stock = update.stock;
+      }
+      
+      // Update inventory alerts
+      const alertIndex = currentInventory.alerts.findIndex(a => a.product_id === update.product_id);
+      if (alertIndex !== -1) {
+        currentInventory.alerts[alertIndex].current_stock = update.stock;
+        
+        // Update alert level
+        const threshold = currentInventory.low_stock_threshold;
+        let level = 'low';
+        if (update.stock === 0) level = 'critical';
+        else if (update.stock < threshold / 2) level = 'warning';
+        else if (update.stock >= threshold) {
+          // Remove from alerts if stock is above threshold
+          currentInventory.alerts.splice(alertIndex, 1);
+          return;
+        }
+        currentInventory.alerts[alertIndex].alert_level = level;
+      }
+    });
+    
+    setMockState('currentProducts', currentProducts);
+    setMockState('currentInventory', currentInventory);
+    return { data: { message: 'Stock updated successfully' } };
+  }
+
+  // Admin Users Management
+  async getAdminUsers(params = {}) {
+    await delay();
+    const { currentUsers } = getMockState();
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const search = params.search || '';
+    
+    let filteredUsers = [...currentUsers];
+    
+    // Apply search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredUsers = filteredUsers.filter(u => 
+        u.name.toLowerCase().includes(searchLower) ||
+        u.email.toLowerCase().includes(searchLower) ||
+        u.phone.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Pagination
+    const total = filteredUsers.length;
+    const pages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const users = filteredUsers.slice(offset, offset + limit);
+    
+    return {
+      data: {
+        users,
+        total,
+        pages,
+        current_page: page
+      }
+    };
+  }
+
+  async getUserDetails(userId) {
+    await delay();
+    const { currentUsers, currentOrders, currentReviews, currentCart, currentWishlist } = getMockState();
+    const user = currentUsers.find(u => u.id === userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    // Get user statistics
+    const userOrders = currentOrders.filter(o => o.user_id === userId);
+    const userReviews = currentReviews.filter(r => r.user_id === userId);
+    const userCart = currentCart.filter(c => c.user_id === userId);
+    const userWishlist = currentWishlist.filter(w => w.user_id === userId);
+    
+    const totalSpent = userOrders
+      .filter(o => o.payment_status === 'paid')
+      .reduce((sum, o) => sum + o.total_amount, 0);
+    
+    return {
+      data: {
+        user,
+        statistics: {
+          total_orders: userOrders.length,
+          total_spent: totalSpent,
+          cart_items: userCart.length,
+          wishlist_items: userWishlist.length,
+          reviews_count: userReviews.length
+        },
+        recent_orders: userOrders.slice(0, 5)
+      }
+    };
+  }
+
+  async blockUnblockUser(userId) {
+    await delay();
+    const { currentUsers } = getMockState();
+    const user = currentUsers.find(u => u.id === userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    user.is_blocked = user.is_blocked ? 0 : 1;
+    const action = user.is_blocked ? 'blocked' : 'unblocked';
+    
+    setMockState('currentUsers', currentUsers);
+    return { data: { message: `User ${action} successfully` } };
+  }
+
+  async deleteUser(userId) {
+    await delay();
+    const { currentUsers, currentOrders, currentReviews, currentCart, currentWishlist } = getMockState();
+    
+    // Delete user
+    const newUsers = currentUsers.filter(u => u.id !== userId);
+    setMockState('currentUsers', newUsers);
+    
+    // Delete user's orders
+    const newOrders = currentOrders.filter(o => o.user_id !== userId);
+    setMockState('currentOrders', newOrders);
+    
+    // Delete user's reviews
+    const newReviews = currentReviews.filter(r => r.user_id !== userId);
+    setMockState('currentReviews', newReviews);
+    
+    // Delete user's cart
+    const newCart = currentCart.filter(c => c.user_id !== userId);
+    setMockState('currentCart', newCart);
+    
+    // Delete user's wishlist
+    const newWishlist = currentWishlist.filter(w => w.user_id !== userId);
+    setMockState('currentWishlist', newWishlist);
+    
+    return { data: { message: 'User and all related data deleted successfully' } };
+  }
+
+  async changeUserRole(userId, newRole) {
+    await delay();
+    const { currentUsers } = getMockState();
+    const user = currentUsers.find(u => u.id === userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    user.role = newRole;
+    setMockState('currentUsers', currentUsers);
+    return { data: { message: `User role updated to ${newRole}` } };
+  }
 }
 
 export const mockApiService = new MockApiService();

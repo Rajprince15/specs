@@ -11,7 +11,7 @@ const Navigation = ({
   cartCount = 0, 
   wishlistCount = 0,
   savedItemsCount = 0,
-  showWishlist = false,
+  showWishlist = true,
   showSavedItems = true
 }) => {
   return (

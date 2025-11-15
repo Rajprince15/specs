@@ -180,23 +180,23 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />}
+              element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />}
             />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/register" element={<Register onLogin={handleLogin} />} />
             <Route
               path="/products"
-              element={<Products user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} />}
+              element={<Products user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} />}
             />
             <Route
               path="/products/:productId"
-              element={<ProductDetail user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} />}
+              element={<ProductDetail user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} />}
             />
             <Route
               path="/cart"
               element={
                 <ProtectedRoute>
-                  <Cart user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchSavedItemsCount={fetchSavedItemsCount} />
+                  <Cart user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchSavedItemsCount={fetchSavedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -204,7 +204,7 @@ function App() {
               path="/wishlist"
               element={
                 <ProtectedRoute>
-                  <Wishlist user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} fetchCartCount={fetchCartCount} fetchWishlistCount={fetchWishlistCount} />
+                  <Wishlist user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchWishlistCount={fetchWishlistCount} />
                 </ProtectedRoute>
               }
             />
@@ -212,7 +212,7 @@ function App() {
               path="/saved-items"
               element={
                 <ProtectedRoute>
-                  <SavedItems user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchSavedItemsCount={fetchSavedItemsCount} />
+                  <SavedItems user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchSavedItemsCount={fetchSavedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -220,7 +220,7 @@ function App() {
               path="/orders"
               element={
                 <ProtectedRoute>
-                  <Orders user={user} onLogout={handleLogout} cartCount={cartCount} />
+                  <Orders user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -228,7 +228,7 @@ function App() {
               path="/orders/:orderId/tracking"
               element={
                 <ProtectedRoute>
-                  <OrderTracking user={user} onLogout={handleLogout} cartCount={cartCount} />
+                  <OrderTracking user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -236,7 +236,7 @@ function App() {
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <Profile user={user} onLogout={handleLogout} cartCount={cartCount} />
+                  <Profile user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -244,7 +244,7 @@ function App() {
               path="/addresses"
               element={
                 <ProtectedRoute>
-                  <Addresses user={user} onLogout={handleLogout} cartCount={cartCount} />
+                  <Addresses user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -316,13 +316,13 @@ function App() {
               path="/payment-success"
               element={
                 <ProtectedRoute>
-                  <PaymentSuccess user={user} onLogout={handleLogout} cartCount={cartCount} />
+                  <PaymentSuccess user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/compare"
-              element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} />}
+              element={<Compare user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />}
             />
           </Routes>
         </Suspense>

@@ -10,7 +10,7 @@ import { formatCurrency } from '@/utils/formatters';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-const Home = ({ user, onLogout, cartCount, savedItemsCount }) => {
+const Home = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount }) => {
   const { t, i18n } = useTranslation();
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
@@ -50,7 +50,7 @@ const Home = ({ user, onLogout, cartCount, savedItemsCount }) => {
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Navigation */}
-        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />
+        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} showWishlist={true} showSavedItems={true} />
 
       {/* Main Content */}
       <main id="main-content">

@@ -271,16 +271,25 @@ class ApiAdapter {
         return mockApiService.getCheckoutStatus(sessionId);
       }
 
-      // Admin routes
+      // ==================== ADMIN ROUTES ====================
+      
+      // Admin Dashboard Stats
       if (cleanUrl === 'admin/stats' && method === 'GET') {
-        return mockApiService.getAdminStats();
+        return mockApiService.getAdminDashboardStats();
       }
-      if (cleanUrl === 'admin/users' && method === 'GET') {
-        return mockApiService.getAllUsers();
+      
+      // Admin Orders Management
+      if (cleanUrl.match(/^orders\/[^/]+\/status$/) && method === 'PUT') {
+        const orderId = cleanUrl.split('/')[1];
+        return mockApiService.updateOrderStatusAdmin(orderId, data);
       }
-      if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'PATCH') {
-        const userId = cleanUrl.split('/')[2];
-        return mockApiService.updateUserStatus(userId, data.is_blocked);
+      if (cleanUrl.match(/^admin\/orders\/[^/]+\/payment-status$/) && method === 'PUT') {
+        const orderId = cleanUrl.split('/')[2];
+        return mockApiService.updateOrderPaymentStatus(orderId, data);
+      }
+      if (cleanUrl.match(/^admin\/orders\/[^/]+$/) && method === 'DELETE') {
+        const orderId = cleanUrl.split('/')[2];
+        return mockApiService.deleteOrder(orderId);
       }
       if (cleanUrl === 'admin/orders' && method === 'GET') {
         return mockApiService.getAllOrders();
@@ -289,13 +298,81 @@ class ApiAdapter {
         const orderId = cleanUrl.split('/')[2];
         return mockApiService.updateOrderStatus(orderId, data.order_status);
       }
+      
+      // Admin Payments Management
+      if (cleanUrl === 'admin/payments' && method === 'GET') {
+        return mockApiService.getAdminPayments(params);
+      }
+      if (cleanUrl.match(/^admin\/payments\/[^/]+$/) && method === 'GET') {
+        const sessionId = cleanUrl.split('/')[2];
+        return mockApiService.getPaymentDetails(sessionId);
+      }
+      if (cleanUrl.match(/^admin\/payments\/[^/]+\/status$/) && method === 'PUT') {
+        const sessionId = cleanUrl.split('/')[2];
+        return mockApiService.updatePaymentStatus(sessionId, params.payment_status, params.status);
+      }
+      if (cleanUrl.match(/^admin\/payments\/[^/]+$/) && method === 'DELETE') {
+        const sessionId = cleanUrl.split('/')[2];
+        return mockApiService.deletePayment(sessionId);
+      }
+      
+      // Admin Reviews Management
       if (cleanUrl === 'admin/reviews' && method === 'GET') {
-        return mockApiService.getAllReviews();
+        return mockApiService.getAdminReviews(params);
       }
       if (cleanUrl.match(/^admin\/reviews\/[^/]+$/) && method === 'DELETE') {
         const reviewId = cleanUrl.split('/')[2];
-        return mockApiService.deleteReview(reviewId);
+        return mockApiService.deleteReviewAdmin(reviewId);
       }
+      
+      // Admin Analytics
+      if (cleanUrl === 'admin/analytics/sales' && method === 'GET') {
+        return mockApiService.getAnalyticsSales(params);
+      }
+      if (cleanUrl === 'admin/analytics/top-products' && method === 'GET') {
+        return mockApiService.getAnalyticsTopProducts(params);
+      }
+      if (cleanUrl === 'admin/analytics/revenue' && method === 'GET') {
+        return mockApiService.getAnalyticsRevenue(params);
+      }
+      
+      // Admin Inventory Management
+      if (cleanUrl === 'admin/inventory/alerts' && method === 'GET') {
+        return mockApiService.getInventoryAlerts();
+      }
+      if (cleanUrl === 'admin/inventory/threshold' && method === 'PUT') {
+        return mockApiService.updateInventoryThreshold(params.threshold);
+      }
+      if (cleanUrl === 'admin/inventory/bulk-update' && method === 'PUT') {
+        return mockApiService.bulkUpdateStock(data);
+      }
+      
+      // Admin Users Management
+      if (cleanUrl === 'admin/users' && method === 'GET') {
+        return mockApiService.getAdminUsers(params);
+      }
+      if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'GET') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.getUserDetails(userId);
+      }
+      if (cleanUrl.match(/^admin\/users\/[^/]+\/block$/) && method === 'PUT') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.blockUnblockUser(userId);
+      }
+      if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'DELETE') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.deleteUser(userId);
+      }
+      if (cleanUrl.match(/^admin\/users\/[^/]+\/role$/) && method === 'PUT') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.changeUserRole(userId, data);
+      }
+      if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'PATCH') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.updateUserStatus(userId, data.is_blocked);
+      }
+      
+      // Admin Coupons Management
       if (cleanUrl === 'admin/coupons' && method === 'GET') {
         return mockApiService.getCoupons();
       }
