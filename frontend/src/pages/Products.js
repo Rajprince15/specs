@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
 import { ShoppingBag, Glasses, Search, Plus, Clock, SlidersHorizontal, GitCompare, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -16,6 +17,9 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [priceRange, setPriceRange] = useState([0, 500]);
   
   // Autocomplete states
   const [suggestions, setSuggestions] = useState({ products: [], brands: [], categories: [] });
@@ -228,6 +232,15 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
     }
     const productIds = compareProducts.map(p => p.id).join(',');
     navigate(`/compare?products=${productIds}`);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearch('');
+    setCategory('all');
+    setSortBy('newest');
+    setPriceRange([0, 500]);
+    setShowSuggestions(false);
   };
 
   return (

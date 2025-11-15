@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Header, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Header, Depends
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -527,7 +527,7 @@ async def get_db():
 
 @api_router.post("/auth/register")
 @limiter.limit(RateLimit['register'])
-async def register(request: Request, user_data: UserRegister):
+async def register(request: Request, response: Response, user_data: UserRegister):
     async with async_session_maker() as session:
         # Check if user exists
         result = await session.execute(select(UserDB).where(UserDB.email == user_data.email))
@@ -581,7 +581,7 @@ async def register(request: Request, user_data: UserRegister):
 
 @api_router.post("/auth/login")
 @limiter.limit(RateLimit['login'])
-async def login(request: Request, credentials: UserLogin):
+async def login(request: Request, response: Response, credentials: UserLogin):
     # Check for admin login
     if credentials.email == ADMIN_EMAIL:
         if credentials.password == ADMIN_PASSWORD:

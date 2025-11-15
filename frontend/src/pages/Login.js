@@ -117,9 +117,17 @@ const Login = ({ onLogin }) => {
                   {t('auth.signUp')}
                 </Link>
               </p>
-              <p className="text-sm text-gray-500 mt-4">
-                Admin Login: admin@lenskart.com / Admin@123
-              </p>
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-semibold text-gray-700">Demo Credentials:</p>
+                <div className="bg-blue-50 p-3 rounded-lg space-y-1">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Admin:</span> admin@lenskart.com / Admin@123
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">User:</span> user@demo.com / Demo@123
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
