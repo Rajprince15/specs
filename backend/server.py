@@ -2192,8 +2192,8 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
             existing_payment.payment_status = checkout_status.payment_status
             existing_payment.updated_at = datetime.now(timezone.utc)
             
-            # If payment successful and not yet processed
-            if checkout_status.payment_status == "paid" and existing_payment.payment_status != 'paid':
+            # If payment successful and order not yet created
+            if checkout_status.payment_status == "paid" and existing_payment.order_id is None:
                 # Create order from cart
                 cart_result = await session.execute(
                     select(CartItemDB).where(CartItemDB.user_id == user['user_id'])
