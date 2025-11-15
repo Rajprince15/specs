@@ -59,6 +59,10 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Create rate limiter (must be before route definitions)
+limiter = create_limiter(default_limit=os.getenv('DEFAULT_RATE_LIMIT', '100/minute'))
+app.state.limiter = limiter
+
 # ============ SQLAlchemy Models ============
 
 class Base(DeclarativeBase):
@@ -3755,13 +3759,7 @@ if sentry_dsn:
 else:
     logger.info("Sentry DSN not configured - error tracking disabled")
 
-# Create rate limiter
-limiter = create_limiter(default_limit=os.getenv('DEFAULT_RATE_LIMIT', '100/minute'))
-
-# Add rate limiter to app state
-app.state.limiter = limiter
-
-# Add exception handler for rate limiting
+# Add exception handler for rate limiting (limiter already created above)
 app.add_exception_handler(RateLimitExceeded, rate_limit_error_handler)
 
 # Include the router in the main app

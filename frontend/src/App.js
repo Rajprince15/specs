@@ -253,13 +253,13 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <ToastProvider>
-          <HelmetProvider>
-            <div className="App">
-              <BrowserRouter>
+          <BrowserRouter>
+            <HelmetProvider>
+              <div className="App">
                 <AppContent />
-              </BrowserRouter>
-            </div>
-          </HelmetProvider>
+              </div>
+            </HelmetProvider>
+          </BrowserRouter>
         </ToastProvider>
       </ThemeProvider>
     </ErrorBoundary>
