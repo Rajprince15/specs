@@ -104,9 +104,22 @@ function App() {
     }
   };
 
-  const handleLogin = (userData) => {
+  const handleLogin = (userData, token) => {
+    // Store token first - critical for authenticated API calls
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+    
+    // Then set user data
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
+    
+    // Track user in analytics
+    if (userData?.id) {
+      setUserId(userData.id);
+    }
+    
+    // Fetch user-specific data
     fetchCartCount();
     fetchWishlistCount();
   };

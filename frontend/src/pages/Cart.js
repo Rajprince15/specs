@@ -35,13 +35,21 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
   const fetchAvailableGateways = async () => {
     try {
       const response = await axiosInstance.get('/payment/gateways');
+      console.log('Available payment gateways:', response.data);
       setAvailableGateways(response.data);
-      // Set default gateway to first available
+      
+      // Set default gateway to first available, or default to stripe
       if (response.data.length > 0) {
         setPaymentGateway(response.data[0].id);
+      } else {
+        // If no gateways returned from API, default to stripe
+        console.warn('No payment gateways available from API, defaulting to stripe');
+        setPaymentGateway('stripe');
       }
     } catch (error) {
-      console.error('Failed to fetch payment gateways');
+      console.error('Failed to fetch payment gateways:', error);
+      // On error, default to stripe
+      setPaymentGateway('stripe');
     }
   };
 
@@ -137,17 +145,44 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
         await handleStripeCheckout();
       } else if (paymentGateway === 'razorpay') {
         await handleRazorpayCheckout();
+      } else {
+        toast.error('Please select a payment method');
+        setCheckoutLoading(false);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Checkout failed');
+      console.error('Checkout error:', error);
+      toast.error(error.response?.data?.detail || error.message || 'Checkout failed');
       setCheckoutLoading(false);
     }
   };
 
   const handleStripeCheckout = async () => {
-    const originUrl = window.location.origin;
-    const response = await axiosInstance.post('/payment/checkout', { origin_url: originUrl });
-    window.location.href = response.data.url;
+    try {
+      const originUrl = window.location.origin;
+      console.log('Initiating Stripe checkout with origin:', originUrl);
+      
+      const checkoutData = {
+        origin_url: originUrl
+      };
+      
+      // Include coupon if applied
+      if (appliedCoupon) {
+        checkoutData.coupon_code = appliedCoupon.code;
+        checkoutData.discount_amount = discount;
+      }
+      
+      const response = await axiosInstance.post('/payment/checkout', checkoutData);
+      
+      if (response.data && response.data.url) {
+        console.log('Redirecting to Stripe checkout:', response.data.url);
+        window.location.href = response.data.url;
+      } else {
+        throw new Error('No checkout URL received from server');
+      }
+    } catch (error) {
+      console.error('Stripe checkout error:', error);
+      throw error; // Re-throw to be caught by handleCheckout
+    }
   };
 
   const handleRazorpayCheckout = async () => {

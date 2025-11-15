@@ -2082,7 +2082,7 @@ async def delete_product_image(product_id: str, image_id: str, authorization: st
 
 @api_router.post("/payment/checkout")
 @limiter.limit(RateLimit['checkout'])
-async def create_checkout(request: Request, authorization: str = Header(None)):
+async def create_checkout(request: Request, response: Response, authorization: str = Header(None)):
     user = await get_current_user(authorization)
     
     async with async_session_maker() as session:
@@ -2109,6 +2109,10 @@ async def create_checkout(request: Request, authorization: str = Header(None)):
         if not origin_url:
             raise HTTPException(status_code=400, detail="Origin URL is required")
         
+        # Apply discount if coupon provided
+        discount_amount = body.get('discount_amount', 0)
+        final_amount = max(total_amount - discount_amount, 0)
+        
         # Initialize Stripe
         host_url = origin_url
         webhook_url = f"{str(request.base_url).rstrip('/')}/api/webhook/stripe"
@@ -2118,25 +2122,31 @@ async def create_checkout(request: Request, authorization: str = Header(None)):
         success_url = f"{host_url}/payment-success?session_id={{{{CHECKOUT_SESSION_ID}}}}"
         cancel_url = f"{host_url}/cart"
         
+        coupon_code = body.get('coupon_code', '')
+        metadata = {"user_id": user['user_id']}
+        if coupon_code:
+            metadata['coupon_code'] = coupon_code
+            metadata['discount_amount'] = str(discount_amount)
+        
         checkout_request = CheckoutSessionRequest(
-            amount=total_amount,
+            amount=final_amount,
             currency="usd",
             success_url=success_url,
             cancel_url=cancel_url,
-            metadata={"user_id": user['user_id']}
+            metadata=metadata
         )
         
         session_response = await stripe_checkout.create_checkout_session(checkout_request)
         
-        # Create payment transaction
+        # Create payment transaction with final amount (after discount)
         payment = PaymentTransaction(
             session_id=session_response.session_id,
             user_id=user['user_id'],
-            amount=total_amount,
+            amount=final_amount,
             currency="usd",
             payment_status="pending",
             status="initiated",
-            metadata={"user_id": user['user_id']}
+            metadata=metadata
         )
         
         db_payment = PaymentTransactionDB(
