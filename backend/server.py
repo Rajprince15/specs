@@ -2880,7 +2880,7 @@ async def validate_coupon(request: ValidateCouponRequest, authorization: str = H
         if request.cart_total < coupon.min_purchase:
             return ValidateCouponResponse(
                 valid=False,
-                message=f"Minimum purchase of ${coupon.min_purchase:.2f} required",
+                message=f"Minimum purchase of ₹{coupon.min_purchase:.2f} required",
                 discount_amount=0,
                 final_amount=request.cart_total
             )

@@ -179,7 +179,7 @@ const Wishlist = ({ user, onLogout, cartCount, wishlistCount, fetchCartCount, fe
 
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                          ${item.product?.price?.toFixed(2)}
+                          ₹{item.product?.price?.toFixed(2)}
                         </span>
                         {item.product?.category && (
                           <span className="px-2 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs font-medium rounded-full">

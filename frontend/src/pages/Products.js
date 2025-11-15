@@ -403,7 +403,7 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
                                 <div className="font-medium text-gray-900 truncate">{product.name}</div>
                                 <div className="text-sm text-gray-500">{product.brand}</div>
                               </div>
-                              <div className="text-blue-600 font-semibold">${product.price.toFixed(2)}</div>
+                              <div className="text-blue-600 font-semibold">₹{product.price.toFixed(2)}</div>
                             </div>
                           );
                         })}
@@ -647,7 +647,7 @@ const Products = ({ user, onLogout, cartCount, fetchCartCount }) => {
                   )}
                   
                   <div className="flex items-center justify-between">
-                    <p className="text-2xl font-bold text-blue-600">${product.price.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-blue-600">₹{product.price.toFixed(2)}</p>
                     <Button
                       data-testid={`add-to-cart-${product.id}`}
                       size="sm"

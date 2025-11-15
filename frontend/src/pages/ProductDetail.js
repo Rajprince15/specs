@@ -379,7 +379,7 @@ const ProductDetail = ({ user, onLogout, cartCount, fetchCartCount }) => {
             <div>
               <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">{product.brand}</p>
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{product.name}</h1>
-              <p className="text-3xl font-bold text-blue-600">${product.price.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-blue-600">₹{product.price.toFixed(2)}</p>
             </div>
 
             <div className="space-y-4">

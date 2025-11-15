@@ -182,7 +182,7 @@ const Analytics = ({ user, onLogout }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-cyan-100 text-sm font-medium">Total Revenue</p>
-                  <p className="text-3xl font-bold mt-2">${salesData.summary.total_revenue?.toFixed(2) || '0.00'}</p>
+                  <p className="text-3xl font-bold mt-2">₹{salesData.summary.total_revenue?.toFixed(2) || '0.00'}</p>
                 </div>
                 <DollarSign className="h-12 w-12 text-cyan-200" />
               </div>
@@ -194,7 +194,7 @@ const Analytics = ({ user, onLogout }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-amber-100 text-sm font-medium">Avg Order Value</p>
-                  <p className="text-3xl font-bold mt-2">${salesData.summary.average_order_value?.toFixed(2) || '0.00'}</p>
+                  <p className="text-3xl font-bold mt-2">₹{salesData.summary.average_order_value?.toFixed(2) || '0.00'}</p>
                 </div>
                 <TrendingUp className="h-12 w-12 text-amber-200" />
               </div>
@@ -226,7 +226,7 @@ const Analytics = ({ user, onLogout }) => {
                     dataKey="total_revenue"
                     stroke="#8b5cf6"
                     strokeWidth={3}
-                    name="Revenue ($)"
+                    name="Revenue (₹)"
                     dot={{ fill: '#8b5cf6', r: 5 }}
                   />
                   <Line
@@ -266,7 +266,7 @@ const Analytics = ({ user, onLogout }) => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ category, revenue }) => `${category}: $${revenue.toFixed(0)}`}
+                      label={({ category, revenue }) => `${category}: ₹${revenue.toFixed(0)}`}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="revenue"
@@ -354,7 +354,7 @@ const Analytics = ({ user, onLogout }) => {
                         </td>
                         <td className="py-3 px-4 text-right font-semibold">{product.quantity_sold}</td>
                         <td className="py-3 px-4 text-right font-semibold text-green-600">
-                          ${product.total_revenue.toFixed(2)}
+                          ₹{product.total_revenue.toFixed(2)}
                         </td>
                       </tr>
                     ))}

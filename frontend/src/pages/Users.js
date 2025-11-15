@@ -413,7 +413,7 @@ const Users = ({ user, onLogout }) => {
                   <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
                     <CardContent className="p-4 text-center">
                       <DollarSign className="w-8 h-8 mx-auto mb-2 opacity-80" />
-                      <p className="text-2xl font-bold">${userDetails.statistics.total_spent.toFixed(2)}</p>
+                      <p className="text-2xl font-bold">₹{userDetails.statistics.total_spent.toFixed(2)}</p>
                       <p className="text-xs opacity-90">Spent</p>
                     </CardContent>
                   </Card>
@@ -463,7 +463,7 @@ const Users = ({ user, onLogout }) => {
                               {order.id.substring(0, 8)}...
                             </td>
                             <td className="px-4 py-3 text-sm font-medium">
-                              ${order.total_amount.toFixed(2)}
+                              ₹{order.total_amount.toFixed(2)}
                             </td>
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 text-xs rounded-full ${

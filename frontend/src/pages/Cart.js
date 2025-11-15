@@ -424,7 +424,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                           </h3>
                           <div className="flex items-center gap-3 mt-2">
                             <p className="text-2xl font-bold text-blue-600">
-                              ${item.product?.price.toFixed(2)}
+                              ₹{item.product?.price.toFixed(2)}
                             </p>
                             {item.product?.stock < 10 && (
                               <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
@@ -468,7 +468,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                                 </Button>
                               </div>
                               <div className="text-sm text-gray-600">
-                                Subtotal: <span className="font-semibold text-gray-900">${(item.product?.price * item.quantity).toFixed(2)}</span>
+                                Subtotal: <span className="font-semibold text-gray-900">₹{(item.product?.price * item.quantity).toFixed(2)}</span>
                               </div>
                             </div>
                             <Button
@@ -526,7 +526,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                                 {item.product?.name}
                               </h3>
                               <p className="text-xl font-bold text-blue-600">
-                                ${item.product?.price.toFixed(2)}
+                                ₹{item.product?.price.toFixed(2)}
                               </p>
                             </div>
                             <div className="flex gap-2 mt-4">
@@ -609,12 +609,12 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                   <div className="space-y-3">
                     <div className="flex justify-between text-gray-600">
                       <span>Subtotal</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>₹{calculateTotal().toFixed(2)}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Discount</span>
-                        <span>-${discount.toFixed(2)}</span>
+                        <span>-₹{discount.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-gray-600">
@@ -624,7 +624,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-xl font-bold text-gray-900">
                         <span>Total</span>
-                        <span data-testid="cart-total" className="text-blue-600">${calculateFinalTotal().toFixed(2)}</span>
+                        <span data-testid="cart-total" className="text-blue-600">₹{calculateFinalTotal().toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

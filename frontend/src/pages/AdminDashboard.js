@@ -360,7 +360,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                     <Input data-testid="product-brand-input" id="brand" value={productForm.brand} onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price ($)</Label>
+                    <Label htmlFor="price">Price (₹)</Label>
                     <Input data-testid="product-price-input" id="price" type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
@@ -476,7 +476,7 @@ const AdminDashboard = ({ user, onLogout }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Total Revenue</p>
-                  <p data-testid="stat-revenue" className="text-3xl font-bold text-gray-900">${stats.total_revenue.toFixed(2)}</p>
+                  <p data-testid="stat-revenue" className="text-3xl font-bold text-gray-900">₹{stats.total_revenue.toFixed(2)}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-green-600" />
@@ -510,7 +510,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                       </td>
                       <td className="py-3 px-4 font-medium text-gray-900">{product.name}</td>
                       <td className="py-3 px-4 text-gray-600">{product.brand}</td>
-                      <td className="py-3 px-4 text-blue-600 font-semibold">${product.price.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-blue-600 font-semibold">₹{product.price.toFixed(2)}</td>
                       <td className="py-3 px-4 text-gray-600">{product.stock}</td>
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
@@ -546,7 +546,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                       <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleString()}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-blue-600">${order.total_amount.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-blue-600">₹{order.total_amount.toFixed(2)}</p>
                       <p className="text-sm text-gray-600 capitalize">{order.payment_status}</p>
                     </div>
                   </div>
@@ -714,7 +714,7 @@ const AdminDashboard = ({ user, onLogout }) => {
                       <td className="py-3 px-4 font-semibold text-blue-600">{coupon.code}</td>
                       <td className="py-3 px-4 text-gray-600 capitalize">{coupon.discount_type}</td>
                       <td className="py-3 px-4 text-gray-900">
-                        {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `$${coupon.discount_value.toFixed(2)}`}
+                        {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 text-gray-600">
                         {coupon.used_count} / {coupon.usage_limit || '∞'}

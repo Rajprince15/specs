@@ -132,7 +132,7 @@ const Orders = ({ user, onLogout, cartCount }) => {
                           <h3 className="font-semibold text-gray-900">{item.name}</h3>
                           <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                         </div>
-                        <p className="text-lg font-bold text-blue-600">${item.price.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-blue-600">₹{item.price.toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
@@ -145,7 +145,7 @@ const Orders = ({ user, onLogout, cartCount }) => {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Total Amount</p>
-                        <p className="text-2xl font-bold text-blue-600">${order.total_amount.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-blue-600">₹{order.total_amount.toFixed(2)}</p>
                       </div>
                       <Link to={`/orders/${order.id}/tracking`}>
                         <Button 

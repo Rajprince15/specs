@@ -121,7 +121,7 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
                 <div className="glass p-6 rounded-xl">
                   <p className="text-sm text-gray-500 mb-2">Amount Paid</p>
                   <p data-testid="payment-amount" className="text-3xl font-bold text-blue-600">
-                    ${(paymentStatus.amount_total / 100).toFixed(2)}
+                    ₹{(paymentStatus.amount_total / 100).toFixed(2)}
                   </p>
                 </div>
                 <div className="flex gap-4 justify-center">

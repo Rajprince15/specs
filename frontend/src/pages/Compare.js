@@ -65,7 +65,7 @@ const Compare = ({ user, onLogout, cartCount }) => {
   // Get all unique specs for comparison
   const getSpecRows = () => {
     const specs = [
-      { label: 'Price', key: 'price', format: (val) => `$${val.toFixed(2)}` },
+      { label: 'Price', key: 'price', format: (val) => `₹${val.toFixed(2)}` },
       { label: 'Brand', key: 'brand' },
       { label: 'Category', key: 'category', format: (val) => val.charAt(0).toUpperCase() + val.slice(1) },
       { label: 'Frame Type', key: 'frame_type', format: (val) => val.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') },
