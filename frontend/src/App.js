@@ -26,6 +26,7 @@ const Products = lazy(() => import("@/pages/Products"));
 const ProductDetail = lazy(() => import("@/pages/ProductDetail"));
 const Cart = lazy(() => import("@/pages/Cart"));
 const Wishlist = lazy(() => import("@/pages/Wishlist"));
+const SavedItems = lazy(() => import("@/pages/SavedItems"));
 const Orders = lazy(() => import("@/pages/Orders"));
 const OrderTracking = lazy(() => import("@/pages/OrderTracking"));
 const Profile = lazy(() => import("@/pages/Profile"));
@@ -191,6 +192,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Wishlist user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} fetchCartCount={fetchCartCount} fetchWishlistCount={fetchWishlistCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/saved-items"
+              element={
+                <ProtectedRoute>
+                  <SavedItems user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />
                 </ProtectedRoute>
               }
             />

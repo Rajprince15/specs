@@ -373,6 +373,7 @@ export const mockProductImages = {
 let currentUser = null;
 let currentCart = [...mockCart];
 let currentWishlist = [...mockWishlist];
+let currentSavedItems = []; // Saved for later items
 let currentRecentlyViewed = [...mockRecentlyViewed];
 let currentOrders = [...mockOrders];
 let currentAddresses = [...mockAddresses];
@@ -385,6 +386,7 @@ export const getMockState = () => ({
   currentUser,
   currentCart,
   currentWishlist,
+  currentSavedItems,
   currentRecentlyViewed,
   currentOrders,
   currentAddresses,
@@ -404,6 +406,9 @@ export const setMockState = (key, value) => {
       break;
     case 'currentWishlist':
       currentWishlist = value;
+      break;
+    case 'currentSavedItems':
+      currentSavedItems = value;
       break;
     case 'currentRecentlyViewed':
       currentRecentlyViewed = value;
@@ -435,6 +440,7 @@ export const resetMockState = () => {
   currentUser = null;
   currentCart = [];
   currentWishlist = [];
+  currentSavedItems = [];
   currentRecentlyViewed = [];
   currentOrders = [...mockOrders];
   currentAddresses = [...mockAddresses];

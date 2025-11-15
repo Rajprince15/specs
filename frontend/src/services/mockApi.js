@@ -333,6 +333,79 @@ class MockApiService {
     return { data: { message: 'Item removed from wishlist' } };
   }
 
+  // Saved Items endpoints (Save for Later)
+  async getSavedItems() {
+    await delay();
+    const { currentSavedItems, currentProducts } = getMockState();
+    const savedItemsWithProducts = currentSavedItems.map(item => {
+      const product = currentProducts.find(p => p.id === item.product_id);
+      return {
+        ...item,
+        product
+      };
+    });
+    return { data: savedItemsWithProducts };
+  }
+
+  async saveForLater(cartItemId) {
+    await delay();
+    const { currentCart, currentSavedItems } = getMockState();
+    const cartItem = currentCart.find(i => i.id === cartItemId);
+    
+    if (cartItem) {
+      // Move item from cart to saved items
+      const savedItem = {
+        id: generateId(),
+        user_id: '1',
+        product_id: cartItem.product_id,
+        quantity: cartItem.quantity,
+        saved_at: now()
+      };
+      
+      currentSavedItems.push(savedItem);
+      const newCart = currentCart.filter(i => i.id !== cartItemId);
+      
+      setMockState('currentSavedItems', currentSavedItems);
+      setMockState('currentCart', newCart);
+    }
+    
+    return { data: { message: 'Item saved for later' } };
+  }
+
+  async moveToCart(savedItemId) {
+    await delay();
+    const { currentSavedItems, currentCart } = getMockState();
+    const savedItem = currentSavedItems.find(i => i.id === savedItemId);
+    
+    if (savedItem) {
+      // Move item from saved items back to cart
+      const cartItem = {
+        id: generateId(),
+        user_id: '1',
+        product_id: savedItem.product_id,
+        quantity: savedItem.quantity,
+        added_at: now()
+      };
+      
+      currentCart.push(cartItem);
+      const newSavedItems = currentSavedItems.filter(i => i.id !== savedItemId);
+      
+      setMockState('currentCart', currentCart);
+      setMockState('currentSavedItems', newSavedItems);
+    }
+    
+    return { data: { message: 'Item moved to cart' } };
+  }
+
+  async deleteSavedItem(savedItemId) {
+    await delay();
+    const { currentSavedItems } = getMockState();
+    const newSavedItems = currentSavedItems.filter(i => i.id !== savedItemId);
+    setMockState('currentSavedItems', newSavedItems);
+    return { data: { message: 'Saved item removed' } };
+  }
+
+
   // Orders endpoints
   async getOrders() {
     await delay();

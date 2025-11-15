@@ -192,6 +192,23 @@ class ApiAdapter {
         return mockApiService.removeFromWishlist(id);
       }
 
+      // Saved Items routes (Save for Later)
+      if (cleanUrl === 'saved-items' && method === 'GET') {
+        return mockApiService.getSavedItems();
+      }
+      if (cleanUrl.match(/^cart\/[^/]+\/save$/) && method === 'POST') {
+        const cartItemId = cleanUrl.split('/')[1];
+        return mockApiService.saveForLater(cartItemId);
+      }
+      if (cleanUrl.match(/^saved-items\/[^/]+\/move-to-cart$/) && method === 'POST') {
+        const savedItemId = cleanUrl.split('/')[1];
+        return mockApiService.moveToCart(savedItemId);
+      }
+      if (cleanUrl.match(/^saved-items\/[^/]+$/) && method === 'DELETE') {
+        const savedItemId = cleanUrl.split('/')[1];
+        return mockApiService.deleteSavedItem(savedItemId);
+      }
+
       // Orders routes
       if (cleanUrl === 'orders' && method === 'GET') {
         return mockApiService.getOrders();
