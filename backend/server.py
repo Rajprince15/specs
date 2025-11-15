@@ -2176,7 +2176,7 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
     webhook_url = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001')}/api/webhook/stripe"
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
     
-    # Get checkout status
+    # Get fresh checkout status from Stripe
     checkout_status = await stripe_checkout.get_checkout_status(session_id)
     
     async with async_session_maker() as session:
@@ -2187,7 +2187,7 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
         existing_payment = result.scalar_one_or_none()
         
         if existing_payment:
-            # Update payment transaction
+            # Update payment transaction with fresh data from Stripe
             existing_payment.status = checkout_status.status
             existing_payment.payment_status = checkout_status.payment_status
             existing_payment.updated_at = datetime.now(timezone.utc)
@@ -2296,6 +2296,41 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
                         logging.error(f"Failed to send payment/order emails: {str(e)}")
             
             await session.commit()
+            
+            # Return order details if order was created
+            if existing_payment.order_id:
+                order_result = await session.execute(
+                    select(OrderDB).where(OrderDB.id == existing_payment.order_id)
+                )
+                order = order_result.scalar_one_or_none()
+                
+                if order:
+                    # Get order items for analytics
+                    items_result = await session.execute(
+                        select(OrderItemDB).where(OrderItemDB.order_id == order.id)
+                    )
+                    order_items = items_result.scalars().all()
+                    
+                    return {
+                        "status": checkout_status.status,
+                        "payment_status": checkout_status.payment_status,
+                        "amount_total": checkout_status.amount_total,
+                        "currency": checkout_status.currency,
+                        "order": {
+                            "id": order.id,
+                            "total_amount": float(order.total_amount),
+                            "payment_method": "stripe",
+                            "items": [
+                                {
+                                    "name": item.product_name,
+                                    "brand": item.product_brand,
+                                    "price": float(item.product_price),
+                                    "quantity": item.quantity
+                                }
+                                for item in order_items
+                            ]
+                        }
+                    }
     
     return {
         "status": checkout_status.status,
@@ -2323,12 +2358,92 @@ async def stripe_webhook(request: Request):
             payment = result.scalar_one_or_none()
             
             if payment:
+                # Update payment status
                 payment.payment_status = webhook_response.payment_status
+                payment.status = webhook_response.event_type
                 payment.updated_at = datetime.now(timezone.utc)
+                
+                # Create order if payment successful and order doesn't exist
+                # This is a backup mechanism in case user doesn't return to success page
+                if webhook_response.payment_status == "paid" and payment.order_id is None:
+                    try:
+                        # Get cart items for this user
+                        cart_result = await session.execute(
+                            select(CartItemDB).where(CartItemDB.user_id == payment.user_id)
+                        )
+                        cart_items = cart_result.scalars().all()
+                        
+                        if cart_items:
+                            items = []
+                            total_amount = 0.0
+                            for cart_item in cart_items:
+                                product_result = await session.execute(
+                                    select(ProductDB).where(ProductDB.id == cart_item.product_id)
+                                )
+                                product = product_result.scalar_one_or_none()
+                                
+                                if product:
+                                    items.append({
+                                        "product_id": product.id,
+                                        "name": product.name,
+                                        "brand": product.brand,
+                                        "price": product.price,
+                                        "quantity": cart_item.quantity
+                                    })
+                                    total_amount += product.price * cart_item.quantity
+                            
+                            # Get user info for address
+                            user_result = await session.execute(select(UserDB).where(UserDB.id == payment.user_id))
+                            user_info = user_result.scalar_one_or_none()
+                            
+                            # Create order
+                            order_id = str(uuid.uuid4())
+                            
+                            db_order = OrderDB(
+                                id=order_id,
+                                user_id=payment.user_id,
+                                total_amount=total_amount,
+                                payment_status="paid",
+                                order_status="confirmed",
+                                shipping_address=user_info.address if user_info and user_info.address else 'No address provided',
+                                created_at=datetime.now(timezone.utc),
+                                updated_at=datetime.now(timezone.utc)
+                            )
+                            
+                            session.add(db_order)
+                            
+                            # Create order items
+                            for item in items:
+                                subtotal = item['price'] * item['quantity']
+                                db_order_item = OrderItemDB(
+                                    id=str(uuid.uuid4()),
+                                    order_id=order_id,
+                                    product_id=item['product_id'],
+                                    product_name=item['name'],
+                                    product_brand=item['brand'],
+                                    product_price=item['price'],
+                                    quantity=item['quantity'],
+                                    subtotal=subtotal
+                                )
+                                session.add(db_order_item)
+                            
+                            # Update payment with order_id
+                            payment.order_id = order_id
+                            
+                            # Clear cart
+                            await session.execute(
+                                delete(CartItemDB).where(CartItemDB.user_id == payment.user_id)
+                            )
+                            
+                            logging.info(f"Order {order_id} created via webhook for payment {payment.session_id}")
+                    except Exception as order_error:
+                        logging.error(f"Failed to create order in webhook: {str(order_error)}")
+                
                 await session.commit()
         
         return {"status": "success"}
     except Exception as e:
+        logging.error(f"Webhook error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # ============ Unified Payment Gateway Endpoints ============
@@ -2534,10 +2649,26 @@ async def verify_razorpay_payment(
         
         await session.commit()
         
+        # Return order details for analytics
         return {
             "status": "success",
+            "payment_status": "paid",
             "order_id": order_id,
-            "message": "Payment verified and order created successfully"
+            "message": "Payment verified and order created successfully",
+            "order": {
+                "id": order_id,
+                "total_amount": float(total_amount),
+                "payment_method": "razorpay",
+                "items": [
+                    {
+                        "name": item['name'],
+                        "brand": item['brand'],
+                        "price": float(item['price']),
+                        "quantity": item['quantity']
+                    }
+                    for item in items
+                ]
+            }
         }
 
 @api_router.post("/webhook/razorpay")

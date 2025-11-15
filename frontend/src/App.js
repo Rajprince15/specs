@@ -56,6 +56,25 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle 401 errors gracefully (don't logout on payment-success page)
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Don't logout on payment-success or payment-related pages
+      const isPaymentPage = window.location.pathname.includes('/payment-success') || 
+                            window.location.pathname.includes('/payment-cancel');
+      
+      if (!isPaymentPage) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 function App() {
   const [user, setUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
