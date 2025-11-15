@@ -1714,6 +1714,73 @@ async def update_order_status(order_id: str, status_data: UpdateOrderStatus, aut
             }
         }
 
+@api_router.put("/admin/orders/{order_id}/payment-status")
+async def update_order_payment_status(
+    order_id: str, 
+    payment_status: str,
+    authorization: str = Header(None)
+):
+    """Admin endpoint to update payment status of an order"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate payment status
+    valid_statuses = ['pending', 'paid', 'failed', 'refunded']
+    if payment_status not in valid_statuses:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid payment status. Must be one of: {', '.join(valid_statuses)}"
+        )
+    
+    async with async_session_maker() as session:
+        # Get order
+        result = await session.execute(select(OrderDB).where(OrderDB.id == order_id))
+        order = result.scalar_one_or_none()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Update payment status
+        old_status = order.payment_status
+        order.payment_status = payment_status
+        order.updated_at = datetime.now(timezone.utc)
+        
+        await session.commit()
+        
+        return {
+            "message": "Payment status updated successfully",
+            "order": {
+                "id": order.id,
+                "payment_status": order.payment_status,
+                "old_payment_status": old_status,
+                "updated_at": order.updated_at.isoformat()
+            }
+        }
+
+@api_router.delete("/admin/orders/{order_id}")
+async def delete_order(order_id: str, authorization: str = Header(None)):
+    """Admin endpoint to delete an order (careful - removes all related data)"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        # Get order
+        result = await session.execute(select(OrderDB).where(OrderDB.id == order_id))
+        order = result.scalar_one_or_none()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Delete order (cascade will delete order_items and tracking)
+        await session.delete(order)
+        await session.commit()
+        
+        return {"message": "Order deleted successfully", "order_id": order_id}
+
 # ============ Review Routes ============
 
 @api_router.get("/products/{product_id}/reviews")
@@ -1855,6 +1922,68 @@ async def delete_review(review_id: str, authorization: str = Header(None)):
         await session.commit()
         
         return {"message": "Review deleted successfully"}
+
+@api_router.delete("/admin/reviews/{review_id}")
+async def admin_delete_review(review_id: str, authorization: str = Header(None)):
+    """Admin endpoint to delete any review"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(ReviewDB).where(ReviewDB.id == review_id)
+        )
+        review = result.scalar_one_or_none()
+        
+        if not review:
+            raise HTTPException(status_code=404, detail="Review not found")
+        
+        await session.delete(review)
+        await session.commit()
+        
+        return {
+            "message": "Review deleted successfully by admin",
+            "review_id": review_id
+        }
+
+@api_router.get("/admin/reviews")
+async def get_all_reviews(
+    limit: int = 100,
+    offset: int = 0,
+    authorization: str = Header(None)
+):
+    """Admin endpoint to view all reviews across all products"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(ReviewDB, ProductDB)
+            .join(ProductDB, ReviewDB.product_id == ProductDB.id)
+            .order_by(ReviewDB.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        rows = result.all()
+        
+        return [
+            {
+                "id": row[0].id,
+                "product_id": row[0].product_id,
+                "product_name": row[1].name,
+                "user_id": row[0].user_id,
+                "user_name": row[0].user_name,
+                "rating": row[0].rating,
+                "comment": row[0].comment,
+                "created_at": row[0].created_at.isoformat() if row[0].created_at else None,
+                "updated_at": row[0].updated_at.isoformat() if row[0].updated_at else None
+            }
+            for row in rows
+        ]
 
 # ============ Wishlist Routes ============
 
@@ -2703,6 +2832,155 @@ async def razorpay_webhook(request: Request):
     except Exception as e:
         logging.error(f"Razorpay webhook error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+# ============ Admin Payment Transaction Management ============
+
+@api_router.get("/admin/payments")
+async def get_all_payment_transactions(
+    limit: int = 100,
+    offset: int = 0,
+    authorization: str = Header(None)
+):
+    """Admin endpoint to view all payment transactions"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(PaymentTransactionDB)
+            .order_by(PaymentTransactionDB.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        payments = result.scalars().all()
+        
+        return [
+            {
+                "id": p.id,
+                "session_id": p.session_id,
+                "user_id": p.user_id,
+                "order_id": p.order_id,
+                "amount": float(p.amount),
+                "currency": p.currency,
+                "payment_status": p.payment_status,
+                "status": p.status,
+                "metadata": json.loads(p.payment_metadata) if p.payment_metadata else None,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None
+            }
+            for p in payments
+        ]
+
+@api_router.get("/admin/payments/{session_id}")
+async def get_payment_transaction(session_id: str, authorization: str = Header(None)):
+    """Admin endpoint to view a specific payment transaction"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(PaymentTransactionDB).where(PaymentTransactionDB.session_id == session_id)
+        )
+        payment = result.scalar_one_or_none()
+        
+        if not payment:
+            raise HTTPException(status_code=404, detail="Payment transaction not found")
+        
+        return {
+            "id": payment.id,
+            "session_id": payment.session_id,
+            "user_id": payment.user_id,
+            "order_id": payment.order_id,
+            "amount": float(payment.amount),
+            "currency": payment.currency,
+            "payment_status": payment.payment_status,
+            "status": payment.status,
+            "metadata": json.loads(payment.payment_metadata) if payment.payment_metadata else None,
+            "created_at": payment.created_at.isoformat() if payment.created_at else None,
+            "updated_at": payment.updated_at.isoformat() if payment.updated_at else None
+        }
+
+@api_router.put("/admin/payments/{session_id}/status")
+async def update_payment_transaction_status(
+    session_id: str,
+    payment_status: str,
+    status: Optional[str] = None,
+    authorization: str = Header(None)
+):
+    """Admin endpoint to manually update payment transaction status"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate payment status
+    valid_payment_statuses = ['pending', 'completed', 'failed', 'cancelled', 'refunded']
+    if payment_status not in valid_payment_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid payment status. Must be one of: {', '.join(valid_payment_statuses)}"
+        )
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(PaymentTransactionDB).where(PaymentTransactionDB.session_id == session_id)
+        )
+        payment = result.scalar_one_or_none()
+        
+        if not payment:
+            raise HTTPException(status_code=404, detail="Payment transaction not found")
+        
+        # Update payment transaction
+        old_payment_status = payment.payment_status
+        old_status = payment.status
+        
+        payment.payment_status = payment_status
+        if status:
+            payment.status = status
+        payment.updated_at = datetime.now(timezone.utc)
+        
+        await session.commit()
+        
+        return {
+            "message": "Payment transaction updated successfully",
+            "payment": {
+                "session_id": payment.session_id,
+                "old_payment_status": old_payment_status,
+                "new_payment_status": payment.payment_status,
+                "old_status": old_status,
+                "new_status": payment.status,
+                "updated_at": payment.updated_at.isoformat()
+            }
+        }
+
+@api_router.delete("/admin/payments/{session_id}")
+async def delete_payment_transaction(session_id: str, authorization: str = Header(None)):
+    """Admin endpoint to delete a payment transaction (use with caution)"""
+    user = await get_current_user(authorization)
+    
+    if user.get('role') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(PaymentTransactionDB).where(PaymentTransactionDB.session_id == session_id)
+        )
+        payment = result.scalar_one_or_none()
+        
+        if not payment:
+            raise HTTPException(status_code=404, detail="Payment transaction not found")
+        
+        await session.delete(payment)
+        await session.commit()
+        
+        return {
+            "message": "Payment transaction deleted successfully",
+            "session_id": session_id
+        }
 
 # ============ Recently Viewed & Recommendations ============
 
@@ -3957,6 +4235,87 @@ async def block_unblock_user(
                 "name": user.name,
                 "email": user.email,
                 "is_blocked": bool(user.is_blocked)
+            }
+        }
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    authorization: str = Header(None)
+):
+    """Delete a user and all related data (admin only - use with caution)"""
+    admin = await get_current_user(authorization)
+    
+    if admin['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserDB).where(UserDB.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Prevent deleting admin users
+        if user.role == 'admin':
+            raise HTTPException(status_code=400, detail="Cannot delete admin users")
+        
+        # Delete user (cascade will delete all related data: orders, cart, wishlist, reviews, etc.)
+        user_email = user.email
+        user_name = user.name
+        
+        await session.delete(user)
+        await session.commit()
+        
+        return {
+            "message": "User and all related data deleted successfully",
+            "deleted_user": {
+                "id": user_id,
+                "name": user_name,
+                "email": user_email
+            }
+        }
+
+@api_router.put("/admin/users/{user_id}/role")
+async def change_user_role(
+    user_id: str,
+    new_role: str,
+    authorization: str = Header(None)
+):
+    """Change user role between 'user' and 'admin' (admin only)"""
+    admin = await get_current_user(authorization)
+    
+    if admin['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate role
+    if new_role not in ['user', 'admin']:
+        raise HTTPException(status_code=400, detail="Role must be 'user' or 'admin'")
+    
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserDB).where(UserDB.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        old_role = user.role
+        user.role = new_role
+        
+        await session.commit()
+        
+        return {
+            "message": f"User role changed from {old_role} to {new_role}",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "old_role": old_role,
+                "new_role": new_role
             }
         }
 
