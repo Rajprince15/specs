@@ -128,9 +128,9 @@ const Profile = ({ user, onLogout, cartCount }) => {
         keywords="user profile, account settings, personal information"
         noindex={true}
       />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Navigation */}
-        <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
+        <nav className="glass sticky top-0 z-50 border-b dark:border-gray-800" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Glasses className="w-8 h-8 text-blue-600" />

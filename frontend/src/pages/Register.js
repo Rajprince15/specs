@@ -52,10 +52,10 @@ const Register = ({ onLogin }) => {
         keywords="register, sign up, create account, join"
         noindex={true}
       />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6">
         <main id="main-content" className="w-full max-w-md">
           <nav role="navigation" aria-label="Authentication navigation">
-          <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8" aria-label="Back to Home">
+          <Link to="/" className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-8" aria-label="Back to Home">
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             Back to Home
           </Link>

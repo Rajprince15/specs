@@ -295,7 +295,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
         keywords="shop glasses online, eyewear collection, buy sunglasses, designer frames, prescription eyeglasses"
         ogImage="https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=1200&h=630&fit=crop"
       />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Navigation */}
         <Navigation user={user} onLogout={onLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} showWishlist={true} showSavedItems={true} />
 
@@ -321,7 +321,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
           <div className="glass p-6 rounded-2xl mb-8 space-y-6">
             {/* Search Bar with Autocomplete */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 Search
               </label>
               <div className="relative" ref={searchRef}>
@@ -346,17 +346,17 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                 {showSuggestions && (search.length >= 2 || recentSearches.length > 0) && (
                   <div 
                     ref={suggestionsRef}
-                    className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-[500px] overflow-y-auto"
+                    className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[500px] overflow-y-auto"
                   >
                     {/* Recent Searches */}
                     {recentSearches.length > 0 && search.length < 2 && (
-                      <div className="p-3 border-b">
-                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Recent Searches</div>
+                      <div className="p-3 border-b dark:border-gray-700">
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Recent Searches</div>
                         {recentSearches.map((recent, idx) => (
                           <div
                             key={`recent-${idx}`}
                             className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
-                              selectedIndex === idx ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              selectedIndex === idx ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                             }`}
                             onClick={() => {
                               setSearch(recent);
@@ -364,7 +364,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                             }}
                           >
                             <Clock className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-700">{recent}</span>
+                            <span className="text-gray-700 dark:text-gray-300">{recent}</span>
                           </div>
                         ))}
                       </div>
@@ -372,15 +372,15 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
 
                     {/* Product Suggestions */}
                     {suggestions.products.length > 0 && (
-                      <div className="p-3 border-b">
-                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Products</div>
+                      <div className="p-3 border-b dark:border-gray-700">
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Products</div>
                         {suggestions.products.map((product, idx) => {
                           const itemIndex = recentSearches.length + idx;
                           return (
                             <div
                               key={product.id}
                               className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
-                                selectedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                selectedIndex === itemIndex ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                               }`}
                               onClick={() => {
                                 navigate(`/products/${product.id}`);
@@ -393,10 +393,10 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                                 className="w-12 h-12 object-cover rounded-md"
                               />
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 truncate">{product.name}</div>
-                                <div className="text-sm text-gray-500">{product.brand}</div>
+                                <div className="font-medium text-gray-900 dark:text-white truncate">{product.name}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">{product.brand}</div>
                               </div>
-                              <div className="text-blue-600 font-semibold">₹{product.price.toFixed(2)}</div>
+                              <div className="text-blue-600 dark:text-blue-400 font-semibold">₹{product.price.toFixed(2)}</div>
                             </div>
                           );
                         })}
@@ -405,15 +405,15 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
 
                     {/* Brand Suggestions */}
                     {suggestions.brands.length > 0 && (
-                      <div className="p-3 border-b">
-                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Brands</div>
+                      <div className="p-3 border-b dark:border-gray-700">
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Brands</div>
                         {suggestions.brands.map((brand, idx) => {
                           const itemIndex = recentSearches.length + suggestions.products.length + idx;
                           return (
                             <div
                               key={`brand-${idx}`}
                               className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
-                                selectedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                selectedIndex === itemIndex ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                               }`}
                               onClick={() => {
                                 setSearch(brand);
@@ -421,7 +421,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                               }}
                             >
                               <Search className="w-4 h-4 text-gray-400" />
-                              <span className="text-gray-700">{brand}</span>
+                              <span className="text-gray-700 dark:text-gray-300">{brand}</span>
                             </div>
                           );
                         })}
@@ -431,14 +431,14 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                     {/* Category Suggestions */}
                     {suggestions.categories.length > 0 && (
                       <div className="p-3">
-                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Categories</div>
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Categories</div>
                         {suggestions.categories.map((cat, idx) => {
                           const itemIndex = recentSearches.length + suggestions.products.length + suggestions.brands.length + idx;
                           return (
                             <div
                               key={`cat-${idx}`}
                               className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
-                                selectedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                selectedIndex === itemIndex ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                               }`}
                               onClick={() => {
                                 setCategory(cat);
@@ -447,7 +447,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                               }}
                             >
                               <ShoppingBag className="w-4 h-4 text-gray-400" />
-                              <span className="text-gray-700 capitalize">{cat}</span>
+                              <span className="text-gray-700 dark:text-gray-300 capitalize">{cat}</span>
                             </div>
                           );
                         })}
@@ -473,7 +473,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
             <div className="grid md:grid-cols-3 gap-6">
               {/* Category Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Category
                 </label>
                 <Select value={category} onValueChange={setCategory}>
@@ -492,7 +492,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
 
               {/* Sort Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Sort By
                 </label>
                 <Select value={sortBy} onValueChange={setSortBy}>
@@ -525,7 +525,7 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
 
             {/* Price Range Slider */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 Price Range: ${priceRange[0]} - ${priceRange[1]}
               </label>
               <div className="px-2">
@@ -543,8 +543,8 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
 
             {/* Active Filters Display */}
             {(search || category !== 'all' || priceRange[0] > 0 || priceRange[1] < 500 || sortBy !== 'newest') && (
-              <div className="flex items-center gap-2 flex-wrap pt-4 border-t">
-                <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              <div className="flex items-center gap-2 flex-wrap pt-4 border-t dark:border-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Active Filters:</span>
                 {search && (
                   <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-1">
                     Search: {search}
@@ -607,14 +607,14 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
                       onCheckedChange={() => toggleCompare(product)}
                       className="border-2 border-blue-500 data-[state=checked]:bg-blue-600"
                     />
-                    <span className="text-xs font-medium text-gray-700">Compare</span>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Compare</span>
                   </div>
                 </div>
 
                 {/* Wishlist Button */}
                 <button
                   onClick={(e) => addToWishlist(product.id, e)}
-                  className="absolute top-2 right-2 z-10 p-2.5 bg-white/90 hover:bg-pink-50 rounded-full shadow-lg transition-all hover:scale-110 group"
+                  className="absolute top-2 right-2 z-10 p-2.5 bg-white/90 dark:bg-gray-800/90 hover:bg-pink-50 dark:hover:bg-pink-900/50 rounded-full shadow-lg transition-all hover:scale-110 group"
                   aria-label="Add to wishlist"
                 >
                   <Heart className="w-5 h-5 text-gray-600 group-hover:text-pink-500 group-hover:fill-pink-500 transition-colors" />

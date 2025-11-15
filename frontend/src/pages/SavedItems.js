@@ -60,7 +60,7 @@ const SavedItems = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount
           keywords="saved items, save for later, saved glasses"
           noindex={true}
         />
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
           <Navigation user={user} onLogout={onLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />
           <div className="flex justify-center items-center h-[60vh]" role="status" aria-live="polite">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" aria-label="Loading saved items"></div>
@@ -78,7 +78,7 @@ const SavedItems = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount
         keywords="saved items, save for later, saved glasses"
         noindex={true}
       />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Navigation user={user} onLogout={onLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />
 
         <main id="main-content" className="container mx-auto px-4 py-8">
