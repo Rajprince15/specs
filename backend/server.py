@@ -20,9 +20,7 @@ from email_service import email_service
 from cache_service import get_cache_service
 from logging_config import setup_logging, get_logger
 from error_tracking import initialize_sentry, capture_exception, set_user_context
-from rate_limiter import create_limiter, RateLimit, rate_limit_error_handler
 from middleware import RequestTrackerMiddleware, ErrorHandlerMiddleware
-from slowapi.errors import RateLimitExceeded
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -522,7 +520,6 @@ async def get_db():
 # ============ Auth Routes ============
 
 @api_router.post("/auth/register")
-@limiter.limit(RateLimit['register'])
 async def register(request: Request, user_data: UserRegister):
     async with async_session_maker() as session:
         # Check if user exists
@@ -576,7 +573,6 @@ async def register(request: Request, user_data: UserRegister):
         }
 
 @api_router.post("/auth/login")
-@limiter.limit(RateLimit['login'])
 async def login(request: Request, credentials: UserLogin):
     # Check for admin login
     if credentials.email == ADMIN_EMAIL:
@@ -2004,7 +2000,6 @@ async def delete_product_image(product_id: str, image_id: str, authorization: st
 # ============ Payment Routes ============
 
 @api_router.post("/payment/checkout")
-@limiter.limit(RateLimit['checkout'])
 async def create_checkout(request: Request, authorization: str = Header(None)):
     user = await get_current_user(authorization)
     
@@ -3754,15 +3749,6 @@ if sentry_dsn:
     logger.info("Sentry error tracking initialized")
 else:
     logger.info("Sentry DSN not configured - error tracking disabled")
-
-# Create rate limiter
-limiter = create_limiter(default_limit=os.getenv('DEFAULT_RATE_LIMIT', '100/minute'))
-
-# Add rate limiter to app state
-app.state.limiter = limiter
-
-# Add exception handler for rate limiting
-app.add_exception_handler(RateLimitExceeded, rate_limit_error_handler)
 
 # Include the router in the main app
 app.include_router(api_router)
