@@ -223,6 +223,18 @@ class SavedItemDB(Base):
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     saved_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class OrderItemDB(Base):
+    __tablename__ = "order_items"
+    
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    order_id: Mapped[str] = mapped_column(String(36), index=True)
+    product_id: Mapped[str] = mapped_column(String(36), index=True)
+    product_name: Mapped[str] = mapped_column(String(255))
+    product_brand: Mapped[str] = mapped_column(String(100))
+    product_price: Mapped[float] = mapped_column(Float)
+    quantity: Mapped[int] = mapped_column(Integer)
+    subtotal: Mapped[float] = mapped_column(Float)
+
 # ============ Pydantic Models ============
 
 class User(BaseModel):
@@ -381,6 +393,17 @@ class CreateProductImage(BaseModel):
     image_url: str
     display_order: int = 0
     is_primary: bool = False
+
+class OrderItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    order_id: str
+    product_id: str
+    product_name: str
+    product_brand: str
+    product_price: float
+    quantity: int
+    subtotal: float
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1321,38 +1344,47 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
                 items.append({
                     "product_id": product.id,
                     "name": product.name,
+                    "brand": product.brand,
                     "price": product.price,
                     "quantity": cart_item.quantity
                 })
                 total_amount += product.price * cart_item.quantity
         
-        # Create order
-        order = Order(
-            user_id=user['user_id'],
-            items=items,
-            total_amount=total_amount,
-            shipping_address=order_data.shipping_address
-        )
+        # Create order ID
+        order_id = str(uuid.uuid4())
         
+        # Create order
         db_order = OrderDB(
-            id=order.id,
-            user_id=order.user_id,
-            items=json.dumps(order.items),
-            total_amount=order.total_amount,
-            payment_status=order.payment_status,
-            order_status=order.order_status,
-            shipping_address=order.shipping_address,
-            tracking_number=order.tracking_number,
-            estimated_delivery=order.estimated_delivery,
-            created_at=order.created_at,
-            updated_at=order.updated_at
+            id=order_id,
+            user_id=user['user_id'],
+            total_amount=total_amount,
+            payment_status="pending",
+            order_status="processing",
+            shipping_address=order_data.shipping_address,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         
         session.add(db_order)
         
+        # Create order items
+        for item in items:
+            subtotal = item['price'] * item['quantity']
+            db_order_item = OrderItemDB(
+                id=str(uuid.uuid4()),
+                order_id=order_id,
+                product_id=item['product_id'],
+                product_name=item['name'],
+                product_brand=item['brand'],
+                product_price=item['price'],
+                quantity=item['quantity'],
+                subtotal=subtotal
+            )
+            session.add(db_order_item)
+        
         # Create initial tracking entry
         initial_tracking = OrderTracking(
-            order_id=order.id,
+            order_id=order_id,
             status="processing",
             description="Order has been placed and is being processed",
             location="Warehouse"
@@ -1397,7 +1429,7 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
                 email_service.send_order_confirmation_email(
                     user_db.name,
                     user_db.email,
-                    order.id,
+                    order_id,
                     email_items,
                     total_amount,
                     order_data.shipping_address
@@ -1405,7 +1437,19 @@ async def create_order(order_data: CreateOrder, authorization: str = Header(None
             except Exception as e:
                 logging.error(f"Failed to send order confirmation email: {str(e)}")
         
-        return {"message": "Order created successfully", "order": order.model_dump()}
+        return {
+            "message": "Order created successfully",
+            "order": {
+                "id": order_id,
+                "user_id": user['user_id'],
+                "items": items,
+                "total_amount": total_amount,
+                "payment_status": "pending",
+                "order_status": "processing",
+                "shipping_address": order_data.shipping_address,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
 
 @api_router.get("/orders")
 async def get_orders(authorization: str = Header(None)):
@@ -1419,17 +1463,39 @@ async def get_orders(authorization: str = Header(None)):
         
         orders = result.scalars().all()
         
+        # Get order items for all orders
+        order_ids = [o.id for o in orders]
+        order_items_dict = {}
+        
+        if order_ids:
+            items_result = await session.execute(
+                select(OrderItemDB).where(OrderItemDB.order_id.in_(order_ids))
+            )
+            order_items = items_result.scalars().all()
+            
+            for item in order_items:
+                if item.order_id not in order_items_dict:
+                    order_items_dict[item.order_id] = []
+                order_items_dict[item.order_id].append({
+                    "product_id": item.product_id,
+                    "name": item.product_name,
+                    "brand": item.product_brand,
+                    "price": item.product_price,
+                    "quantity": item.quantity,
+                    "subtotal": item.subtotal
+                })
+        
         return [
             {
                 "id": o.id,
                 "user_id": o.user_id,
-                "items": json.loads(o.items) if isinstance(o.items, str) else o.items,
+                "items": order_items_dict.get(o.id, []),
                 "total_amount": o.total_amount,
                 "payment_status": o.payment_status,
                 "order_status": o.order_status,
                 "shipping_address": o.shipping_address,
-                "tracking_number": o.tracking_number,
-                "estimated_delivery": o.estimated_delivery.isoformat() if o.estimated_delivery else None,
+                "tracking_number": None,
+                "estimated_delivery": None,
                 "created_at": o.created_at.isoformat() if o.created_at else None,
                 "updated_at": o.updated_at.isoformat() if o.updated_at else None
             }
@@ -1450,16 +1516,34 @@ async def get_order(order_id: str, authorization: str = Header(None)):
         if user['role'] != 'admin' and order.user_id != user['user_id']:
             raise HTTPException(status_code=403, detail="Access denied")
         
+        # Get order items
+        items_result = await session.execute(
+            select(OrderItemDB).where(OrderItemDB.order_id == order_id)
+        )
+        order_items = items_result.scalars().all()
+        
+        items = [
+            {
+                "product_id": item.product_id,
+                "name": item.product_name,
+                "brand": item.product_brand,
+                "price": item.product_price,
+                "quantity": item.quantity,
+                "subtotal": item.subtotal
+            }
+            for item in order_items
+        ]
+        
         return {
             "id": order.id,
             "user_id": order.user_id,
-            "items": json.loads(order.items) if isinstance(order.items, str) else order.items,
+            "items": items,
             "total_amount": order.total_amount,
             "payment_status": order.payment_status,
             "order_status": order.order_status,
             "shipping_address": order.shipping_address,
-            "tracking_number": order.tracking_number,
-            "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+            "tracking_number": None,
+            "estimated_delivery": None,
             "created_at": order.created_at.isoformat() if order.created_at else None,
             "updated_at": order.updated_at.isoformat() if order.updated_at else None
         }
@@ -2049,6 +2133,7 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
                         items.append({
                             "product_id": product.id,
                             "name": product.name,
+                            "brand": product.brand,
                             "price": product.price,
                             "quantity": cart_item.quantity
                         })
@@ -2058,30 +2143,39 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
                 user_result = await session.execute(select(UserDB).where(UserDB.id == user['user_id']))
                 user_info = user_result.scalar_one_or_none()
                 
-                order = Order(
+                # Create order ID
+                order_id = str(uuid.uuid4())
+                
+                db_order = OrderDB(
+                    id=order_id,
                     user_id=user['user_id'],
-                    items=items,
                     total_amount=total_amount,
                     payment_status="paid",
                     order_status="confirmed",
-                    shipping_address=user_info.address if user_info and user_info.address else 'No address provided'
-                )
-                
-                db_order = OrderDB(
-                    id=order.id,
-                    user_id=order.user_id,
-                    items=json.dumps(order.items),
-                    total_amount=order.total_amount,
-                    payment_status=order.payment_status,
-                    order_status=order.order_status,
-                    shipping_address=order.shipping_address,
-                    created_at=order.created_at
+                    shipping_address=user_info.address if user_info and user_info.address else 'No address provided',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc)
                 )
                 
                 session.add(db_order)
                 
+                # Create order items
+                for item in items:
+                    subtotal = item['price'] * item['quantity']
+                    db_order_item = OrderItemDB(
+                        id=str(uuid.uuid4()),
+                        order_id=order_id,
+                        product_id=item['product_id'],
+                        product_name=item['name'],
+                        product_brand=item['brand'],
+                        product_price=item['price'],
+                        quantity=item['quantity'],
+                        subtotal=subtotal
+                    )
+                    session.add(db_order_item)
+                
                 # Update payment with order_id
-                existing_payment.order_id = order.id
+                existing_payment.order_id = order_id
                 
                 # Clear cart
                 await session.execute(
@@ -2096,7 +2190,7 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
                             email_service.send_payment_receipt_email(
                                 user_info.name,
                                 user_info.email,
-                                order.id,
+                                order_id,
                                 total_amount,
                                 "Stripe"
                             )
@@ -2107,17 +2201,17 @@ async def get_payment_status(session_id: str, authorization: str = Header(None))
                             for item in items:
                                 email_items.append({
                                     'name': item['name'],
-                                    'brand': 'LensKart',
+                                    'brand': item.get('brand', 'LensKart'),
                                     'quantity': item['quantity'],
                                     'price': item['price']
                                 })
                             email_service.send_order_confirmation_email(
                                 user_info.name,
                                 user_info.email,
-                                order.id,
+                                order_id,
                                 email_items,
                                 total_amount,
-                                order.shipping_address
+                                user_info.address if user_info.address else 'No address provided'
                             )
                     except Exception as e:
                         logging.error(f"Failed to send payment/order emails: {str(e)}")
@@ -2301,6 +2395,7 @@ async def verify_razorpay_payment(
                 items.append({
                     "product_id": product.id,
                     "name": product.name,
+                    "brand": product.brand,
                     "price": product.price,
                     "quantity": cart_item.quantity
                 })
@@ -2310,27 +2405,36 @@ async def verify_razorpay_payment(
         user_result = await session.execute(select(UserDB).where(UserDB.id == user['user_id']))
         user_info = user_result.scalar_one_or_none()
         
-        order = Order(
+        # Create order ID
+        order_id = str(uuid.uuid4())
+        
+        db_order = OrderDB(
+            id=order_id,
             user_id=user['user_id'],
-            items=items,
             total_amount=total_amount,
             payment_status="paid",
             order_status="confirmed",
-            shipping_address=user_info.address if user_info and user_info.address else 'No address provided'
-        )
-        
-        db_order = OrderDB(
-            id=order.id,
-            user_id=order.user_id,
-            items=json.dumps(order.items),
-            total_amount=order.total_amount,
-            payment_status=order.payment_status,
-            order_status=order.order_status,
-            shipping_address=order.shipping_address,
-            created_at=order.created_at
+            shipping_address=user_info.address if user_info and user_info.address else 'No address provided',
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         
         session.add(db_order)
+        
+        # Create order items
+        for item in items:
+            subtotal = item['price'] * item['quantity']
+            db_order_item = OrderItemDB(
+                id=str(uuid.uuid4()),
+                order_id=order_id,
+                product_id=item['product_id'],
+                product_name=item['name'],
+                product_brand=item['brand'],
+                product_price=item['price'],
+                quantity=item['quantity'],
+                subtotal=subtotal
+            )
+            session.add(db_order_item)
         
         # Update payment transaction
         payment_result = await session.execute(
@@ -2341,7 +2445,7 @@ async def verify_razorpay_payment(
         if existing_payment:
             existing_payment.payment_status = "completed"
             existing_payment.status = "completed"
-            existing_payment.order_id = order.id
+            existing_payment.order_id = order_id
             existing_payment.updated_at = datetime.now(timezone.utc)
         
         # Clear cart
@@ -2353,7 +2457,7 @@ async def verify_razorpay_payment(
         
         return {
             "status": "success",
-            "order_id": order.id,
+            "order_id": order_id,
             "message": "Payment verified and order created successfully"
         }
 
@@ -3179,7 +3283,7 @@ async def get_top_products(
                     'total_revenue': 0.0
                 }
             product_sales[item.product_id]['quantity_sold'] += item.quantity
-            product_sales[item.product_id]['total_revenue'] += float(item.price * item.quantity)
+            product_sales[item.product_id]['total_revenue'] += float(item.product_price * item.quantity)
         
         # Get product details
         top_products = []
@@ -3258,7 +3362,7 @@ async def get_revenue_analytics(
                     category = product.category
                     if category not in revenue_by_category:
                         revenue_by_category[category] = 0.0
-                    revenue_by_category[category] += float(item.price * item.quantity)
+                    revenue_by_category[category] += float(item.product_price * item.quantity)
         
         # Revenue by order status
         revenue_by_order_status = {}
