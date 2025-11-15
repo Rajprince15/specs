@@ -231,7 +231,7 @@ CREATE TABLE `payment_transactions` (
   `user_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `order_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `currency` varchar(3) COLLATE utf8mb4_unicode_ci DEFAULT 'usd',
+  `currency` varchar(3) COLLATE utf8mb4_unicode_ci DEFAULT 'inr',
   `payment_status` enum('pending','completed','failed','cancelled','refunded') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
   `status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'initiated' COMMENT 'Transaction lifecycle status',
   `metadata` json DEFAULT NULL COMMENT 'Additional Stripe metadata',
