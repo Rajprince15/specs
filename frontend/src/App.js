@@ -152,12 +152,7 @@ function App() {
     
     return (
       <>
-        {/* Mock Mode Banner */}
-        {isMockMode && (
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2 px-4 text-center text-sm font-medium shadow-lg z-50 sticky top-0">
-            🎭 Frontend-Only Mode Active - Using Mock Data (No Backend Required)
-          </div>
-        )}
+        
         <SkipToMain />
         <InstallPrompt />
         <Toaster 
@@ -180,6 +175,10 @@ function App() {
           <Routes>
             <Route
               path="/"
+              element={<Navigate to="/products" replace />}
+            />
+            <Route
+              path="/home"
               element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />}
             />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />

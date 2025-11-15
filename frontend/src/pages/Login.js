@@ -44,7 +44,7 @@ const Login = ({ onLogin }) => {
       if (response.data.user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/products');
+        navigate('/home');
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || t('auth.loginError'));
@@ -71,7 +71,7 @@ const Login = ({ onLogin }) => {
       if (response.data.user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/products');
+        navigate('/home');
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Demo login failed');
