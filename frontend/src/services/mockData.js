@@ -288,9 +288,43 @@ export const mockAddresses = [
   }
 ];
 
-export const mockCart = [];
+export const mockCart = [
+  {
+    id: '1',
+    user_id: '1',
+    product_id: '1',
+    quantity: 2,
+    added_at: '2024-03-01T00:00:00Z'
+  },
+  {
+    id: '2',
+    user_id: '1',
+    product_id: '2',
+    quantity: 1,
+    added_at: '2024-03-02T00:00:00Z'
+  }
+];
 
-export const mockWishlist = [];
+export const mockWishlist = [
+  {
+    id: '1',
+    user_id: '1',
+    product_id: '3',
+    added_at: '2024-03-01T00:00:00Z'
+  },
+  {
+    id: '2',
+    user_id: '1',
+    product_id: '7',
+    added_at: '2024-03-02T00:00:00Z'
+  },
+  {
+    id: '3',
+    user_id: '1',
+    product_id: '10',
+    added_at: '2024-03-03T00:00:00Z'
+  }
+];
 
 export const mockRecentlyViewed = [];
 
