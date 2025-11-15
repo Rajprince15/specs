@@ -216,6 +216,10 @@ class ApiAdapter {
       if (cleanUrl === 'orders' && method === 'POST') {
         return mockApiService.createOrder(data);
       }
+      if (cleanUrl.match(/^orders\/[^/]+\/tracking$/) && method === 'GET') {
+        const id = cleanUrl.split('/')[1];
+        return mockApiService.getOrderTracking(id);
+      }
       if (cleanUrl.match(/^orders\/[^/]+$/) && method === 'GET') {
         const id = cleanUrl.split('/')[1];
         return mockApiService.getOrder(id);

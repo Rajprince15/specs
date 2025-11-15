@@ -454,6 +454,32 @@ class MockApiService {
     return { data: newOrder };
   }
 
+  async getOrderTracking(orderId) {
+    await delay();
+    const { currentOrders } = getMockState();
+    const order = currentOrders.find(o => o.id === orderId);
+    
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    
+    return {
+      data: {
+        order_id: order.id,
+        current_status: order.order_status,
+        tracking_number: order.tracking_number || 'TRK' + generateId().substring(0, 12).toUpperCase(),
+        estimated_delivery: order.estimated_delivery || new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        history: [
+          {
+            status: 'processing',
+            timestamp: order.created_at,
+            description: 'Order placed and payment confirmed'
+          }
+        ]
+      }
+    };
+  }
+
   // User profile endpoints
   async getUserProfile() {
     await delay();
