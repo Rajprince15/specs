@@ -250,19 +250,19 @@ function App() {
   };
 
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <BrowserRouter>
+    <BrowserRouter>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <ToastProvider>
             <HelmetProvider>
               <div className="App">
                 <AppContent />
               </div>
             </HelmetProvider>
-          </BrowserRouter>
-        </ToastProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+          </ToastProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
   );
 }
 

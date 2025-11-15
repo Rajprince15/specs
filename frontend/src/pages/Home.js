@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Shield, ShoppingBag } from 'lucide-react';
+import { TrendingUp, Shield, ShoppingBag, Glasses } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import SEO from '@/components/SEO';

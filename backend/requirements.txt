@@ -19,7 +19,7 @@ dnspython==2.8.0
 ecdsa==0.19.1
 email-validator==2.3.0
 emergentintegrations==0.1.0
-ellipticcurve
+starkbank-ecdsa
 fastapi==0.110.1
 fastuuid==0.14.0
 filelock==3.20.0
@@ -103,6 +103,8 @@ regex==2025.11.3
 requests==2.32.5
 requests-oauthlib==2.0.0
 rich==14.2.0
+sentry-sdk==1.40.0
+slowapi==0.1.9
 rpds-py==0.28.0
 rsa==4.9.1
 razorpay==1.4.1
