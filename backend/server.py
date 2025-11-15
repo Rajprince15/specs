@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Column, String, Float, Integer, Text, DateTime, JSON, select, update, delete, func, or_
+from sqlalchemy import Column, String, Float, Integer, Text, DateTime, JSON, Enum, select, update, delete, func, or_
 import os
 import logging
 import json
@@ -75,9 +75,9 @@ class UserDB(Base):
     name: Mapped[str] = mapped_column(String(255))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password: Mapped[str] = mapped_column(String(255))
-    phone: Mapped[str] = mapped_column(String(50))
+    phone: Mapped[str] = mapped_column(String(20))
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    role: Mapped[str] = mapped_column(String(50), default="user")
+    role: Mapped[str] = mapped_column(Enum('user', 'admin', name='role_enum'), default="user")
     is_blocked: Mapped[int] = mapped_column(Integer, default=0)  # 0 for not blocked, 1 for blocked
     email_welcome: Mapped[int] = mapped_column(Integer, default=1)  # 1 for enabled, 0 for disabled
     email_order_confirmation: Mapped[int] = mapped_column(Integer, default=1)
@@ -90,14 +90,14 @@ class ProductDB(Base):
     
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
-    brand: Mapped[str] = mapped_column(String(255))
+    brand: Mapped[str] = mapped_column(String(100))
     price: Mapped[float] = mapped_column(Float)
-    description: Mapped[str] = mapped_column(Text)
-    category: Mapped[str] = mapped_column(String(100), index=True)
-    frame_type: Mapped[str] = mapped_column(String(100))
-    frame_shape: Mapped[str] = mapped_column(String(100))
-    color: Mapped[str] = mapped_column(String(100))
-    image_url: Mapped[str] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    category: Mapped[str] = mapped_column(Enum('men', 'women', 'kids', 'sunglasses', name='category_enum'), index=True)
+    frame_type: Mapped[str] = mapped_column(Enum('full-rim', 'half-rim', 'rimless', name='frame_type_enum'))
+    frame_shape: Mapped[str] = mapped_column(Enum('rectangular', 'round', 'cat-eye', 'aviator', 'wayfarer', 'square', 'oval', name='frame_shape_enum'))
+    color: Mapped[str] = mapped_column(String(50))
+    image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     stock: Mapped[int] = mapped_column(Integer, default=100)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -115,13 +115,10 @@ class OrderDB(Base):
     
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(36), index=True)
-    items: Mapped[str] = mapped_column(Text)  # JSON string
     total_amount: Mapped[float] = mapped_column(Float)
-    payment_status: Mapped[str] = mapped_column(String(50), default="pending")
-    order_status: Mapped[str] = mapped_column(String(50), default="processing")
+    payment_status: Mapped[str] = mapped_column(Enum('pending', 'paid', 'failed', 'refunded', name='payment_status_enum'), default="pending")
+    order_status: Mapped[str] = mapped_column(Enum('processing', 'confirmed', 'shipped', 'delivered', 'cancelled', name='order_status_enum'), default="processing")
     shipping_address: Mapped[str] = mapped_column(Text)
-    tracking_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    estimated_delivery: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -539,25 +536,24 @@ async def register(request: Request, response: Response, user_data: UserRegister
         # Hash password
         hashed_password = pwd_context.hash(user_data.password)
         
-        # Create user
-        user = User(
+        # Generate user ID
+        user_id = str(uuid.uuid4())
+        
+        # Create database user directly
+        db_user = UserDB(
+            id=user_id,
             name=user_data.name,
             email=user_data.email,
             password=hashed_password,
             phone=user_data.phone,
             address=user_data.address,
-            role="user"
-        )
-        
-        db_user = UserDB(
-            id=user.id,
-            name=user.name,
-            email=user.email,
-            password=user.password,
-            phone=user.phone,
-            address=user.address,
-            role=user.role,
-            created_at=user.created_at
+            role="user",
+            is_blocked=0,
+            email_welcome=1,
+            email_order_confirmation=1,
+            email_payment_receipt=1,
+            email_shipping_notification=1,
+            created_at=datetime.now(timezone.utc)
         )
         
         session.add(db_user)
@@ -565,18 +561,18 @@ async def register(request: Request, response: Response, user_data: UserRegister
         
         # Send welcome email (async in background)
         try:
-            email_service.send_welcome_email(user.name, user.email)
+            email_service.send_welcome_email(db_user.name, db_user.email)
         except Exception as e:
             # Log error but don't fail registration
-            logging.error(f"Failed to send welcome email to {user.email}: {str(e)}")
+            logging.error(f"Failed to send welcome email to {db_user.email}: {str(e)}")
         
         # Generate token
-        token = create_token(user.id, user.email, user.role)
+        token = create_token(db_user.id, db_user.email, db_user.role)
         
         return {
             "message": "Registration successful",
             "token": token,
-            "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
+            "user": {"id": db_user.id, "name": db_user.name, "email": db_user.email, "role": db_user.role}
         }
 
 @api_router.post("/auth/login")
