@@ -324,7 +324,7 @@ class PaymentGatewayFactory:
                 'id': 'stripe',
                 'name': 'Stripe',
                 'description': 'International payments (Cards, Apple Pay, Google Pay)',
-                'currencies': ['USD', 'EUR', 'GBP'],
+                'currencies': ['INR','USD', 'EUR', 'GBP'],
                 'enabled': True
             })
         

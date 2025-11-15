@@ -116,7 +116,7 @@ const Home = ({ user, onLogout, cartCount }) => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{product.brand}</p>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">{product.name}</h3>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(product.price, 'USD', i18n.language)}</span>
+                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(product.price, 'INR', i18n.language)}</span>
                       {product.stock > 0 ? (
                         <span className="text-xs text-green-600 dark:text-green-400">{t('products.inStock')}</span>
                       ) : (
@@ -154,7 +154,7 @@ const Home = ({ user, onLogout, cartCount }) => {
                   </div>
                   <div className="p-3">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">{product.name}</h3>
-                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatCurrency(product.price, 'USD', i18n.language)}</span>
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatCurrency(product.price, 'INR', i18n.language)}</span>
                   </div>
                 </Link>
               ))}

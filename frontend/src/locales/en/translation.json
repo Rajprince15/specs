@@ -209,8 +209,8 @@
     "lowStock": "Low Stock Alerts"
   },
   "currency": {
-    "symbol": "$",
-    "code": "USD"
+    "symbol": "₹",
+    "code": "INR"
   },
   "date": {
     "format": "MM/DD/YYYY",

@@ -67,7 +67,7 @@ export const trackProductView = (product) => {
   if (!isAnalyticsEnabled()) return;
   
   ReactGA.event('view_item', {
-    currency: 'USD',
+    currency: 'INR',
     value: product.price,
     items: [
       {
@@ -92,7 +92,7 @@ export const trackAddToCart = (product, quantity = 1) => {
   if (!isAnalyticsEnabled()) return;
   
   ReactGA.event('add_to_cart', {
-    currency: 'USD',
+    currency: 'INR',
     value: product.price * quantity,
     items: [
       {
@@ -118,7 +118,7 @@ export const trackRemoveFromCart = (product, quantity = 1) => {
   if (!isAnalyticsEnabled()) return;
   
   ReactGA.event('remove_from_cart', {
-    currency: 'USD',
+    currency: 'INR',
     value: product.price * quantity,
     items: [
       {
@@ -153,7 +153,7 @@ export const trackBeginCheckout = (items, value) => {
   }));
   
   ReactGA.event('begin_checkout', {
-    currency: 'USD',
+    currency: 'INR',
     value: value,
     items: formattedItems,
   });
@@ -181,7 +181,7 @@ export const trackPurchase = (orderData) => {
   
   ReactGA.event('purchase', {
     transaction_id: order_id,
-    currency: 'USD',
+    currency: 'INR',
     value: total_amount,
     payment_type: payment_method,
     items: formattedItems,
@@ -198,7 +198,7 @@ export const trackAddToWishlist = (product) => {
   if (!isAnalyticsEnabled()) return;
   
   ReactGA.event('add_to_wishlist', {
-    currency: 'USD',
+    currency: 'INR',
     value: product.price,
     items: [
       {

@@ -130,7 +130,7 @@ class PaymentTransactionDB(Base):
     user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     order_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     amount: Mapped[float] = mapped_column(Float)
-    currency: Mapped[str] = mapped_column(String(10), default="usd")
+    currency: Mapped[str] = mapped_column(String(10), default="inr")
     payment_status: Mapped[str] = mapped_column(String(50), default="pending")
     status: Mapped[str] = mapped_column(String(50), default="initiated")
     payment_metadata: Mapped[Optional[str]] = mapped_column("metadata", Text, nullable=True)  # JSON string
@@ -446,7 +446,7 @@ class PaymentTransaction(BaseModel):
     user_id: Optional[str] = None
     order_id: Optional[str] = None
     amount: float
-    currency: str = "usd"
+    currency: str = "inr"
     payment_status: str = "pending"
     status: str = "initiated"
     metadata: Optional[Dict] = None
@@ -2130,7 +2130,7 @@ async def create_checkout(request: Request, response: Response, authorization: s
         
         checkout_request = CheckoutSessionRequest(
             amount=final_amount,
-            currency="usd",
+            currency="inr",
             success_url=success_url,
             cancel_url=cancel_url,
             metadata=metadata
@@ -2143,7 +2143,7 @@ async def create_checkout(request: Request, response: Response, authorization: s
             session_id=session_response.session_id,
             user_id=user['user_id'],
             amount=final_amount,
-            currency="usd",
+            currency="inr",
             payment_status="pending",
             status="initiated",
             metadata=metadata
@@ -2379,7 +2379,7 @@ async def create_razorpay_order(request: Request, authorization: str = Header(No
         
         checkout_response = await gateway.create_checkout_session(
             amount=total_amount,
-            currency="INR",
+            currency="inr",
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={"user_id": user['user_id']}
@@ -2390,7 +2390,7 @@ async def create_razorpay_order(request: Request, authorization: str = Header(No
             session_id=checkout_response.session_id,
             user_id=user['user_id'],
             amount=total_amount,
-            currency="INR",
+            currency="inr",
             payment_status="pending",
             status="initiated",
             metadata={"user_id": user['user_id'], "gateway": "razorpay"}
