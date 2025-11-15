@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Glasses, Heart } from 'lucide-react';
+import { ShoppingBag, Glasses, Heart, Bookmark } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSelector from '@/components/LanguageSelector';
 
@@ -10,7 +10,9 @@ const Navigation = ({
   onLogout, 
   cartCount = 0, 
   wishlistCount = 0,
-  showWishlist = false 
+  savedItemsCount = 0,
+  showWishlist = false,
+  showSavedItems = true
 }) => {
   return (
     <nav className="glass sticky top-0 z-50 border-b dark:border-gray-800" role="navigation" aria-label="Main navigation">
@@ -38,7 +40,7 @@ const Navigation = ({
                 <>
                   {showWishlist && (
                     <Link to="/wishlist">
-                      <Button variant="outline" className="relative">
+                      <Button variant="outline" className="relative" aria-label="Wishlist">
                         <Heart className="w-5 h-5" />
                         {wishlistCount > 0 && (
                           <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -48,8 +50,20 @@ const Navigation = ({
                       </Button>
                     </Link>
                   )}
+                  {showSavedItems && (
+                    <Link to="/saved-items">
+                      <Button variant="outline" className="relative" aria-label="Saved Items">
+                        <Bookmark className="w-5 h-5" />
+                        {savedItemsCount > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {savedItemsCount}
+                          </span>
+                        )}
+                      </Button>
+                    </Link>
+                  )}
                   <Link to="/cart">
-                    <Button variant="outline" className="relative">
+                    <Button variant="outline" className="relative" aria-label="Shopping Cart">
                       <ShoppingBag className="w-5 h-5" />
                       {cartCount > 0 && (
                         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

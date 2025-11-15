@@ -6,8 +6,9 @@ import { Bookmark, Glasses, Trash2, ShoppingCart, ShoppingBag } from 'lucide-rea
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
+import Navigation from '@/components/Navigation';
 
-const SavedItems = ({ user, onLogout, cartCount, fetchCartCount }) => {
+const SavedItems = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount, fetchSavedItemsCount }) => {
   const navigate = useNavigate();
   const [savedItems, setSavedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +34,7 @@ const SavedItems = ({ user, onLogout, cartCount, fetchCartCount }) => {
       toast.success('Item moved to cart');
       fetchSavedItems();
       if (fetchCartCount) fetchCartCount();
+      if (fetchSavedItemsCount) fetchSavedItemsCount();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to move item to cart');
     }
@@ -43,6 +45,7 @@ const SavedItems = ({ user, onLogout, cartCount, fetchCartCount }) => {
       await axiosInstance.delete(`/saved-items/${savedItemId}`);
       toast.success('Item removed');
       fetchSavedItems();
+      if (fetchSavedItemsCount) fetchSavedItemsCount();
     } catch (error) {
       toast.error('Failed to remove item');
     }
@@ -58,7 +61,7 @@ const SavedItems = ({ user, onLogout, cartCount, fetchCartCount }) => {
           noindex={true}
         />
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-          <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
+          <Navigation user={user} onLogout={onLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />
           <div className="flex justify-center items-center h-[60vh]" role="status" aria-live="polite">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" aria-label="Loading saved items"></div>
           </div>
@@ -76,7 +79,7 @@ const SavedItems = ({ user, onLogout, cartCount, fetchCartCount }) => {
         noindex={true}
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} />
+        <Navigation user={user} onLogout={onLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />
 
         <main id="main-content" className="container mx-auto px-4 py-8">
           <div className="mb-8">
@@ -233,67 +236,6 @@ const SavedItems = ({ user, onLogout, cartCount, fetchCartCount }) => {
         </main>
       </div>
     </>
-  );
-};
-
-const Navigation = ({ user, onLogout, cartCount }) => {
-  const navigate = useNavigate();
-
-  return (
-    <nav className="backdrop-blur-md bg-white/80 border-b sticky top-0 z-50 shadow-sm" role="navigation" aria-label="Main navigation">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2" aria-label="Gee Ess Opticals Home">
-            <Glasses className="h-8 w-8 text-blue-600" aria-hidden="true" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Gee Ess Opticals
-            </span>
-          </Link>
-
-          <div className="flex items-center space-x-4">
-            <Link to="/">
-              <Button variant="ghost" aria-label="Home page">Home</Button>
-            </Link>
-            <Link to="/products">
-              <Button variant="ghost" aria-label="Products page">Products</Button>
-            </Link>
-            {user && (
-              <>
-                <Link to="/saved-items">
-                  <Button variant="ghost" className="relative" aria-label="Saved items">
-                    <Bookmark className="h-5 w-5" aria-hidden="true" />
-                  </Button>
-                </Link>
-                <Link to="/cart">
-                  <Button variant="ghost" className="relative" aria-label={`Shopping cart with ${cartCount} items`}>
-                    <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-                    {cartCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" aria-label={`${cartCount} items in cart`}>
-                        {cartCount}
-                      </span>
-                    )}
-                  </Button>
-                </Link>
-                <Link to="/orders">
-                  <Button variant="ghost" aria-label="Orders page">Orders</Button>
-                </Link>
-                <Link to="/profile">
-                  <Button variant="ghost" aria-label="Profile page">Profile</Button>
-                </Link>
-                <Button
-                  onClick={onLogout}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                  aria-label="Logout from account"
-                >
-                  Logout
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </nav>
   );
 };
 

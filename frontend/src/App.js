@@ -51,6 +51,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [savedItemsCount, setSavedItemsCount] = useState(0);
 
   // Initialize Google Analytics 4
   useEffect(() => {
@@ -71,6 +72,7 @@ function App() {
       
       fetchCartCount();
       fetchWishlistCount();
+      fetchSavedItemsCount();
     }
   }, []);
 
@@ -96,6 +98,15 @@ function App() {
     }
   };
 
+  const fetchSavedItemsCount = async () => {
+    try {
+      const response = await apiAdapter.get("/saved-items");
+      setSavedItemsCount(response.data.length);
+    } catch (error) {
+      console.error("Failed to fetch saved items count");
+    }
+  };
+
   const handleLogin = (userData, token) => {
     // Store token first - critical for authenticated API calls
     if (token) {
@@ -114,12 +125,14 @@ function App() {
     // Fetch user-specific data
     fetchCartCount();
     fetchWishlistCount();
+    fetchSavedItemsCount();
   };
 
   const handleLogout = () => {
     setUser(null);
     setCartCount(0);
     setWishlistCount(0);
+    setSavedItemsCount(0);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     toast.success("Logged out successfully");
@@ -167,23 +180,23 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} />}
+              element={<Home user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} />}
             />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/register" element={<Register onLogin={handleLogin} />} />
             <Route
               path="/products"
-              element={<Products user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />}
+              element={<Products user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} />}
             />
             <Route
               path="/products/:productId"
-              element={<ProductDetail user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />}
+              element={<ProductDetail user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} />}
             />
             <Route
               path="/cart"
               element={
                 <ProtectedRoute>
-                  <Cart user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />
+                  <Cart user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchSavedItemsCount={fetchSavedItemsCount} />
                 </ProtectedRoute>
               }
             />
@@ -199,7 +212,7 @@ function App() {
               path="/saved-items"
               element={
                 <ProtectedRoute>
-                  <SavedItems user={user} onLogout={handleLogout} cartCount={cartCount} fetchCartCount={fetchCartCount} />
+                  <SavedItems user={user} onLogout={handleLogout} cartCount={cartCount} savedItemsCount={savedItemsCount} fetchCartCount={fetchCartCount} fetchSavedItemsCount={fetchSavedItemsCount} />
                 </ProtectedRoute>
               }
             />

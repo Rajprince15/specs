@@ -8,7 +8,7 @@ import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
 import { trackBeginCheckout, trackRemoveFromCart, trackApplyCoupon } from '@/utils/analytics';
 
-const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
+const Cart = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount, fetchSavedItemsCount }) => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -316,6 +316,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
       fetchCart();
       fetchCartCount();
       fetchSavedItems();
+      if (fetchSavedItemsCount) fetchSavedItemsCount();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to save item');
     }
@@ -328,6 +329,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
       fetchCart();
       fetchCartCount();
       fetchSavedItems();
+      if (fetchSavedItemsCount) fetchSavedItemsCount();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to move item');
     }
@@ -338,6 +340,7 @@ const Cart = ({ user, onLogout, cartCount, fetchCartCount }) => {
       await axiosInstance.delete(`/saved-items/${savedItemId}`);
       toast.success('Saved item removed');
       fetchSavedItems();
+      if (fetchSavedItemsCount) fetchSavedItemsCount();
     } catch (error) {
       toast.error('Failed to remove saved item');
     }
