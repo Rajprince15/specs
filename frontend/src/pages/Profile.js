@@ -19,6 +19,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
     phone: '',
     address: ''
   });
+  const [defaultAddress, setDefaultAddress] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [passwordData, setPasswordData] = useState({
     old_password: '',
@@ -44,10 +45,22 @@ const Profile = ({ user, onLogout, cartCount }) => {
     try {
       const response = await axiosInstance.get('/user/profile');
       setProfile(response.data);
+      
       // Fetch email preferences
       const prefsResponse = await axiosInstance.get('/user/email-preferences');
       setEmailPreferences(prefsResponse.data);
+      
+      // Fetch addresses and find default
+      try {
+        const addressesResponse = await axiosInstance.get('/user/addresses');
+        const addresses = addressesResponse.data;
+        const defaultAddr = addresses.find(addr => addr.is_default === 1 || addr.is_default === true);
+        setDefaultAddress(defaultAddr);
+      } catch (addressError) {
+        console.log('Could not fetch addresses:', addressError);
+      }
     } catch (error) {
+      console.error('Profile fetch error:', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
@@ -59,8 +72,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
     try {
       await axiosInstance.put('/user/profile', {
         name: profile.name,
-        phone: profile.phone,
-        address: profile.address
+        phone: profile.phone
       });
       toast.success('Profile updated successfully');
       setEditMode(false);
@@ -250,15 +262,28 @@ const Profile = ({ user, onLogout, cartCount }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Address
+                      Default Address
                     </label>
-                    <Textarea
-                      value={profile.address || ''}
-                      onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                      disabled={!editMode}
-                      rows={3}
-                      placeholder="Enter your full address"
-                    />
+                    {defaultAddress ? (
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p className="font-medium text-gray-900">{defaultAddress.label}</p>
+                        <p className="text-sm text-gray-700">{defaultAddress.full_address}</p>
+                        <p className="text-sm text-gray-600">
+                          {defaultAddress.city}, {defaultAddress.state} {defaultAddress.zip_code}
+                        </p>
+                        <p className="text-sm text-gray-600">{defaultAddress.country}</p>
+                        <Link to="/addresses" className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block">
+                          Manage Addresses →
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p className="text-sm text-gray-600">No default address set</p>
+                        <Link to="/addresses" className="text-sm text-blue-600 hover:text-blue-700 mt-2 inline-block">
+                          Add Address →
+                        </Link>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-3 pt-4">

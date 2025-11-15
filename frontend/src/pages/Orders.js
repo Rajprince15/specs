@@ -129,10 +129,10 @@ const Orders = ({ user, onLogout, cartCount }) => {
                     {order.items.map((item, index) => (
                       <div key={index} className="flex items-center gap-4 p-4 bg-white/50 rounded-xl">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                          <h3 className="font-semibold text-gray-900">{item.product_name}</h3>
                           <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                         </div>
-                        <p className="text-lg font-bold text-blue-600">₹{item.price.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-blue-600">₹{item.product_price.toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
