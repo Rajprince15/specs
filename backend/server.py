@@ -3718,28 +3718,122 @@ async def block_unblock_user(
 # ============ Database Initialization ============
 
 async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """Initialize database with enhanced logging"""
+    try:
+        logger.info("=" * 70)
+        logger.info("[STARTUP] DATABASE INITIALIZATION")
+        logger.info("=" * 70)
+        
+        # Test database connection
+        logger.info("[DATABASE] Connecting to MySQL database...")
+        logger.info(f"   Host: {DB_HOST}")
+        logger.info(f"   Port: {DB_PORT}")
+        logger.info(f"   Database: {DB_NAME}")
+        logger.info(f"   User: {DB_USER}")
+        
+        async with engine.begin() as conn:
+            # Test connection
+            result = await conn.execute(select(func.version()))
+            version = result.scalar()
+            logger.info("[SUCCESS] Database connection successful!")
+            logger.info(f"   MySQL Version: {version}")
+            
+            # Create tables
+            logger.info("[DATABASE] Creating/verifying database tables...")
+            await conn.run_sync(Base.metadata.create_all)
+            
+            logger.info("[SUCCESS] Database tables created/verified successfully!")
+            logger.info("   Available tables: users, products, cart, orders, addresses, reviews, wishlist, etc.")
+            
+    except Exception as e:
+        logger.error("=" * 70)
+        logger.error("[FAILED] DATABASE INITIALIZATION FAILED!")
+        logger.error("=" * 70)
+        logger.error(f"Error Type: {type(e).__name__}")
+        logger.error(f"Error Message: {str(e)}")
+        logger.error("Please check:")
+        logger.error("  1. MySQL server is running")
+        logger.error(f"  2. Database '{DB_NAME}' exists")
+        logger.error(f"  3. User '{DB_USER}' has proper permissions")
+        logger.error(f"  4. Connection details in .env are correct")
+        logger.error("=" * 70)
+        raise
 
 @app.on_event("startup")
 async def startup_event():
-    await init_db()
-    logging.info("Database tables created successfully")
-    
-    # Initialize Redis cache
-    cache = get_cache_service()
-    await cache.connect()
-    logging.info("Redis cache initialized")
+    """Application startup with enhanced logging"""
+    try:
+        logger.info("")
+        logger.info("=" * 70)
+        logger.info("[STARTUP] LENSKART E-COMMERCE BACKEND STARTING UP")
+        logger.info("=" * 70)
+        logger.info("")
+        
+        # Initialize database
+        await init_db()
+        logger.info("")
+        
+        # Initialize Redis cache
+        try:
+            logger.info("[CACHE] Initializing Redis cache...")
+            cache = get_cache_service()
+            await cache.connect()
+            logger.info("[SUCCESS] Redis cache initialized successfully!")
+        except Exception as e:
+            logger.warning(f"[WARNING] Redis cache initialization failed: {str(e)}")
+            logger.warning("   Application will continue without caching")
+        
+        logger.info("")
+        logger.info("=" * 70)
+        logger.info("[SUCCESS] BACKEND SERVER IS NOW RUNNING!")
+        logger.info("=" * 70)
+        logger.info(f"[INFO] Server URL: http://0.0.0.0:8001")
+        logger.info(f"[INFO] API Documentation: http://0.0.0.0:8001/docs")
+        logger.info(f"[INFO] API Prefix: /api")
+        logger.info(f"[INFO] Admin Credentials: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
+        logger.info("=" * 70)
+        logger.info("")
+        
+    except Exception as e:
+        logger.error("")
+        logger.error("=" * 70)
+        logger.error("[FAILED] BACKEND STARTUP FAILED!")
+        logger.error("=" * 70)
+        logger.error(f"Error: {str(e)}")
+        logger.error("=" * 70)
+        raise
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await engine.dispose()
-    logging.info("Database connection closed")
-    
-    # Close Redis cache connection
-    cache = get_cache_service()
-    await cache.disconnect()
-    logging.info("Redis cache connection closed")
+    """Application shutdown with enhanced logging"""
+    try:
+        logger.info("")
+        logger.info("=" * 70)
+        logger.info("[SHUTDOWN] SHUTTING DOWN LENSKART BACKEND SERVER")
+        logger.info("=" * 70)
+        
+        # Close database connection
+        logger.info("[DATABASE] Closing database connection...")
+        await engine.dispose()
+        logger.info("[SUCCESS] Database connection closed")
+        
+        # Close Redis cache connection
+        try:
+            logger.info("[CACHE] Closing Redis cache connection...")
+            cache = get_cache_service()
+            await cache.disconnect()
+            logger.info("[SUCCESS] Redis cache connection closed")
+        except Exception as e:
+            logger.warning(f"[WARNING] Redis cache closure warning: {str(e)}")
+        
+        logger.info("=" * 70)
+        logger.info("[SUCCESS] BACKEND SERVER STOPPED SUCCESSFULLY")
+        logger.info("=" * 70)
+        logger.info("")
+        
+    except Exception as e:
+        logger.error(f"[FAILED] Error during shutdown: {str(e)}")
+        raise
 
 # Configure structured logging (JSON format in production)
 json_logging = os.getenv('JSON_LOGGING', 'false').lower() == 'true'
