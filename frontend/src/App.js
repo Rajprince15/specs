@@ -38,6 +38,7 @@ const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const Analytics = lazy(() => import("@/pages/Analytics"));
 const Inventory = lazy(() => import("@/pages/Inventory"));
 const Users = lazy(() => import("@/pages/Users"));
+const AdminOrders = lazy(() => import("@/pages/AdminOrders"));
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -221,6 +222,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboard user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/analytics"
               element={
                 <ProtectedRoute adminOnly={true}>
@@ -241,6 +250,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly={true}>
                   <Users user={user} onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminOrders user={user} onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />

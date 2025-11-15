@@ -326,6 +326,12 @@ const AdminDashboard = ({ user, onLogout }) => {
                 Users
               </Button>
             </Link>
+            <Link to="/admin/orders">
+              <Button variant="ghost" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                <Glasses className="w-4 h-4 mr-2" />
+                Orders
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -534,9 +540,17 @@ const AdminDashboard = ({ user, onLogout }) => {
         </Card>
 
         {/* Recent Orders */}
-        <Card className="glass border-0">
+        <Card className="glass border-0 mb-12">
           <CardContent className="p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Orders</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Recent Orders</h2>
+              <Link to="/admin/orders">
+                <Button className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700">
+                  <Glasses className="w-5 h-5 mr-2" />
+                  View All Orders
+                </Button>
+              </Link>
+            </div>
             <div className="space-y-4">
               {orders.slice(0, 10).map((order) => (
                 <div key={order.id} data-testid={`order-row-${order.id}`} className="p-4 bg-white/50 rounded-xl">
