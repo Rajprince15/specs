@@ -294,6 +294,47 @@ export const mockWishlist = [];
 
 export const mockRecentlyViewed = [];
 
+export const mockCoupons = [
+  {
+    id: '1',
+    code: 'WELCOME10',
+    discount_type: 'percentage',
+    discount_value: 10,
+    min_order_value: 50,
+    max_discount: 20,
+    valid_from: '2024-01-01T00:00:00Z',
+    valid_until: '2024-12-31T23:59:59Z',
+    usage_limit: 100,
+    used_count: 15,
+    is_active: 1,
+    created_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: '2',
+    code: 'SAVE20',
+    discount_type: 'percentage',
+    discount_value: 20,
+    min_order_value: 100,
+    max_discount: 50,
+    valid_from: '2024-01-01T00:00:00Z',
+    valid_until: '2024-12-31T23:59:59Z',
+    usage_limit: 50,
+    used_count: 8,
+    is_active: 1,
+    created_at: '2024-01-15T00:00:00Z'
+  }
+];
+
+export const mockProductImages = {
+  '1': [
+    { id: '1', product_id: '1', image_url: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400', display_order: 1 },
+    { id: '2', product_id: '1', image_url: 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=400', display_order: 2 }
+  ],
+  '2': [
+    { id: '3', product_id: '2', image_url: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=400', display_order: 1 }
+  ]
+};
+
 // Mock state management
 let currentUser = null;
 let currentCart = [...mockCart];
@@ -302,6 +343,9 @@ let currentRecentlyViewed = [...mockRecentlyViewed];
 let currentOrders = [...mockOrders];
 let currentAddresses = [...mockAddresses];
 let currentReviews = [...mockReviews];
+let currentProducts = [...mockProducts];
+let currentCoupons = [...mockCoupons];
+let currentProductImages = { ...mockProductImages };
 
 export const getMockState = () => ({
   currentUser,
@@ -310,7 +354,10 @@ export const getMockState = () => ({
   currentRecentlyViewed,
   currentOrders,
   currentAddresses,
-  currentReviews
+  currentReviews,
+  currentProducts,
+  currentCoupons,
+  currentProductImages
 });
 
 export const setMockState = (key, value) => {
@@ -336,6 +383,15 @@ export const setMockState = (key, value) => {
     case 'currentReviews':
       currentReviews = value;
       break;
+    case 'currentProducts':
+      currentProducts = value;
+      break;
+    case 'currentCoupons':
+      currentCoupons = value;
+      break;
+    case 'currentProductImages':
+      currentProductImages = value;
+      break;
     default:
       break;
   }
@@ -349,4 +405,7 @@ export const resetMockState = () => {
   currentOrders = [...mockOrders];
   currentAddresses = [...mockAddresses];
   currentReviews = [...mockReviews];
+  currentProducts = [...mockProducts];
+  currentCoupons = [...mockCoupons];
+  currentProductImages = { ...mockProductImages };
 };

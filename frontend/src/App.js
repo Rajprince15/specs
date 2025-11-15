@@ -3,7 +3,6 @@ import "@/App.css";
 import "@/styles/accessibility.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import axios from "axios";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import LoadingFallback from "@/components/LoadingFallback";
@@ -15,6 +14,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import "@/i18n"; // Initialize i18n
 import { initializeAnalytics, setUserId } from "@/utils/analytics";
 import usePageTracking from "@/hooks/usePageTracking";
+import { apiAdapter } from "@/services/apiAdapter";
 
 // Eager load critical pages (landing, login, register)
 import Home from "@/pages/Home";
@@ -42,40 +42,9 @@ const AdminOrders = lazy(() => import("@/pages/AdminOrders"));
 const AdminPayments = lazy(() => import("@/pages/AdminPayments"));
 const AdminReviews = lazy(() => import("@/pages/AdminReviews"));
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-export const axiosInstance = axios.create({
-  baseURL: API,
-});
-
-// Add token to requests
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Handle 401 errors gracefully (don't logout on payment-success page)
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Don't logout on payment-success or payment-related pages
-      const isPaymentPage = window.location.pathname.includes('/payment-success') || 
-                            window.location.pathname.includes('/payment-cancel');
-      
-      if (!isPaymentPage) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+// Export apiAdapter as axiosInstance for backward compatibility
+// This allows existing code to work without changes
+export const axiosInstance = apiAdapter;
 
 function App() {
   const [user, setUser] = useState(null);
@@ -106,7 +75,7 @@ function App() {
 
   const fetchCartCount = async () => {
     try {
-      const response = await axiosInstance.get("/cart");
+      const response = await apiAdapter.get("/cart");
       const count = response.data.reduce(
         (sum, item) => sum + item.quantity,
         0
@@ -119,7 +88,7 @@ function App() {
 
   const fetchWishlistCount = async () => {
     try {
-      const response = await axiosInstance.get("/wishlist");
+      const response = await apiAdapter.get("/wishlist");
       setWishlistCount(response.data.length);
     } catch (error) {
       console.error("Failed to fetch wishlist count");
@@ -165,8 +134,16 @@ function App() {
   const AppContent = () => {
     usePageTracking(); // Track page views on route changes
     
+    const isMockMode = process.env.REACT_APP_USE_MOCK === 'true';
+    
     return (
       <>
+        {/* Mock Mode Banner */}
+        {isMockMode && (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2 px-4 text-center text-sm font-medium shadow-lg z-50 sticky top-0">
+            🎭 Frontend-Only Mode Active - Using Mock Data (No Backend Required)
+          </div>
+        )}
         <SkipToMain />
         <InstallPrompt />
         <Toaster 

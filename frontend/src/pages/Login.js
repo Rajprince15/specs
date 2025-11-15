@@ -44,6 +44,33 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  const handleDemoLogin = async (email, password, role) => {
+    setFormData({ email, password });
+    setLoading(true);
+
+    try {
+      const response = await axiosInstance.post('/auth/login', { email, password });
+      toast.success(`Logged in as ${role}!`);
+      onLogin(response.data.user, response.data.token);
+      
+      // Track login event
+      trackLogin('demo');
+      if (response.data.user?.id) {
+        setUserId(response.data.user.id);
+      }
+      
+      if (response.data.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/products');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <SEO
@@ -110,23 +137,50 @@ const Login = ({ onLogin }) => {
                 {loading ? `${t('common.loading')}` : t('auth.signIn')}
               </Button>
             </form>
-            <div className="mt-6 text-center">
-              <p className="text-gray-600">
-                {t('auth.noAccount')}{' '}
-                <Link to="/register" className="text-blue-600 hover:underline font-semibold">
-                  {t('auth.signUp')}
-                </Link>
-              </p>
-              <div className="mt-4 space-y-2">
-                <p className="text-sm font-semibold text-gray-700">Demo Credentials:</p>
-                <div className="bg-blue-50 p-3 rounded-lg space-y-1">
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">Admin:</span> admin@lenskart.com / Admin@123
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    <span className="font-medium">User:</span> user@demo.com / Demo@123
-                  </p>
+            <div className="mt-6 space-y-4">
+              {/* Demo Login Buttons */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-700 text-center">Quick Demo Login:</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading}
+                    onClick={() => handleDemoLogin('user@example.com', 'demo123', 'User')}
+                    className="h-11 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 font-semibold"
+                  >
+                    👤 Login as User
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading}
+                    onClick={() => handleDemoLogin('admin@lenskart.com', 'admin123', 'Admin')}
+                    className="h-11 border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold"
+                  >
+                    👨‍💼 Login as Admin
+                  </Button>
                 </div>
+              </div>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+
+              {/* Sign Up Link */}
+              <div className="text-center">
+                <p className="text-gray-600">
+                  {t('auth.noAccount')}{' '}
+                  <Link to="/register" className="text-blue-600 hover:underline font-semibold">
+                    {t('auth.signUp')}
+                  </Link>
+                </p>
               </div>
             </div>
           </CardContent>

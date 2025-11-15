@@ -35,6 +35,7 @@ class MockApiService {
     
     return {
       data: {
+        message: 'Login successful',
         user: {
           id: user.id,
           name: user.name,
@@ -80,7 +81,8 @@ class MockApiService {
   // Products endpoints
   async getProducts(params = {}) {
     await delay();
-    let products = [...mockProducts];
+    const { currentProducts } = getMockState();
+    let products = [...currentProducts];
 
     // Filter by category
     if (params.category && params.category !== 'all') {
@@ -121,36 +123,74 @@ class MockApiService {
 
   async getProduct(id) {
     await delay();
-    const product = mockProducts.find(p => p.id === id);
+    const { currentProducts } = getMockState();
+    const product = currentProducts.find(p => p.id === id);
     if (!product) {
       throw new Error('Product not found');
     }
     return { data: product };
   }
 
+  async createProduct(productData) {
+    await delay();
+    const { currentProducts } = getMockState();
+    const newProduct = {
+      id: generateId(),
+      ...productData,
+      rating: 0,
+      reviews_count: 0,
+      created_at: now()
+    };
+    currentProducts.push(newProduct);
+    setMockState('currentProducts', currentProducts);
+    return { data: newProduct };
+  }
+
+  async updateProduct(id, productData) {
+    await delay();
+    const { currentProducts } = getMockState();
+    const index = currentProducts.findIndex(p => p.id === id);
+    if (index !== -1) {
+      currentProducts[index] = { ...currentProducts[index], ...productData };
+      setMockState('currentProducts', currentProducts);
+      return { data: currentProducts[index] };
+    }
+    throw new Error('Product not found');
+  }
+
+  async deleteProduct(id) {
+    await delay();
+    const { currentProducts } = getMockState();
+    const newProducts = currentProducts.filter(p => p.id !== id);
+    setMockState('currentProducts', newProducts);
+    return { data: { message: 'Product deleted successfully' } };
+  }
+
   async getRecommendedProducts(limit = 8) {
     await delay();
+    const { currentProducts } = getMockState();
     // Return top rated products
-    const sorted = [...mockProducts].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    const sorted = [...currentProducts].sort((a, b) => (b.rating || 0) - (a.rating || 0));
     return { data: sorted.slice(0, limit) };
   }
 
   async getSearchSuggestions(query) {
     await delay(100);
+    const { currentProducts } = getMockState();
     const queryLower = query.toLowerCase();
     
-    const products = mockProducts
+    const products = currentProducts
       .filter(p => p.name.toLowerCase().includes(queryLower))
       .slice(0, 5)
       .map(p => ({ id: p.id, name: p.name, type: 'product' }));
     
-    const brands = [...new Set(mockProducts
+    const brands = [...new Set(currentProducts
       .filter(p => p.brand.toLowerCase().includes(queryLower))
       .map(p => p.brand))]
       .slice(0, 3)
       .map(brand => ({ name: brand, type: 'brand' }));
     
-    const categories = [...new Set(mockProducts
+    const categories = [...new Set(currentProducts
       .filter(p => p.category.toLowerCase().includes(queryLower))
       .map(p => p.category))]
       .slice(0, 3)
@@ -159,12 +199,46 @@ class MockApiService {
     return { data: { products, brands, categories } };
   }
 
+  // Product Images endpoints
+  async getProductImages(productId) {
+    await delay();
+    const { currentProductImages } = getMockState();
+    return { data: currentProductImages[productId] || [] };
+  }
+
+  async addProductImage(productId, imageData) {
+    await delay();
+    const { currentProductImages } = getMockState();
+    if (!currentProductImages[productId]) {
+      currentProductImages[productId] = [];
+    }
+    const newImage = {
+      id: generateId(),
+      product_id: productId,
+      image_url: imageData.image_url,
+      display_order: currentProductImages[productId].length + 1
+    };
+    currentProductImages[productId].push(newImage);
+    setMockState('currentProductImages', currentProductImages);
+    return { data: newImage };
+  }
+
+  async deleteProductImage(productId, imageId) {
+    await delay();
+    const { currentProductImages } = getMockState();
+    if (currentProductImages[productId]) {
+      currentProductImages[productId] = currentProductImages[productId].filter(img => img.id !== imageId);
+      setMockState('currentProductImages', currentProductImages);
+    }
+    return { data: { message: 'Image deleted successfully' } };
+  }
+
   // Cart endpoints
   async getCart() {
     await delay();
-    const { currentCart } = getMockState();
+    const { currentCart, currentProducts } = getMockState();
     const cartWithProducts = currentCart.map(item => {
-      const product = mockProducts.find(p => p.id === item.product_id);
+      const product = currentProducts.find(p => p.id === item.product_id);
       return {
         ...item,
         product
@@ -222,9 +296,9 @@ class MockApiService {
   // Wishlist endpoints
   async getWishlist() {
     await delay();
-    const { currentWishlist } = getMockState();
+    const { currentWishlist, currentProducts } = getMockState();
     const wishlistWithProducts = currentWishlist.map(item => {
-      const product = mockProducts.find(p => p.id === item.product_id);
+      const product = currentProducts.find(p => p.id === item.product_id);
       return {
         ...item,
         product
@@ -278,7 +352,7 @@ class MockApiService {
 
   async createOrder(orderData) {
     await delay();
-    const { currentOrders, currentCart } = getMockState();
+    const { currentOrders, currentCart, currentProducts } = getMockState();
     
     const newOrder = {
       id: generateId(),
@@ -290,7 +364,7 @@ class MockApiService {
       created_at: now(),
       updated_at: now(),
       items: currentCart.map(item => {
-        const product = mockProducts.find(p => p.id === item.product_id);
+        const product = currentProducts.find(p => p.id === item.product_id);
         return {
           product_id: item.product_id,
           product_name: product?.name || 'Unknown',
@@ -401,11 +475,11 @@ class MockApiService {
   // Recently viewed
   async getRecentlyViewed(limit = 6) {
     await delay();
-    const { currentRecentlyViewed } = getMockState();
+    const { currentRecentlyViewed, currentProducts } = getMockState();
     const productsWithDetails = currentRecentlyViewed
       .slice(0, limit)
       .map(item => {
-        const product = mockProducts.find(p => p.id === item.product_id);
+        const product = currentProducts.find(p => p.id === item.product_id);
         return product;
       })
       .filter(p => p);
@@ -460,13 +534,14 @@ class MockApiService {
   // Admin endpoints (simplified)
   async getAdminStats() {
     await delay();
+    const { currentProducts, currentOrders } = getMockState();
     return {
       data: {
         total_users: mockUsers.length,
-        total_products: mockProducts.length,
-        total_orders: mockOrders.length,
-        total_revenue: mockOrders.reduce((sum, o) => sum + o.total_amount, 0),
-        pending_orders: mockOrders.filter(o => o.order_status === 'processing').length
+        total_products: currentProducts.length,
+        total_orders: currentOrders.length,
+        total_revenue: currentOrders.reduce((sum, o) => sum + o.total_amount, 0),
+        pending_orders: currentOrders.filter(o => o.order_status === 'processing').length
       }
     };
   }
@@ -476,16 +551,96 @@ class MockApiService {
     return { data: mockUsers };
   }
 
+  async updateUserStatus(userId, isBlocked) {
+    await delay();
+    const user = mockUsers.find(u => u.id === userId);
+    if (user) {
+      user.is_blocked = isBlocked ? 1 : 0;
+    }
+    return { data: { message: 'User status updated' } };
+  }
+
   async getAllOrders() {
     await delay();
     const { currentOrders } = getMockState();
     return { data: currentOrders };
   }
 
+  async updateOrderStatus(orderId, status) {
+    await delay();
+    const { currentOrders } = getMockState();
+    const order = currentOrders.find(o => o.id === orderId);
+    if (order) {
+      order.order_status = status;
+      order.updated_at = now();
+      setMockState('currentOrders', currentOrders);
+    }
+    return { data: order };
+  }
+
   async getAllReviews() {
     await delay();
     const { currentReviews } = getMockState();
     return { data: currentReviews };
+  }
+
+  async deleteReview(reviewId) {
+    await delay();
+    const { currentReviews } = getMockState();
+    const newReviews = currentReviews.filter(r => r.id !== reviewId);
+    setMockState('currentReviews', newReviews);
+    return { data: { message: 'Review deleted successfully' } };
+  }
+
+  // Coupon management endpoints
+  async getCoupons() {
+    await delay();
+    const { currentCoupons } = getMockState();
+    return { data: currentCoupons };
+  }
+
+  async createCoupon(couponData) {
+    await delay();
+    const { currentCoupons } = getMockState();
+    const newCoupon = {
+      id: generateId(),
+      ...couponData,
+      used_count: 0,
+      created_at: now()
+    };
+    currentCoupons.push(newCoupon);
+    setMockState('currentCoupons', currentCoupons);
+    return { data: newCoupon };
+  }
+
+  async updateCoupon(id, couponData) {
+    await delay();
+    const { currentCoupons } = getMockState();
+    const index = currentCoupons.findIndex(c => c.id === id);
+    if (index !== -1) {
+      currentCoupons[index] = { ...currentCoupons[index], ...couponData };
+      setMockState('currentCoupons', currentCoupons);
+      return { data: currentCoupons[index] };
+    }
+    throw new Error('Coupon not found');
+  }
+
+  async deleteCoupon(id) {
+    await delay();
+    const { currentCoupons } = getMockState();
+    const newCoupons = currentCoupons.filter(c => c.id !== id);
+    setMockState('currentCoupons', newCoupons);
+    return { data: { message: 'Coupon deleted successfully' } };
+  }
+
+  async validateCoupon(code) {
+    await delay();
+    const { currentCoupons } = getMockState();
+    const coupon = currentCoupons.find(c => c.code === code && c.is_active === 1);
+    if (!coupon) {
+      throw new Error('Invalid or expired coupon');
+    }
+    return { data: coupon };
   }
 }
 

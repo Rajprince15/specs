@@ -123,15 +123,42 @@ class ApiAdapter {
       if (cleanUrl === 'products' && method === 'GET') {
         return mockApiService.getProducts(params);
       }
+      if (cleanUrl === 'products' && method === 'POST') {
+        return mockApiService.createProduct(data);
+      }
       if (cleanUrl.match(/^products\/[^/]+$/) && method === 'GET') {
         const id = cleanUrl.split('/')[1];
         return mockApiService.getProduct(id);
+      }
+      if (cleanUrl.match(/^products\/[^/]+$/) && method === 'PUT') {
+        const id = cleanUrl.split('/')[1];
+        return mockApiService.updateProduct(id, data);
+      }
+      if (cleanUrl.match(/^products\/[^/]+$/) && method === 'DELETE') {
+        const id = cleanUrl.split('/')[1];
+        return mockApiService.deleteProduct(id);
       }
       if (cleanUrl === 'products/recommended' && method === 'GET') {
         return mockApiService.getRecommendedProducts(params.limit || 8);
       }
       if (cleanUrl === 'search/suggestions' && method === 'GET') {
         return mockApiService.getSearchSuggestions(params.q || '');
+      }
+
+      // Product Images routes
+      if (cleanUrl.match(/^products\/[^/]+\/images$/) && method === 'GET') {
+        const productId = cleanUrl.split('/')[1];
+        return mockApiService.getProductImages(productId);
+      }
+      if (cleanUrl.match(/^products\/[^/]+\/images$/) && method === 'POST') {
+        const productId = cleanUrl.split('/')[1];
+        return mockApiService.addProductImage(productId, data);
+      }
+      if (cleanUrl.match(/^products\/[^/]+\/images\/[^/]+$/) && method === 'DELETE') {
+        const parts = cleanUrl.split('/');
+        const productId = parts[1];
+        const imageId = parts[3];
+        return mockApiService.deleteProductImage(productId, imageId);
       }
 
       // Cart routes
@@ -234,11 +261,40 @@ class ApiAdapter {
       if (cleanUrl === 'admin/users' && method === 'GET') {
         return mockApiService.getAllUsers();
       }
+      if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'PATCH') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.updateUserStatus(userId, data.is_blocked);
+      }
       if (cleanUrl === 'admin/orders' && method === 'GET') {
         return mockApiService.getAllOrders();
       }
+      if (cleanUrl.match(/^admin\/orders\/[^/]+$/) && method === 'PATCH') {
+        const orderId = cleanUrl.split('/')[2];
+        return mockApiService.updateOrderStatus(orderId, data.order_status);
+      }
       if (cleanUrl === 'admin/reviews' && method === 'GET') {
         return mockApiService.getAllReviews();
+      }
+      if (cleanUrl.match(/^admin\/reviews\/[^/]+$/) && method === 'DELETE') {
+        const reviewId = cleanUrl.split('/')[2];
+        return mockApiService.deleteReview(reviewId);
+      }
+      if (cleanUrl === 'admin/coupons' && method === 'GET') {
+        return mockApiService.getCoupons();
+      }
+      if (cleanUrl === 'admin/coupons' && method === 'POST') {
+        return mockApiService.createCoupon(data);
+      }
+      if (cleanUrl.match(/^admin\/coupons\/[^/]+$/) && method === 'PUT') {
+        const couponId = cleanUrl.split('/')[2];
+        return mockApiService.updateCoupon(couponId, data);
+      }
+      if (cleanUrl.match(/^admin\/coupons\/[^/]+$/) && method === 'DELETE') {
+        const couponId = cleanUrl.split('/')[2];
+        return mockApiService.deleteCoupon(couponId);
+      }
+      if (cleanUrl === 'coupons/validate' && method === 'POST') {
+        return mockApiService.validateCoupon(data.code);
       }
 
       // Default fallback
