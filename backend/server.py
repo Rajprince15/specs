@@ -17,7 +17,6 @@ import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 from payment_gateway import PaymentGatewayFactory, RazorpayGateway
 from email_service import email_service
-from cache_service import get_cache_service
 from logging_config import setup_logging, get_logger
 from error_tracking import initialize_sentry, capture_exception, set_user_context
 from rate_limiter import create_limiter, RateLimit, rate_limit_error_handler
@@ -899,19 +898,6 @@ async def get_products(
     max_price: Optional[float] = None,
     sort: Optional[str] = None
 ):
-    # Try cache first
-    cache = get_cache_service()
-    cache_filters = {
-        "category": category,
-        "search": search,
-        "min_price": min_price,
-        "max_price": max_price,
-        "sort": sort
-    }
-    cached_products = await cache.get_products(cache_filters)
-    if cached_products is not None:
-        return cached_products
-    
     async with async_session_maker() as session:
         query = select(ProductDB)
         
@@ -971,19 +957,10 @@ async def get_products(
             for p in products
         ]
         
-        # Cache the results
-        await cache.set_products(cache_filters, product_list, ttl_seconds=300)
-        
         return product_list
 
 @api_router.get("/products/{product_id}")
 async def get_product(product_id: str):
-    # Try cache first
-    cache = get_cache_service()
-    cached_product = await cache.get_product(product_id)
-    if cached_product is not None:
-        return cached_product
-    
     async with async_session_maker() as session:
         result = await session.execute(select(ProductDB).where(ProductDB.id == product_id))
         product = result.scalar_one_or_none()
@@ -1006,9 +983,6 @@ async def get_product(product_id: str):
             "created_at": product.created_at.isoformat() if product.created_at else None
         }
         
-        # Cache the product
-        await cache.set_product(product_id, product_data, ttl_seconds=600)
-        
         return product_data
 
 @api_router.get("/search/suggestions")
@@ -1022,12 +996,6 @@ async def get_search_suggestions(q: str = ""):
         }
     
     query = q.lower().strip()
-    
-    # Try cache first
-    cache = get_cache_service()
-    cached_suggestions = await cache.get_search_suggestions(query)
-    if cached_suggestions is not None:
-        return cached_suggestions
     
     async with async_session_maker() as session:
         # Search products by name, brand, or description
@@ -1075,9 +1043,6 @@ async def get_search_suggestions(q: str = ""):
             "categories": matching_categories
         }
         
-        # Cache suggestions for 30 minutes
-        await cache.set_search_suggestions(query, suggestions, ttl_seconds=1800)
-        
         return suggestions
 
 @api_router.post("/products")
@@ -1107,10 +1072,6 @@ async def create_product(product_data: ProductCreate, authorization: str = Heade
         session.add(db_product)
         await session.commit()
         
-        # Invalidate product caches
-        cache = get_cache_service()
-        await cache.invalidate_products()
-        
         return {"message": "Product created successfully", "product": product.model_dump()}
 
 @api_router.put("/products/{product_id}")
@@ -1132,10 +1093,6 @@ async def update_product(product_id: str, product_data: ProductCreate, authoriza
         
         await session.commit()
         
-        # Invalidate product caches
-        cache = get_cache_service()
-        await cache.invalidate_product(product_id)
-        
         return {"message": "Product updated successfully"}
 
 @api_router.delete("/products/{product_id}")
@@ -1154,10 +1111,6 @@ async def delete_product(product_id: str, authorization: str = Header(None)):
         await session.delete(product)
         await session.commit()
         
-        # Invalidate product caches
-        cache = get_cache_service()
-        await cache.invalidate_product(product_id)
-        
         return {"message": "Product deleted successfully"}
 
 # ============ Cart Routes ============
@@ -1166,12 +1119,6 @@ async def delete_product(product_id: str, authorization: str = Header(None)):
 async def get_cart(authorization: str = Header(None)):
     user = await get_current_user(authorization)
     user_id = user['user_id']
-    
-    # Try cache first
-    cache = get_cache_service()
-    cached_cart = await cache.get_cart(user_id)
-    if cached_cart is not None:
-        return cached_cart
     
     async with async_session_maker() as session:
         result = await session.execute(select(CartItemDB).where(CartItemDB.user_id == user_id))
@@ -1204,9 +1151,6 @@ async def get_cart(authorization: str = Header(None)):
                         "stock": product.stock
                     }
                 })
-        
-        # Cache the cart
-        await cache.set_cart(user_id, cart_with_products, ttl_seconds=600)
         
         return cart_with_products
 
@@ -1245,10 +1189,6 @@ async def add_to_cart(cart_data: AddToCart, authorization: str = Header(None)):
             existing.quantity = new_quantity
             await session.commit()
             
-            # Invalidate cart cache
-            cache = get_cache_service()
-            await cache.invalidate_cart(user['user_id'])
-            
             return {"message": "Cart updated successfully"}
         
         # Check stock for new item
@@ -1272,10 +1212,6 @@ async def add_to_cart(cart_data: AddToCart, authorization: str = Header(None)):
         session.add(db_cart_item)
         await session.commit()
         
-        # Invalidate cart cache
-        cache = get_cache_service()
-        await cache.invalidate_cart(user['user_id'])
-        
         return {"message": "Item added to cart"}
 
 @api_router.delete("/cart/{product_id}")
@@ -1294,10 +1230,6 @@ async def remove_from_cart(product_id: str, authorization: str = Header(None)):
         if cart_item:
             await session.delete(cart_item)
             await session.commit()
-            
-            # Invalidate cart cache
-            cache = get_cache_service()
-            await cache.invalidate_cart(user['user_id'])
         
         return {"message": "Item removed from cart"}
 
@@ -1310,10 +1242,6 @@ async def clear_cart(authorization: str = Header(None)):
             delete(CartItemDB).where(CartItemDB.user_id == user['user_id'])
         )
         await session.commit()
-        
-        # Invalidate cart cache
-        cache = get_cache_service()
-        await cache.invalidate_cart(user['user_id'])
         
         return {"message": "Cart cleared"}
 
@@ -1355,10 +1283,6 @@ async def update_cart_quantity(item_id: str, quantity_data: UpdateCartQuantity, 
         # Update quantity
         cart_item.quantity = quantity_data.quantity
         await session.commit()
-        
-        # Invalidate cart cache
-        cache = get_cache_service()
-        await cache.invalidate_cart(user['user_id'])
         
         return {
             "message": "Cart quantity updated successfully",
@@ -3768,18 +3692,6 @@ async def startup_event():
         # Initialize database
         await init_db()
         logger.info("")
-        
-        # Initialize Redis cache
-        try:
-            logger.info("[CACHE] Initializing Redis cache...")
-            cache = get_cache_service()
-            await cache.connect()
-            logger.info("[SUCCESS] Redis cache initialized successfully!")
-        except Exception as e:
-            logger.warning(f"[WARNING] Redis cache initialization failed: {str(e)}")
-            logger.warning("   Application will continue without caching")
-        
-        logger.info("")
         logger.info("=" * 70)
         logger.info("[SUCCESS] BACKEND SERVER IS NOW RUNNING!")
         logger.info("=" * 70)
@@ -3812,15 +3724,6 @@ async def shutdown_event():
         logger.info("[DATABASE] Closing database connection...")
         await engine.dispose()
         logger.info("[SUCCESS] Database connection closed")
-        
-        # Close Redis cache connection
-        try:
-            logger.info("[CACHE] Closing Redis cache connection...")
-            cache = get_cache_service()
-            await cache.disconnect()
-            logger.info("[SUCCESS] Redis cache connection closed")
-        except Exception as e:
-            logger.warning(f"[WARNING] Redis cache closure warning: {str(e)}")
         
         logger.info("=" * 70)
         logger.info("[SUCCESS] BACKEND SERVER STOPPED SUCCESSFULLY")
