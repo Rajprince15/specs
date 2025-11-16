@@ -72,7 +72,8 @@ const Profile = ({ user, onLogout, cartCount }) => {
     try {
       await axiosInstance.put('/user/profile', {
         name: profile.name,
-        phone: profile.phone
+        phone: profile.phone,
+        address: profile.address
       });
       toast.success('Profile updated successfully');
       setEditMode(false);
@@ -220,7 +221,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
               <CardContent>
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Full Name
                     </label>
                     <Input
@@ -234,20 +235,20 @@ const Profile = ({ user, onLogout, cartCount }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email Address
                     </label>
                     <Input
                       type="email"
                       value={profile.email}
                       disabled
-                      className="h-12 bg-gray-100 cursor-not-allowed"
+                      className="h-12 bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Phone Number
                     </label>
                     <Input
@@ -261,8 +262,21 @@ const Profile = ({ user, onLogout, cartCount }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Default Address
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Address
+                    </label>
+                    <Textarea
+                      value={profile.address || ''}
+                      onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                      disabled={!editMode}
+                      placeholder="Enter your address"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Saved Addresses
                     </label>
                     {defaultAddress ? (
                       <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
