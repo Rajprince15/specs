@@ -248,6 +248,9 @@ export const mockOrders = [
   {
     id: 'ord_1a2b3c4d5e6f7g8h',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     total_amount: 244.99,
     payment_status: 'paid',
     order_status: 'delivered',
@@ -304,6 +307,9 @@ export const mockOrders = [
   {
     id: 'ord_2b3c4d5e6f7g8h9i',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     total_amount: 189.99,
     payment_status: 'paid',
     order_status: 'shipped',
@@ -346,6 +352,9 @@ export const mockOrders = [
   {
     id: 'ord_3c4d5e6f7g8h9i0j',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     total_amount: 425.00,
     payment_status: 'pending',
     order_status: 'processing',
@@ -376,6 +385,9 @@ export const mockOrders = [
   {
     id: 'ord_4d5e6f7g8h9i0j1k',
     user_id: '2',
+    user_name: 'Admin User',
+    user_email: 'admin@lenskart.com',
+    user_phone: '+1234567891',
     total_amount: 139.99,
     payment_status: 'failed',
     order_status: 'cancelled',
@@ -406,6 +418,9 @@ export const mockOrders = [
   {
     id: 'ord_5e6f7g8h9i0j1k2l',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     total_amount: 295.00,
     payment_status: 'refunded',
     order_status: 'cancelled',

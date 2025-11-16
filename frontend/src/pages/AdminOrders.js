@@ -216,6 +216,9 @@ const AdminOrders = ({ user, onLogout }) => {
     const matchesSearch = 
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.user_name && order.user_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.user_email && order.user_email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.user_phone && order.user_phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
       order.shipping_address.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesOrderStatus = orderStatusFilter === 'all' || order.order_status === orderStatusFilter;
@@ -285,7 +288,7 @@ const AdminOrders = ({ user, onLogout }) => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="search"
-                    placeholder="Order ID, User ID, Address..."
+                    placeholder="Search by Order ID, Customer Name, Email, Phone..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -358,14 +361,14 @@ const AdminOrders = ({ user, onLogout }) => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Order ID</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Date</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Amount</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Order Status</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Payment</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Tracking</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Actions</th>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Order ID</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Customer</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Date</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Amount</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Order Status</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Payment</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -377,13 +380,19 @@ const AdminOrders = ({ user, onLogout }) => {
                     </tr>
                   ) : (
                     paginatedOrders.map((order) => (
-                      <tr key={order.id} className="border-b hover:bg-gray-50">
+                      <tr key={order.id} className="border-b hover:bg-blue-50 transition-colors">
                         <td className="py-3 px-4">
-                          <div className="font-mono text-sm text-gray-900">
-                            {order.id.substring(0, 8)}...
+                          <div className="font-mono text-xs text-gray-900">
+                            {order.id.substring(0, 12)}...
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900 text-sm">{order.user_name || 'N/A'}</span>
+                            <span className="text-xs text-gray-500">{order.user_email || ''}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-xs text-gray-600">
                           {formatDate(order.created_at)}
                         </td>
                         <td className="py-3 px-4">
@@ -403,23 +412,14 @@ const AdminOrders = ({ user, onLogout }) => {
                             {order.payment_status}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {order.tracking_number ? (
-                            <div className="flex items-center gap-1">
-                              <Truck className="w-3 h-3" />
-                              {order.tracking_number}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => handleViewDetails(order.id)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                              title="View Details"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -427,7 +427,8 @@ const AdminOrders = ({ user, onLogout }) => {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleUpdateOrder(order)}
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-100"
+                              title="Update Status"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -489,90 +490,118 @@ const AdminOrders = ({ user, onLogout }) => {
             </div>
           ) : orderDetails ? (
             <div className="space-y-6">
-              {/* Order Info */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-500">Order ID</Label>
-                  <p className="font-mono text-sm">{orderDetails.id}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Order Date</Label>
-                  <p className="text-sm">{formatDate(orderDetails.created_at)}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Order Status</Label>
-                  <p>
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(orderDetails.order_status)}`}>
-                      {getStatusIcon(orderDetails.order_status)}
-                      {orderDetails.order_status}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Payment Status</Label>
-                  <p>
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(orderDetails.payment_status)}`}>
-                      {getStatusIcon(orderDetails.payment_status)}
-                      {orderDetails.payment_status}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Total Amount</Label>
-                  <p className="text-xl font-bold text-blue-600">₹{orderDetails.total_amount.toFixed(2)}</p>
-                </div>
-                {orderDetails.tracking_number && (
-                  <div>
-                    <Label className="text-gray-500">Tracking Number</Label>
-                    <p className="font-mono text-sm">{orderDetails.tracking_number}</p>
+              {/* Customer Information - Highlighted Section */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-5 rounded-lg border-2 border-blue-200">
+                <Label className="text-gray-700 font-bold text-base mb-3 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Customer Information
+                </Label>
+                <div className="grid md:grid-cols-3 gap-4 mt-3">
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <Label className="text-gray-500 text-xs">Customer Name</Label>
+                    <p className="font-semibold text-gray-900 mt-1">{orderDetails.user_name || 'N/A'}</p>
                   </div>
-                )}
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <Label className="text-gray-500 text-xs">Email Address</Label>
+                    <p className="font-medium text-gray-900 mt-1 text-sm break-all">{orderDetails.user_email || 'N/A'}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <Label className="text-gray-500 text-xs">Phone Number</Label>
+                    <p className="font-medium text-gray-900 mt-1">{orderDetails.user_phone || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Info */}
+              <div>
+                <Label className="text-gray-700 font-bold text-base mb-3 block">Order Information</Label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Order ID</Label>
+                    <p className="font-mono text-sm mt-1">{orderDetails.id}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Order Date</Label>
+                    <p className="text-sm mt-1">{formatDate(orderDetails.created_at)}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Order Status</Label>
+                    <p className="mt-1">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(orderDetails.order_status)}`}>
+                        {getStatusIcon(orderDetails.order_status)}
+                        {orderDetails.order_status}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Payment Status</Label>
+                    <p className="mt-1">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(orderDetails.payment_status)}`}>
+                        {getStatusIcon(orderDetails.payment_status)}
+                        {orderDetails.payment_status}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Total Amount</Label>
+                    <p className="text-xl font-bold text-blue-600 mt-1">₹{orderDetails.total_amount.toFixed(2)}</p>
+                  </div>
+                  {orderDetails.tracking_number && (
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <Label className="text-gray-500 text-xs">Tracking Number</Label>
+                      <p className="font-mono text-sm mt-1">{orderDetails.tracking_number}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Payment Status Update & Delete Actions */}
-              <div className="border-t pt-4 space-y-4">
+              <div className="border-t-2 border-gray-200 pt-6 space-y-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg">
                 <div>
-                  <Label className="text-gray-700 mb-2 block">Update Payment Status</Label>
-                  <Select
-                    value={orderDetails.payment_status}
-                    onValueChange={(value) => handleUpdatePaymentStatus(orderDetails.id, value)}
-                  >
-                    <SelectTrigger className="w-full md:w-64">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-yellow-600" />
-                          <span>Pending</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="paid">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span>Paid</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="failed">
-                        <div className="flex items-center gap-2">
-                          <XCircle className="w-4 h-4 text-red-600" />
-                          <span>Failed</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="refunded">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-blue-600" />
-                          <span>Refunded</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-gray-700 font-semibold mb-3 block text-base">Quick Actions</Label>
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <Label className="text-gray-600 mb-2 block text-sm">Update Payment Status</Label>
+                    <Select
+                      value={orderDetails.payment_status}
+                      onValueChange={(value) => handleUpdatePaymentStatus(orderDetails.id, value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-yellow-600" />
+                            <span>Pending</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="paid">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span>Paid</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="failed">
+                          <div className="flex items-center gap-2">
+                            <XCircle className="w-4 h-4 text-red-600" />
+                            <span>Failed</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="refunded">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-blue-600" />
+                            <span>Refunded</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="grid md:grid-cols-2 gap-3">
                   <Button
                     onClick={() => handleUpdateOrder(orderDetails)}
-                    className="flex-1"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Update Order Status
@@ -580,6 +609,7 @@ const AdminOrders = ({ user, onLogout }) => {
                   <Button
                     variant="destructive"
                     onClick={() => handleDeleteOrder(orderDetails.id)}
+                    className="bg-red-600 hover:bg-red-700"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Order
@@ -589,33 +619,36 @@ const AdminOrders = ({ user, onLogout }) => {
 
               {/* Shipping Address */}
               <div>
-                <Label className="text-gray-500 flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4" />
+                <Label className="text-gray-700 font-bold text-base mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-blue-600" />
                   Shipping Address
                 </Label>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm whitespace-pre-line">{orderDetails.shipping_address}</p>
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
+                  <p className="text-sm whitespace-pre-line text-gray-800 leading-relaxed">{orderDetails.shipping_address}</p>
                 </div>
               </div>
 
               {/* Order Items */}
               {orderDetails.items && orderDetails.items.length > 0 && (
                 <div>
-                  <Label className="text-gray-500 flex items-center gap-2 mb-2">
-                    <Package className="w-4 h-4" />
+                  <Label className="text-gray-700 font-bold text-base mb-3 flex items-center gap-2">
+                    <Package className="w-5 h-5 text-blue-600" />
                     Order Items ({orderDetails.items.length})
                   </Label>
                   <div className="space-y-3">
                     {orderDetails.items.map((item, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                      <div key={index} className="bg-white border border-gray-200 p-4 rounded-lg flex justify-between items-center hover:shadow-md transition-shadow">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{item.product_name}</p>
-                          <p className="text-sm text-gray-600">{item.product_brand}</p>
-                          <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                          <p className="font-semibold text-gray-900 text-base">{item.product_name}</p>
+                          <p className="text-sm text-gray-600 mt-1">{item.product_brand}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Qty: {item.quantity}</span>
+                            <span className="text-xs text-gray-500">Unit Price: ₹{item.product_price.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-gray-900">₹{item.product_price.toFixed(2)}</p>
-                          <p className="text-sm text-gray-600">Subtotal: ₹{item.subtotal.toFixed(2)}</p>
+                        <div className="text-right ml-4">
+                          <p className="text-sm text-gray-500">Subtotal</p>
+                          <p className="font-bold text-gray-900 text-lg">₹{item.subtotal.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
@@ -626,20 +659,27 @@ const AdminOrders = ({ user, onLogout }) => {
               {/* Tracking History */}
               {orderDetails.tracking && orderDetails.tracking.length > 0 && (
                 <div>
-                  <Label className="text-gray-500 flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4" />
-                    Tracking History
+                  <Label className="text-gray-700 font-bold text-base mb-3 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                    Tracking History ({orderDetails.tracking.length} updates)
                   </Label>
                   <div className="space-y-2">
                     {orderDetails.tracking.map((track, index) => (
-                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <div key={index} className="bg-gradient-to-r from-gray-50 to-white border-l-4 border-blue-400 p-4 rounded-lg hover:shadow-sm transition-shadow">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-gray-900 capitalize">{track.status}</p>
-                            {track.description && <p className="text-sm text-gray-600">{track.description}</p>}
-                            {track.location && <p className="text-xs text-gray-500">{track.location}</p>}
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 capitalize text-base">{track.status.replace('_', ' ')}</p>
+                            {track.description && <p className="text-sm text-gray-700 mt-1">{track.description}</p>}
+                            {track.location && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <MapPin className="w-3 h-3 text-gray-500" />
+                                <p className="text-xs text-gray-600">{track.location}</p>
+                              </div>
+                            )}
                           </div>
-                          <p className="text-xs text-gray-500">{formatDate(track.created_at)}</p>
+                          <div className="text-right ml-4">
+                            <p className="text-xs text-gray-500">{formatDate(track.created_at)}</p>
+                          </div>
                         </div>
                       </div>
                     ))}
