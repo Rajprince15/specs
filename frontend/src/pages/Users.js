@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users as UsersIcon, Search, Eye, Shield, ShieldOff, ChevronLeft, ChevronRight, UserCircle, Mail, Phone, MapPin, Calendar, Package, Heart, ShoppingCart, MessageSquare, DollarSign, Trash2, UserCog } from 'lucide-react';
+import { Users as UsersIcon, Search, Eye, Shield, ShieldOff, ChevronLeft, ChevronRight, UserCircle, Mail, Phone, MapPin, Calendar, Package, Heart, ShoppingCart, MessageSquare, DollarSign, Trash2, UserCog, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
 import SEO from '@/components/SEO';
@@ -21,6 +21,13 @@ const Users = ({ user, onLogout }) => {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    phone: '',
+    address: ''
+  });
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -138,6 +145,52 @@ const Users = ({ user, onLogout }) => {
         description: error.response?.data?.detail || 'Please try again'
       });
       console.error('Error updating user role:', error);
+    }
+  };
+
+  // Open edit dialog
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name || '',
+      phone: user.phone || '',
+      address: user.address || ''
+    });
+    setShowEditDialog(true);
+  };
+
+  // Handle edit form changes
+  const handleEditFormChange = (field, value) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Save user edits
+  const handleSaveUserEdit = async () => {
+    if (!editingUser) return;
+
+    try {
+      const response = await axiosInstance.put(`/admin/users/${editingUser.id}`, editFormData);
+      toast.success('User updated successfully', {
+        description: 'User information has been updated'
+      });
+      setShowEditDialog(false);
+      setEditingUser(null);
+      
+      // Refresh the user list
+      fetchUsers();
+      
+      // Refresh details if dialog is open
+      if (showDetailsDialog && userDetails?.user?.id === editingUser.id) {
+        handleViewDetails(editingUser.id);
+      }
+    } catch (error) {
+      toast.error('Failed to update user', {
+        description: error.response?.data?.detail || 'Please try again'
+      });
+      console.error('Error updating user:', error);
     }
   };
 
@@ -308,8 +361,17 @@ const Users = ({ user, onLogout }) => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleViewDetails(u.id)}
+                                title="View Details"
                               >
                                 <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditUser(u)}
+                                title="Edit User"
+                              >
+                                <Edit2 className="w-4 h-4" />
                               </Button>
                               {u.role !== 'admin' && (
                                 <Button
@@ -556,6 +618,16 @@ const Users = ({ user, onLogout }) => {
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
+                    onClick={() => {
+                      setShowDetailsDialog(false);
+                      handleEditUser(userDetails.user);
+                    }}
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Edit User Info
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => handleChangeRole(userDetails.user.id, userDetails.user.role)}
                   >
                     <UserCog className="w-4 h-4 mr-2" />
@@ -590,6 +662,98 @@ const Users = ({ user, onLogout }) => {
               </div>
             </div>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="w-5 h-5" />
+              Edit User Information
+            </DialogTitle>
+            <DialogDescription>
+              Update user details. Changes will be saved to the database.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingUser && (
+            <div className="space-y-4 py-4">
+              {/* User Email (read-only) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email (Cannot be changed)
+                </label>
+                <Input
+                  type="email"
+                  value={editingUser.email}
+                  disabled
+                  className="bg-gray-50"
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <Input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => handleEditFormChange('name', e.target.value)}
+                  placeholder="Enter user name"
+                  required
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone *
+                </label>
+                <Input
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => handleEditFormChange('phone', e.target.value)}
+                  placeholder="Enter phone number"
+                  required
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <textarea
+                  value={editFormData.address}
+                  onChange={(e) => handleEditFormChange('address', e.target.value)}
+                  placeholder="Enter address (optional)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setEditingUser(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveUserEdit}
+                  disabled={!editFormData.name || !editFormData.phone}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       </main>

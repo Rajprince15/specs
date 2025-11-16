@@ -1203,6 +1203,47 @@ class MockApiService {
     setMockState('currentUsers', currentUsers);
     return { data: { message: `User role updated to ${newRole}` } };
   }
+
+  async updateUser(userId, updateData) {
+    await delay();
+    const { currentUsers } = getMockState();
+    const user = currentUsers.find(u => u.id === userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    // Update user fields if provided
+    if (updateData.name !== undefined) {
+      user.name = updateData.name;
+    }
+    if (updateData.phone !== undefined) {
+      user.phone = updateData.phone;
+    }
+    if (updateData.address !== undefined) {
+      user.address = updateData.address;
+    }
+    if (updateData.role !== undefined && (updateData.role === 'user' || updateData.role === 'admin')) {
+      user.role = updateData.role;
+    }
+    
+    setMockState('currentUsers', currentUsers);
+    
+    return {
+      data: {
+        message: 'User updated successfully',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          address: user.address,
+          role: user.role,
+          is_blocked: user.is_blocked
+        }
+      }
+    };
+  }
 }
 
 export const mockApiService = new MockApiService();

@@ -394,6 +394,10 @@ class ApiAdapter {
         const userId = cleanUrl.split('/')[2];
         return mockApiService.changeUserRole(userId, data);
       }
+      if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'PUT') {
+        const userId = cleanUrl.split('/')[2];
+        return mockApiService.updateUser(userId, data);
+      }
       if (cleanUrl.match(/^admin\/users\/[^/]+$/) && method === 'PATCH') {
         const userId = cleanUrl.split('/')[2];
         return mockApiService.updateUserStatus(userId, data.is_blocked);
