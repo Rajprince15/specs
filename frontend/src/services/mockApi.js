@@ -483,30 +483,58 @@ class MockApiService {
   // User profile endpoints
   async getUserProfile() {
     await delay();
-    const { currentUser } = getMockState();
+    let { currentUser } = getMockState();
+    
+    // If currentUser is not in mock state, try to get from localStorage
     if (!currentUser) {
-      throw new Error('Not authenticated');
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+        setMockState('currentUser', currentUser);
+      } else {
+        throw new Error('Not authenticated');
+      }
     }
+    
     return { data: currentUser };
   }
 
   async updateUserProfile(profileData) {
     await delay();
-    const { currentUser } = getMockState();
+    let { currentUser } = getMockState();
+    
+    // If currentUser is not in mock state, try to get from localStorage
     if (!currentUser) {
-      throw new Error('Not authenticated');
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+      } else {
+        throw new Error('Not authenticated');
+      }
     }
     
     const updatedUser = { ...currentUser, ...profileData };
     setMockState('currentUser', updatedUser);
+    
+    // Also update localStorage
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
     return { data: updatedUser };
   }
 
   async updatePassword(passwordData) {
     await delay();
-    const { currentUser } = getMockState();
+    let { currentUser } = getMockState();
+    
+    // If currentUser is not in mock state, try to get from localStorage
     if (!currentUser) {
-      throw new Error('Not authenticated');
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+        setMockState('currentUser', currentUser);
+      } else {
+        throw new Error('Not authenticated');
+      }
     }
     
     // In mock mode, just return success
@@ -515,30 +543,52 @@ class MockApiService {
 
   async getEmailPreferences() {
     await delay();
-    const { currentUser } = getMockState();
+    let { currentUser } = getMockState();
+    
+    // If currentUser is not in mock state, try to get from localStorage
     if (!currentUser) {
-      throw new Error('Not authenticated');
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+        setMockState('currentUser', currentUser);
+      } else {
+        throw new Error('Not authenticated');
+      }
     }
     
-    // Return default email preferences
+    // Return email preferences from currentUser if available, otherwise use defaults
     return { 
       data: {
-        email_welcome: true,
-        email_order_confirmation: true,
-        email_payment_receipt: true,
-        email_shipping_notification: true
+        email_welcome: currentUser.email_welcome !== undefined ? Boolean(currentUser.email_welcome) : true,
+        email_order_confirmation: currentUser.email_order_confirmation !== undefined ? Boolean(currentUser.email_order_confirmation) : true,
+        email_payment_receipt: currentUser.email_payment_receipt !== undefined ? Boolean(currentUser.email_payment_receipt) : true,
+        email_shipping_notification: currentUser.email_shipping_notification !== undefined ? Boolean(currentUser.email_shipping_notification) : true
       }
     };
   }
 
   async updateEmailPreferences(preferences) {
     await delay();
-    const { currentUser } = getMockState();
+    let { currentUser } = getMockState();
+    
+    // If currentUser is not in mock state, try to get from localStorage
     if (!currentUser) {
-      throw new Error('Not authenticated');
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+      } else {
+        throw new Error('Not authenticated');
+      }
     }
     
-    // In mock mode, just return the preferences back
+    // Update currentUser with new preferences
+    const updatedUser = { ...currentUser, ...preferences };
+    setMockState('currentUser', updatedUser);
+    
+    // Also update localStorage
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    // In mock mode, return the preferences back
     return { data: preferences };
   }
 

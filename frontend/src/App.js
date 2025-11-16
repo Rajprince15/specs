@@ -32,6 +32,7 @@ const OrderTracking = lazy(() => import("@/pages/OrderTracking"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Addresses = lazy(() => import("@/pages/Addresses"));
 const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
+const MockCheckout = lazy(() => import("@/pages/MockCheckout"));
 const Compare = lazy(() => import("@/pages/Compare"));
 
 // Lazy load admin pages (heavy and used by few users)
@@ -316,6 +317,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PaymentSuccess user={user} onLogout={handleLogout} cartCount={cartCount} wishlistCount={wishlistCount} savedItemsCount={savedItemsCount} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mock-checkout"
+              element={
+                <ProtectedRoute>
+                  <MockCheckout />
                 </ProtectedRoute>
               }
             />

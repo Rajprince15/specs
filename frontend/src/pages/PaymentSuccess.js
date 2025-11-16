@@ -14,14 +14,40 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const sessionId = searchParams.get('session_id');
+  const isMockMode = searchParams.get('mock') === 'true';
 
   useEffect(() => {
     if (sessionId) {
-      pollPaymentStatus();
+      if (isMockMode) {
+        // Mock mode - simulate successful payment
+        handleMockPayment();
+      } else {
+        // Real payment - poll status
+        pollPaymentStatus();
+      }
     } else {
       navigate('/cart');
     }
-  }, [sessionId]);
+  }, [sessionId, isMockMode]);
+
+  const handleMockPayment = () => {
+    // Simulate payment success for mock mode
+    setTimeout(() => {
+      setPaymentStatus({
+        session_id: sessionId,
+        payment_status: 'paid',
+        status: 'complete',
+        order: {
+          id: 'mock_order_' + Date.now(),
+          total_amount: 0,
+          items: [],
+          payment_method: 'stripe_mock'
+        }
+      });
+      toast.success('Mock payment successful!');
+      setLoading(false);
+    }, 1500);
+  };
 
   const pollPaymentStatus = async (attempts = 0) => {
     const maxAttempts = 5;
@@ -76,6 +102,17 @@ const PaymentSuccess = ({ user, onLogout, cartCount }) => {
         noindex={true}
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Mock Mode Banner */}
+        {isMockMode && (
+          <div className="bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
+            <div className="max-w-7xl mx-auto px-6 py-2">
+              <p className="text-sm text-green-800 dark:text-green-200 text-center">
+                <span className="font-semibold">✅ DEMO MODE:</span> This was a mock payment. No real transaction was processed.
+              </p>
+            </div>
+          </div>
+        )}
+        
         {/* Navigation */}
         <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
