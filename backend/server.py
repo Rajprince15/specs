@@ -4219,6 +4219,7 @@ async def update_user(
             user.role = update_data.role
         
         await session.commit()
+        await session.refresh(user)
         
         return {
             "message": "User updated successfully",
