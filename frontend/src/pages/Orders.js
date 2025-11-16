@@ -84,8 +84,8 @@ const Orders = ({ user, onLogout, cartCount }) => {
       </nav>
 
       {/* Content */}
-      <main id="main-content" className="max-w-7xl mx-auto px-6 py-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           My Orders
         </h1>
 
@@ -107,51 +107,52 @@ const Orders = ({ user, onLogout, cartCount }) => {
           <div className="space-y-6">
             {orders.map((order) => (
               <Card key={order.id} data-testid={`order-${order.id}`} className="glass border-0">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                    <div>
-                      <p className="text-sm text-gray-500">Order ID: {order.id}</p>
-                      <p className="text-sm text-gray-500">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">Order ID: {order.id}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">
                         Date: {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="flex gap-3 mt-4 md:mt-0">
-                      <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.order_status)}`}>
+                    <div className="flex flex-wrap gap-2 sm:gap-3">
+                      <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getStatusColor(order.order_status)}`}>
                         {order.order_status}
                       </span>
-                      <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.payment_status)}`}>
+                      <span className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getStatusColor(order.payment_status)}`}>
                         {order.payment_status}
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center gap-4 p-4 bg-white/50 rounded-xl">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{item.product_name}</h3>
-                          <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/50 rounded-xl">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{item.product_name}</h3>
+                          <p className="text-xs sm:text-sm text-gray-600">Quantity: {item.quantity}</p>
                         </div>
-                        <p className="text-lg font-bold text-blue-600">₹{item.product_price.toFixed(2)}</p>
+                        <p className="text-base sm:text-lg font-bold text-blue-600 whitespace-nowrap">₹{item.product_price.toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-6 pt-6 border-t flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Shipping Address</p>
-                      <p className="font-medium text-gray-900">{order.shipping_address}</p>
+                  <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t flex flex-col gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500">Shipping Address</p>
+                      <p className="font-medium text-gray-900 text-sm sm:text-base break-words">{order.shipping_address}</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Total Amount</p>
-                        <p className="text-2xl font-bold text-blue-600">₹{order.total_amount.toFixed(2)}</p>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500">Total Amount</p>
+                        <p className="text-xl sm:text-2xl font-bold text-blue-600">₹{order.total_amount.toFixed(2)}</p>
                       </div>
-                      <Link to={`/orders/${order.id}/tracking`}>
+                      <Link to={`/orders/${order.id}/tracking`} className="w-full sm:w-auto">
                         <Button 
                           data-testid={`track-order-${order.id}`}
                           variant="outline" 
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                          size="sm"
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 w-full sm:w-auto"
                         >
                           <Truck className="w-4 h-4 mr-2" />
                           Track Order

@@ -709,43 +709,44 @@ const Products = ({ user, onLogout, cartCount, wishlistCount, savedItemsCount, f
 
       {/* Floating Compare Bar */}
       {compareProducts.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-bottom">
-          <div className="glass border-2 border-blue-500 rounded-2xl shadow-2xl p-4 min-w-[400px] max-w-4xl">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <GitCompare className="w-6 h-6 text-blue-600" />
-                <div>
-                  <h3 className="font-bold text-gray-900">Compare Products</h3>
-                  <p className="text-sm text-gray-600">
+        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 z-50 animate-in slide-in-from-bottom">
+          <div className="glass border-2 border-blue-500 rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 w-full sm:min-w-[400px] sm:max-w-4xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <GitCompare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">Compare Products</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">
                     {compareProducts.length} product{compareProducts.length > 1 ? 's' : ''} selected (Max: 4)
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   size="sm"
                   onClick={goToCompare}
                   disabled={compareProducts.length < 2}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 flex-1 sm:flex-none text-xs sm:text-sm"
                 >
-                  Compare Now
+                  Compare
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setCompareProducts([])}
+                  className="flex-1 sm:flex-none text-xs sm:text-sm"
                 >
-                  Clear All
+                  Clear
                 </Button>
               </div>
             </div>
             
             {/* Product Thumbnails */}
-            <div className="flex gap-2 mt-4 overflow-x-auto">
+            <div className="flex gap-2 mt-3 sm:mt-4 overflow-x-auto pb-1">
               {compareProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-300"
+                  className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 border-gray-300"
                 >
                   <img
                     src={product.image_url}

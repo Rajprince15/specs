@@ -154,68 +154,95 @@ const Profile = ({ user, onLogout, cartCount }) => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Navigation */}
         <nav className="glass sticky top-0 z-50 border-b dark:border-gray-800" role="navigation" aria-label="Main navigation">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-blue-600" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Gee Ess Opticals
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/products">
-              <Button variant="outline">Products</Button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+              <Glasses className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+              <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden xs:inline">
+                Gee Ess Opticals
+              </span>
+              <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent xs:hidden">
+                GEO
+              </span>
             </Link>
-            {user?.role === 'admin' ? (
-              <Link to="/admin">
-                <Button variant="outline">Admin Dashboard</Button>
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-2 xl:gap-3">
+              <Link to="/products">
+                <Button variant="outline" size="sm">Products</Button>
               </Link>
-            ) : (
-              <>
+              {user?.role === 'admin' ? (
+                <Link to="/admin">
+                  <Button variant="outline" size="sm">Admin Dashboard</Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/cart">
+                    <Button variant="outline" size="sm" className="relative">
+                      <ShoppingBag className="w-5 h-5" />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {cartCount}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                  <Link to="/orders">
+                    <Button variant="outline" size="sm">Orders</Button>
+                  </Link>
+                  <Link to="/addresses">
+                    <Button variant="outline" size="sm">Addresses</Button>
+                  </Link>
+                </>
+              )}
+              <Button onClick={onLogout} variant="destructive" size="sm">
+                Logout
+              </Button>
+            </div>
+            {/* Mobile Navigation - Show cart and menu */}
+            <div className="flex lg:hidden items-center gap-2">
+              {user && user.role !== 'admin' && (
                 <Link to="/cart">
-                  <Button variant="outline" className="relative">
-                    <ShoppingBag className="w-5 h-5" />
+                  <Button variant="outline" size="sm" className="relative">
+                    <ShoppingBag className="w-4 h-4" />
                     {cartCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
                         {cartCount}
                       </span>
                     )}
                   </Button>
                 </Link>
-                <Link to="/orders">
-                  <Button variant="outline">Orders</Button>
-                </Link>
-                <Link to="/addresses">
-                  <Button variant="outline">Addresses</Button>
-                </Link>
-              </>
-            )}
-            <Button onClick={onLogout} variant="destructive">
-              Logout
-            </Button>
+              )}
+              <Link to="/products">
+                <Button variant="outline" size="sm">Products</Button>
+              </Link>
+              <Button onClick={onLogout} variant="destructive" size="sm">
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Content */}
       <main id="main-content">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           My Profile
         </h1>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-0 h-auto sm:h-10">
+            <TabsTrigger value="profile" className="flex items-center justify-center gap-2 py-2 sm:py-0">
               <User className="w-4 h-4" />
-              Profile Information
+              <span className="text-sm sm:text-base">Profile Information</span>
             </TabsTrigger>
-            <TabsTrigger value="password" className="flex items-center gap-2">
+            <TabsTrigger value="password" className="flex items-center justify-center gap-2 py-2 sm:py-0">
               <Lock className="w-4 h-4" />
-              Change Password
+              <span className="text-sm sm:text-base">Change Password</span>
             </TabsTrigger>
-            <TabsTrigger value="email" className="flex items-center gap-2">
+            <TabsTrigger value="email" className="flex items-center justify-center gap-2 py-2 sm:py-0">
               <Mail className="w-4 h-4" />
-              Email Preferences
+              <span className="text-sm sm:text-base">Email Preferences</span>
             </TabsTrigger>
           </TabsList>
 

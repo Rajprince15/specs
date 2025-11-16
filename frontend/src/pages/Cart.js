@@ -392,34 +392,49 @@ const Cart = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount, fetc
         
         {/* Navigation */}
         <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Main navigation">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2" aria-label="Gee Ess Opticals Home">
-              <Glasses className="w-8 h-8 text-blue-600" aria-hidden="true" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Gee Ess Opticals
-              </span>
-            </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/products">
-              <Button data-testid="products-btn" variant="outline">Products</Button>
-            </Link>
-            <Link to="/orders">
-              <Button data-testid="orders-btn" variant="outline">Orders</Button>
-            </Link>
-            <Link to="/profile">
-              <Button data-testid="profile-btn" variant="outline">Profile</Button>
-            </Link>
-            <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
-              Logout
-            </Button>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <Link to="/" className="flex items-center gap-2 flex-shrink-0" aria-label="Gee Ess Opticals Home">
+                <Glasses className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" aria-hidden="true" />
+                <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden xs:inline">
+                  Gee Ess Opticals
+                </span>
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent xs:hidden">
+                  GEO
+                </span>
+              </Link>
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center gap-3 lg:gap-4">
+                <Link to="/products">
+                  <Button data-testid="products-btn" variant="outline" size="sm" className="lg:size-default">Products</Button>
+                </Link>
+                <Link to="/orders">
+                  <Button data-testid="orders-btn" variant="outline" size="sm" className="lg:size-default">Orders</Button>
+                </Link>
+                <Link to="/profile">
+                  <Button data-testid="profile-btn" variant="outline" size="sm" className="lg:size-default">Profile</Button>
+                </Link>
+                <Button data-testid="logout-btn" onClick={onLogout} variant="destructive" size="sm" className="lg:size-default">
+                  Logout
+                </Button>
+              </div>
+              {/* Mobile Navigation */}
+              <div className="flex md:hidden items-center gap-2">
+                <Link to="/products">
+                  <Button variant="outline" size="sm">Products</Button>
+                </Link>
+                <Button onClick={onLogout} variant="destructive" size="sm">
+                  Logout
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
 
       {/* Content */}
       <main id="main-content">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Shopping Cart
         </h1>
 
@@ -443,37 +458,37 @@ const Cart = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount, fetc
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item) => (
                 <Card key={item.id} data-testid={`cart-item-${item.id}`} className="glass border-0">
-                  <CardContent className="p-6">
-                    <div className="flex gap-6">
-                      <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                      <div className="w-full sm:w-24 md:w-32 h-48 sm:h-24 md:h-32 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                         <img
                           src={item.product?.image_url}
                           alt={item.product?.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex-1 flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
                         <div>
-                          <p className="text-sm text-gray-500 uppercase tracking-wide">
+                          <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
                             {item.product?.brand}
                           </p>
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
                             {item.product?.name}
                           </h3>
-                          <div className="flex items-center gap-3 mt-2">
-                            <p className="text-2xl font-bold text-blue-600">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
+                            <p className="text-xl sm:text-2xl font-bold text-blue-600">
                               ₹{item.product?.price.toFixed(2)}
                             </p>
                             {item.product?.stock < 10 && (
-                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full whitespace-nowrap">
                                 Only {item.product?.stock} left
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="space-y-3 mt-4">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
                               <div className="flex items-center gap-2">
                                 <Button
                                   data-testid={`decrement-qty-${item.id}`}
@@ -509,23 +524,26 @@ const Cart = ({ user, onLogout, cartCount, savedItemsCount, fetchCartCount, fetc
                                 Subtotal: <span className="font-semibold text-gray-900">₹{(item.product?.price * item.quantity).toFixed(2)}</span>
                               </div>
                             </div>
-                            <Button
-                              data-testid={`remove-item-${item.id}`}
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeFromCart(item.product_id)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove
-                            </Button>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <Button
+                                data-testid={`remove-item-${item.id}`}
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeFromCart(item.product_id)}
+                                className="flex-1 sm:flex-none"
+                              >
+                                <Trash2 className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Remove</span>
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex justify-end">
+                          <div className="flex justify-start sm:justify-end">
                             <Button
                               data-testid={`save-for-later-${item.id}`}
                               size="sm"
                               variant="outline"
                               onClick={() => saveForLater(item.id)}
-                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full sm:w-auto"
                             >
                               <Bookmark className="w-4 h-4 mr-2" />
                               Save for Later

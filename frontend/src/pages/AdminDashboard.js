@@ -289,19 +289,21 @@ const AdminDashboard = ({ user, onLogout }) => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         {/* Navigation */}
         <nav className="glass sticky top-0 z-50 border-b" role="navigation" aria-label="Admin navigation">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <Link to="/" className="flex items-center gap-2">
-              <Glasses className="w-8 h-8 text-blue-600" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Gee Ess Opticals Admin
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+              <Glasses className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+              <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                <span className="hidden sm:inline">Gee Ess Opticals Admin</span>
+                <span className="sm:hidden">Admin</span>
               </span>
             </Link>
-            <Button data-testid="logout-btn" onClick={onLogout} variant="destructive">
+            <Button data-testid="logout-btn" onClick={onLogout} variant="destructive" size="sm" className="sm:size-default">
               Logout
             </Button>
           </div>
-          <div className="flex gap-2">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex gap-2 flex-wrap">
             <Link to="/admin">
               <Button variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                 <Package className="w-4 h-4 mr-2" />
@@ -345,19 +347,66 @@ const AdminDashboard = ({ user, onLogout }) => {
               </Button>
             </Link>
           </div>
+          {/* Mobile Navigation - Horizontal Scroll */}
+          <div className="lg:hidden overflow-x-auto pb-2 -mx-4 px-4">
+            <div className="flex gap-2 min-w-max">
+              <Link to="/admin">
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 whitespace-nowrap">
+                  <Package className="w-4 h-4 mr-1" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Link to="/admin/analytics">
+                <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 whitespace-nowrap">
+                  <DollarSign className="w-4 h-4 mr-1" />
+                  Analytics
+                </Button>
+              </Link>
+              <Link to="/admin/inventory">
+                <Button variant="ghost" size="sm" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 whitespace-nowrap">
+                  <Package className="w-4 h-4 mr-1" />
+                  Inventory
+                </Button>
+              </Link>
+              <Link to="/admin/users">
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 whitespace-nowrap">
+                  <Users className="w-4 h-4 mr-1" />
+                  Users
+                </Button>
+              </Link>
+              <Link to="/admin/orders">
+                <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50 whitespace-nowrap">
+                  <Glasses className="w-4 h-4 mr-1" />
+                  Orders
+                </Button>
+              </Link>
+              <Link to="/admin/payments">
+                <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 whitespace-nowrap">
+                  <DollarSign className="w-4 h-4 mr-1" />
+                  Payments
+                </Button>
+              </Link>
+              <Link to="/admin/reviews">
+                <Button variant="ghost" size="sm" className="text-pink-600 hover:text-pink-700 hover:bg-pink-50 whitespace-nowrap">
+                  <Users className="w-4 h-4 mr-1" />
+                  Reviews
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </nav>
 
       {/* Content */}
       <main id="main-content">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Dashboard
           </h1>
           <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
             <DialogTrigger asChild>
-              <Button data-testid="add-product-btn" onClick={() => { setEditingProduct(null); setProductForm({ name: '', brand: '', price: '', description: '', category: 'men', frame_type: 'full-rim', frame_shape: 'rectangular', color: '', image_url: '', stock: 100 }); }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Button data-testid="add-product-btn" onClick={() => { setEditingProduct(null); setProductForm({ name: '', brand: '', price: '', description: '', category: 'men', frame_type: 'full-rim', frame_shape: 'rectangular', color: '', image_url: '', stock: 100 }); }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full sm:w-auto">
                 <Plus className="w-5 h-5 mr-2" />
                 Add Product
               </Button>
@@ -449,7 +498,7 @@ const AdminDashboard = ({ user, onLogout }) => {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
           <Card className="glass border-0">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
