@@ -218,23 +218,26 @@ const Users = ({ user, onLogout }) => {
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                <UsersIcon className="w-6 h-6 text-white" />
+                <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-sm sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden sm:inline">
                 Gee Ess Opticals - User Management
               </span>
+              <span className="text-sm font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent sm:hidden">
+                Users
+              </span>
             </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/admin" className="text-gray-600 hover:text-gray-900 transition-colors">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Link to="/admin" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors hidden md:inline">
                 Dashboard
               </Link>
-              <Link to="/admin/analytics" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link to="/admin/analytics" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors hidden lg:inline">
                 Analytics
               </Link>
-              <Link to="/admin/inventory" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link to="/admin/inventory" className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors hidden lg:inline">
                 Inventory
               </Link>
-              <Button onClick={onLogout} variant="outline">Logout</Button>
+              <Button onClick={onLogout} variant="outline" size="sm">Logout</Button>
             </div>
           </div>
         </div>
@@ -244,11 +247,11 @@ const Users = ({ user, onLogout }) => {
       <main id="main-content">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             User Management
           </h1>
-          <p className="text-gray-600">Manage and monitor all user accounts</p>
+          <p className="text-sm sm:text-base text-gray-600">Manage and monitor all user accounts</p>
         </div>
 
         {/* Search and Stats */}
@@ -302,39 +305,39 @@ const Users = ({ user, onLogout }) => {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full min-w-[800px]">
                     <thead className="bg-gray-50 border-b-2 border-gray-200">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Joined</th>
+                        <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {users.map((u) => (
                         <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                <UserCircle className="w-6 h-6 text-white" />
+                          <td className="px-3 sm:px-6 py-4">
+                            <div className="flex items-center min-w-[180px]">
+                              <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <UserCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                               </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">{u.name}</div>
-                                <div className="text-sm text-gray-500">{u.email}</div>
+                              <div className="ml-3 sm:ml-4 min-w-0">
+                                <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{u.name}</div>
+                                <div className="text-xs text-gray-500 truncate">{u.email}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-1 text-sm text-gray-900">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              {u.phone}
+                          <td className="px-3 sm:px-6 py-4">
+                            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-900 whitespace-nowrap">
+                              <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{u.phone}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               u.role === 'admin'
                                 ? 'bg-purple-100 text-purple-800'
@@ -343,7 +346,7 @@ const Users = ({ user, onLogout }) => {
                               {u.role}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               u.is_blocked
                                 ? 'bg-red-100 text-red-800'
@@ -352,16 +355,17 @@ const Users = ({ user, onLogout }) => {
                               {u.is_blocked ? 'Blocked' : 'Active'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 hidden md:table-cell">
                             {formatDate(u.created_at)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
+                            <div className="flex items-center justify-end gap-1 sm:gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleViewDetails(u.id)}
                                 title="View Details"
+                                className="h-8 w-8 p-0"
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
@@ -370,6 +374,7 @@ const Users = ({ user, onLogout }) => {
                                 variant="outline"
                                 onClick={() => handleEditUser(u)}
                                 title="Edit User"
+                                className="h-8 w-8 p-0"
                               >
                                 <Edit2 className="w-4 h-4" />
                               </Button>
@@ -378,6 +383,7 @@ const Users = ({ user, onLogout }) => {
                                   size="sm"
                                   variant={u.is_blocked ? "default" : "destructive"}
                                   onClick={() => handleBlockUnblock(u.id, u.is_blocked)}
+                                  className="hidden lg:flex"
                                 >
                                   {u.is_blocked ? (
                                     <><Shield className="w-4 h-4 mr-1" /> Unblock</>
@@ -396,9 +402,9 @@ const Users = ({ user, onLogout }) => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-                    <div className="text-sm text-gray-700">
-                      Showing page {currentPage} of {totalPages} ({total} total users)
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-6 border-t border-gray-200">
+                    <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
+                      Page {currentPage} of {totalPages} <span className="hidden sm:inline">({total} total users)</span>
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -408,6 +414,7 @@ const Users = ({ user, onLogout }) => {
                         disabled={currentPage === 1}
                       >
                         <ChevronLeft className="w-4 h-4" />
+                        <span className="ml-1 hidden sm:inline">Previous</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -415,6 +422,7 @@ const Users = ({ user, onLogout }) => {
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
                       >
+                        <span className="mr-1 hidden sm:inline">Next</span>
                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     </div>
@@ -452,21 +460,21 @@ const Users = ({ user, onLogout }) => {
                   <UserCircle className="w-5 h-5" />
                   Basic Information
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Name</p>
-                    <p className="font-medium">{userDetails.user.name}</p>
+                    <p className="font-medium text-sm sm:text-base break-words">{userDetails.user.name}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Email</p>
-                    <p className="font-medium flex items-center gap-1">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      {userDetails.user.email}
+                    <p className="font-medium text-sm sm:text-base flex items-center gap-1 break-all">
+                      <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="break-all">{userDetails.user.email}</span>
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Phone</p>
-                    <p className="font-medium flex items-center gap-1">
+                    <p className="font-medium text-sm sm:text-base flex items-center gap-1">
                       <Phone className="w-4 h-4 text-gray-400" />
                       {userDetails.user.phone}
                     </p>
@@ -497,17 +505,17 @@ const Users = ({ user, onLogout }) => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Joined</p>
-                    <p className="font-medium flex items-center gap-1">
+                    <p className="font-medium text-sm sm:text-base flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      {formatDate(userDetails.user.created_at)}
+                      <span className="truncate">{formatDate(userDetails.user.created_at)}</span>
                     </p>
                   </div>
                   {userDetails.user.address && (
-                    <div className="col-span-2">
+                    <div className="sm:col-span-2">
                       <p className="text-sm text-gray-500 mb-1">Address</p>
-                      <p className="font-medium flex items-center gap-1">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        {userDetails.user.address}
+                      <p className="font-medium text-sm sm:text-base flex items-start gap-1">
+                        <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <span className="break-words">{userDetails.user.address}</span>
                       </p>
                     </div>
                   )}
@@ -516,8 +524,8 @@ const Users = ({ user, onLogout }) => {
 
               {/* Statistics */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Activity Statistics</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-4">Activity Statistics</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
                   <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
                     <CardContent className="p-4 text-center">
                       <Package className="w-8 h-8 mx-auto mb-2 opacity-80" />
@@ -559,9 +567,9 @@ const Users = ({ user, onLogout }) => {
               {/* Recent Orders */}
               {userDetails.recent_orders.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Recent Orders</h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full">
+                  <h3 className="text-base sm:text-lg font-semibold mb-4">Recent Orders</h3>
+                  <div className="border rounded-lg overflow-x-auto">
+                    <table className="w-full min-w-[640px]">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
@@ -614,37 +622,42 @@ const Users = ({ user, onLogout }) => {
               )}
 
               {/* Actions */}
-              <div className="flex justify-between items-center gap-3 pt-4 border-t">
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-4 border-t">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => {
                       setShowDetailsDialog(false);
                       handleEditUser(userDetails.user);
                     }}
                   >
                     <Edit2 className="w-4 h-4 mr-2" />
-                    Edit User Info
+                    <span className="hidden sm:inline">Edit User Info</span>
+                    <span className="sm:hidden">Edit</span>
                   </Button>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => handleChangeRole(userDetails.user.id, userDetails.user.role)}
                   >
                     <UserCog className="w-4 h-4 mr-2" />
-                    {userDetails.user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                    <span className="hidden sm:inline">{userDetails.user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}</span>
+                    <span className="sm:hidden">{userDetails.user.role === 'admin' ? 'Remove' : 'Make'} Admin</span>
                   </Button>
                   
                   {userDetails.user.role !== 'admin' && (
                     <Button
                       variant={userDetails.user.is_blocked ? "default" : "destructive"}
+                      size="sm"
                       onClick={() => {
                         handleBlockUnblock(userDetails.user.id, userDetails.user.is_blocked);
                       }}
                     >
                       {userDetails.user.is_blocked ? (
-                        <><Shield className="w-4 h-4 mr-2" /> Unblock User</>
+                        <><Shield className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Unblock User</span><span className="sm:hidden">Unblock</span></>
                       ) : (
-                        <><ShieldOff className="w-4 h-4 mr-2" /> Block User</>
+                        <><ShieldOff className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Block User</span><span className="sm:hidden">Block</span></>
                       )}
                     </Button>
                   )}
@@ -653,6 +666,8 @@ const Users = ({ user, onLogout }) => {
                 {userDetails.user.role !== 'admin' && (
                   <Button
                     variant="destructive"
+                    size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => handleDeleteUser(userDetails.user.id)}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
