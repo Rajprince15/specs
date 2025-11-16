@@ -22,7 +22,7 @@
     }
   ],
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "theme_color": "#3b82f6",
   "background_color": "#0f172a",
   "orientation": "portrait-primary",
