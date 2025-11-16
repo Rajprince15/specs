@@ -569,6 +569,9 @@ export const mockPayments = [
   {
     session_id: 'cs_test_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     amount: 244.99,
     currency: 'INR',
     payment_status: 'paid',
@@ -579,6 +582,9 @@ export const mockPayments = [
   {
     session_id: 'cs_test_b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     amount: 189.99,
     currency: 'INR',
     payment_status: 'paid',
@@ -589,6 +595,9 @@ export const mockPayments = [
   {
     session_id: 'cs_test_c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     amount: 425.00,
     currency: 'INR',
     payment_status: 'pending',
@@ -599,6 +608,9 @@ export const mockPayments = [
   {
     session_id: 'cs_test_d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3',
     user_id: '2',
+    user_name: 'Admin User',
+    user_email: 'admin@lenskart.com',
+    user_phone: '+1234567891',
     amount: 139.99,
     currency: 'INR',
     payment_status: 'failed',
@@ -609,6 +621,9 @@ export const mockPayments = [
   {
     session_id: 'cs_test_e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4',
     user_id: '1',
+    user_name: 'John Doe',
+    user_email: 'user@example.com',
+    user_phone: '+1234567890',
     amount: 295.00,
     currency: 'INR',
     payment_status: 'refunded',

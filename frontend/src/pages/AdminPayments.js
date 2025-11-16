@@ -17,7 +17,8 @@ import {
   XCircle,
   Clock,
   ArrowLeft,
-  CreditCard
+  CreditCard,
+  User
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosInstance } from '@/App';
@@ -412,95 +413,123 @@ const AdminPayments = ({ user, onLogout }) => {
             </div>
           ) : selectedPayment ? (
             <div className="space-y-6">
+              {/* Customer Information - Highlighted Section */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-5 rounded-lg border-2 border-blue-200">
+                <Label className="text-gray-700 font-bold text-base mb-3 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Customer Information
+                </Label>
+                <div className="grid md:grid-cols-3 gap-4 mt-3">
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <Label className="text-gray-500 text-xs">Customer Name</Label>
+                    <p className="font-semibold text-gray-900 mt-1">{selectedPayment.user_name || 'N/A'}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <Label className="text-gray-500 text-xs">Email Address</Label>
+                    <p className="font-medium text-gray-900 mt-1 text-sm break-all">{selectedPayment.user_email || 'N/A'}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm">
+                    <Label className="text-gray-500 text-xs">Phone Number</Label>
+                    <p className="font-medium text-gray-900 mt-1">{selectedPayment.user_phone || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Payment Info */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-500">Session ID</Label>
-                  <p className="font-mono text-sm break-all">{selectedPayment.session_id}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">User ID</Label>
-                  <p className="font-mono text-sm break-all">{selectedPayment.user_id}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Amount</Label>
-                  <p className="text-xl font-bold text-blue-600">₹{selectedPayment.amount?.toFixed(2) || '0.00'}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Currency</Label>
-                  <p className="text-sm">{selectedPayment.currency || 'INR'}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Payment Status</Label>
-                  <p>
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedPayment.payment_status)}`}>
-                      {getStatusIcon(selectedPayment.payment_status)}
-                      {selectedPayment.payment_status}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Status</Label>
-                  <p>
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedPayment.status)}`}>
-                      {selectedPayment.status}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Created At</Label>
-                  <p className="text-sm">{formatDate(selectedPayment.created_at)}</p>
-                </div>
-                <div>
-                  <Label className="text-gray-500">Updated At</Label>
-                  <p className="text-sm">{formatDate(selectedPayment.updated_at)}</p>
+              <div>
+                <Label className="text-gray-700 font-bold text-base mb-3 block">Payment Information</Label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Session ID</Label>
+                    <p className="font-mono text-sm break-all mt-1">{selectedPayment.session_id}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">User ID</Label>
+                    <p className="font-mono text-sm break-all mt-1">{selectedPayment.user_id}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Amount</Label>
+                    <p className="text-xl font-bold text-blue-600 mt-1">₹{selectedPayment.amount?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Currency</Label>
+                    <p className="text-sm mt-1">{selectedPayment.currency || 'INR'}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Payment Status</Label>
+                    <p className="mt-1">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedPayment.payment_status)}`}>
+                        {getStatusIcon(selectedPayment.payment_status)}
+                        {selectedPayment.payment_status}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Status</Label>
+                    <p className="mt-1">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedPayment.status)}`}>
+                        {selectedPayment.status}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Created At</Label>
+                    <p className="text-sm mt-1">{formatDate(selectedPayment.created_at)}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <Label className="text-gray-500 text-xs">Updated At</Label>
+                    <p className="text-sm mt-1">{formatDate(selectedPayment.updated_at)}</p>
+                  </div>
                 </div>
               </div>
 
               {/* Update Status Section */}
-              <div className="border-t pt-4 space-y-4">
+              <div className="border-t-2 border-gray-200 pt-6 space-y-4 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg">
                 <div>
-                  <Label className="text-gray-700 mb-2 block">Update Payment Status</Label>
-                  <Select
-                    value={selectedPayment.payment_status}
-                    onValueChange={(value) => handleUpdateStatus(selectedPayment.session_id, value, selectedPayment.status)}
-                  >
-                    <SelectTrigger className="w-full md:w-64">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-yellow-600" />
-                          <span>Pending</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="paid">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span>Paid</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="completed">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span>Completed</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="failed">
-                        <div className="flex items-center gap-2">
-                          <XCircle className="w-4 h-4 text-red-600" />
-                          <span>Failed</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="refunded">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-blue-600" />
-                          <span>Refunded</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-gray-700 font-semibold mb-3 block text-base">Quick Actions</Label>
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <Label className="text-gray-600 mb-2 block text-sm">Update Payment Status</Label>
+                    <Select
+                      value={selectedPayment.payment_status}
+                      onValueChange={(value) => handleUpdateStatus(selectedPayment.session_id, value, selectedPayment.status)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-yellow-600" />
+                            <span>Pending</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="paid">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span>Paid</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="completed">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span>Completed</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="failed">
+                          <div className="flex items-center gap-2">
+                            <XCircle className="w-4 h-4 text-red-600" />
+                            <span>Failed</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="refunded">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-blue-600" />
+                            <span>Refunded</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="flex justify-end">

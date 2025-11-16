@@ -19,8 +19,13 @@ const Profile = ({ user, onLogout, cartCount }) => {
     phone: '',
     address: ''
   });
+  const [originalProfile, setOriginalProfile] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
   const [defaultAddress, setDefaultAddress] = useState(null);
-  const [editMode, setEditMode] = useState(false);
   const [passwordData, setPasswordData] = useState({
     old_password: '',
     new_password: '',
@@ -45,6 +50,7 @@ const Profile = ({ user, onLogout, cartCount }) => {
     try {
       const response = await axiosInstance.get('/user/profile');
       setProfile(response.data);
+      setOriginalProfile(response.data);
       
       // Fetch email preferences
       const prefsResponse = await axiosInstance.get('/user/email-preferences');
@@ -72,14 +78,18 @@ const Profile = ({ user, onLogout, cartCount }) => {
     try {
       await axiosInstance.put('/user/profile', {
         name: profile.name,
-        phone: profile.phone,
-        address: profile.address
+        phone: profile.phone
       });
       toast.success('Profile updated successfully');
-      setEditMode(false);
+      setOriginalProfile(profile);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to update profile');
     }
+  };
+
+  const handleProfileReset = () => {
+    setProfile(originalProfile);
+    toast.info('Changes discarded');
   };
 
   const handlePasswordChange = async (e) => {
@@ -228,9 +238,9 @@ const Profile = ({ user, onLogout, cartCount }) => {
                       type="text"
                       value={profile.name}
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      disabled={!editMode}
                       required
                       className="h-12"
+                      placeholder="Enter your full name"
                     />
                   </div>
 
@@ -255,22 +265,9 @@ const Profile = ({ user, onLogout, cartCount }) => {
                       type="tel"
                       value={profile.phone}
                       onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      disabled={!editMode}
                       required
                       className="h-12"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Address
-                    </label>
-                    <Textarea
-                      value={profile.address || ''}
-                      onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                      disabled={!editMode}
-                      placeholder="Enter your address"
-                      className="min-h-[100px]"
+                      placeholder="Enter your phone number"
                     />
                   </div>
 
@@ -301,34 +298,19 @@ const Profile = ({ user, onLogout, cartCount }) => {
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    {editMode ? (
-                      <>
-                        <Button
-                          type="submit"
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                        >
-                          Save Changes
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setEditMode(false);
-                            fetchProfile();
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => setEditMode(true)}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      >
-                        Edit Profile
-                      </Button>
-                    )}
+                    <Button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleProfileReset}
+                    >
+                      Reset Changes
+                    </Button>
                   </div>
                 </form>
               </CardContent>

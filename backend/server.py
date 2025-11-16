@@ -1603,9 +1603,27 @@ async def get_order(order_id: str, authorization: str = Header(None)):
             for item in order_items
         ]
         
+        # Fetch user information
+        user_name = None
+        user_email = None
+        user_phone = None
+        
+        if order.user_id:
+            user_result = await session.execute(
+                select(UserDB).where(UserDB.id == order.user_id)
+            )
+            user_data = user_result.scalar_one_or_none()
+            if user_data:
+                user_name = user_data.name
+                user_email = user_data.email
+                user_phone = user_data.phone
+        
         return {
             "id": order.id,
             "user_id": order.user_id,
+            "user_name": user_name,
+            "user_email": user_email,
+            "user_phone": user_phone,
             "items": items,
             "total_amount": order.total_amount,
             "payment_status": order.payment_status,
@@ -2890,10 +2908,28 @@ async def get_payment_transaction(session_id: str, authorization: str = Header(N
         if not payment:
             raise HTTPException(status_code=404, detail="Payment transaction not found")
         
+        # Fetch user information if user_id exists
+        user_name = None
+        user_email = None
+        user_phone = None
+        
+        if payment.user_id:
+            user_result = await session.execute(
+                select(UserDB).where(UserDB.id == payment.user_id)
+            )
+            user_data = user_result.scalar_one_or_none()
+            if user_data:
+                user_name = user_data.name
+                user_email = user_data.email
+                user_phone = user_data.phone
+        
         return {
             "id": payment.id,
             "session_id": payment.session_id,
             "user_id": payment.user_id,
+            "user_name": user_name,
+            "user_email": user_email,
+            "user_phone": user_phone,
             "order_id": payment.order_id,
             "amount": float(payment.amount),
             "currency": payment.currency,
